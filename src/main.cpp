@@ -3,20 +3,20 @@
 #include "MidiController.h"
 #include "UserInput.h"
 
-// Встроенная кнопка
+// Built-in button
 const uint8_t BUTTON_PIN = 24;
 const uint8_t MIDI_CHANNEL = 0;
-bool programToggle = false; // false = программа 2, true = программа 42
+bool programToggle = false; // false = program 2, true = program 42
 
 MidiController midiController(MIDI_CHANNEL);
 UserInput userInput;
 
 void setup()
 {
-    // Задать имя производителя и продукта ДО начала USB
+    // Set manufacturer and product descriptors BEFORE USB initialization
     USBDevice.setManufacturerDescriptor("iv660");
     USBDevice.setProductDescriptor("MIDI Patch Box");
-    USBDevice.setSerialDescriptor("0001"); // можно задать любой серийник
+    USBDevice.setSerialDescriptor("0001"); // any serial number
 
     midiController.begin();
 }
@@ -25,7 +25,7 @@ void loop() {
     userInput.update();
 
     if (userInput.usrButtonIsPressed()) {
-        uint8_t program = programToggle ? 41 : 1; // 42-я или 2-я программа
+        uint8_t program = programToggle ? 41 : 1; // 42nd or 2nd program
         midiController.sendProgramChange(program);
         programToggle = !programToggle;
     }
