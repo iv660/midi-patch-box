@@ -1,8 +1,6 @@
 #include "MidiController.h"
 
-MidiController::MidiController() {}
-
-void MidiController::sendProgramChange(uint8_t program, uint8_t channel)
+void MidiController::sendProgramChange(uint8_t program)
 {
     uint8_t packet[4];
     packet[0] = (0 << 4) | 0xC;          // CN=0, CIN=0xC (Program Change)
