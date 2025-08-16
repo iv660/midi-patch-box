@@ -3,8 +3,6 @@
 #include "MidiController.h"
 #include "UserInput.h"
 
-// Built-in button
-const uint8_t BUTTON_PIN = 24;
 const uint8_t MIDI_CHANNEL = 0;
 bool programToggle = false; // false = program 2, true = program 42
 
