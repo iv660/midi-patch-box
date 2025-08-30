@@ -3,49 +3,70 @@
 #include "app/UserInputInterface.h"
 #include "app/ProgramSelectorInterface.h"
 
-class MockUserInput : public UserInputInterface {
+class MockUserInput : public UserInputInterface 
+{
 public:
-    bool userButtonIsPressed() override {
+    bool userButtonIsPressed() override 
+    {
         return true; // Simulate button press
     }
 };
 
-class MockProgramSelector : public ProgramSelectorInterface {
+class MockProgramSelector : public ProgramSelectorInterface 
+{
 private:
-    int16_t selectedProgram = 2;
+    int selectedProgram = 2;
 public:
-    void selectNextProgram() override {
+    void selectNextProgram() override 
+    {
         selectedProgram++;
     }
 
-    int16_t getSelectedProgram() const {
+    int getSelectedProgram() const 
+    {
         return selectedProgram;
     }
 };
 
-class MockMidiController : public MidiControllerInterface {
+class MockMidiController : public MidiControllerInterface 
+{
+private:
+    bool programChangeIsSent = false;
+
 public:
-    void sendProgramChange(int program) override {
-        // Simulate sending a program change
+    void sendProgramChange(int program) override 
+    {
+        programChangeIsSent = true;
+    }
+
+    bool getProgramChangeIsSent() 
+    {
+        return programChangeIsSent;
     }
 };
 
-void setUp(void) {
+// =================================================================
+
+void setUp(void) 
+{
     // Called before each test
 }
 
-void tearDown(void) {
+void tearDown(void) 
+{
     // Called after each test
 }
 
 // Test that tick() method can be called without error
-void testShouldSupportTickMethod(void) {
+void testShouldSupportTickMethod(void) 
+{
     MidiPatchBoxApplication app;
 
     app.tick();
 }
 
-void testShouldSelectNextProgramOnUserButtonPress(void) {
+void testShouldSelectNextProgramOnUserButtonPress(void) 
+{
     MidiPatchBoxApplication app;
     
     MockUserInput userInput;
@@ -59,16 +80,30 @@ void testShouldSelectNextProgramOnUserButtonPress(void) {
     TEST_ASSERT_EQUAL_INT16(3, programSelector.getSelectedProgram());
 }
 
-void testShouldSendProgramChangeOnUserButtonPress(void) {
-    // MidiPatchBoxApplication app;
+void testShouldSendProgramChangeOnUserButtonPress(void) 
+{
+    MidiPatchBoxApplication app;
 
-    // MockUserInput userInput;
-    
+    MockUserInput userInput;
+    MockMidiController midiController;
+    MockProgramSelector programSelector;
+
+    app.setUserInput(&userInput)
+       ->setMidiController(&midiController)
+       ->setProgramSelector(&programSelector);
+
+    app.tick();
+
+    TEST_ASSERT_TRUE(midiController.getProgramChangeIsSent());
 }
 
-int main(void) {
+int main(void) 
+{
     UNITY_BEGIN();
+
     RUN_TEST(testShouldSupportTickMethod);
     RUN_TEST(testShouldSelectNextProgramOnUserButtonPress);
+    RUN_TEST(testShouldSendProgramChangeOnUserButtonPress);
+
     return UNITY_END();
 }

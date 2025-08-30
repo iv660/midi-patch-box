@@ -13,11 +13,11 @@ private:
     void handleNextButtonPress(void);
     bool hasProgramSelector();
     bool hasUserInput();
+    bool hasMidiController();
     // void selectNextProgram();
-    // bool hasMidiController();
 public:
     void tick();
     MidiPatchBoxApplication* setUserInput(UserInputInterface *userInput);
     MidiPatchBoxApplication* setProgramSelector(ProgramSelectorInterface *programSelector);
-    // MidiPatchBoxApplication* setMidiController(MidiControllerInterface *midiController);
+    MidiPatchBoxApplication* setMidiController(MidiControllerInterface *midiController);
 };

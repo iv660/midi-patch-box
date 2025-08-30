@@ -1,4 +1,5 @@
 #include "MidiPatchBoxApplication.h"
+#include <stdint.h>
 
 MidiPatchBoxApplication * MidiPatchBoxApplication::setUserInput(UserInputInterface * userInput)
 {
@@ -10,7 +11,14 @@ MidiPatchBoxApplication * MidiPatchBoxApplication::setUserInput(UserInputInterfa
 MidiPatchBoxApplication * MidiPatchBoxApplication::setProgramSelector(ProgramSelectorInterface * programSelector)
 {
     this->programSelector = programSelector;
-    
+
+    return this;
+}
+
+MidiPatchBoxApplication * MidiPatchBoxApplication::setMidiController(MidiControllerInterface * midiController)
+{
+    this->midiController = midiController;
+
     return this;
 }
 
@@ -37,6 +45,13 @@ void MidiPatchBoxApplication::handleNextButtonPress(void)
     }
 
     programSelector->selectNextProgram();
+
+    if (false == hasMidiController()) {
+        return;
+    }
+
+    int program = programSelector->getSelectedProgram();
+    midiController->sendProgramChange(program);
 }
 
 bool MidiPatchBoxApplication::hasProgramSelector()
@@ -47,4 +62,9 @@ bool MidiPatchBoxApplication::hasProgramSelector()
 bool MidiPatchBoxApplication::hasUserInput()
 {
     return userInput != nullptr;
+}
+
+bool MidiPatchBoxApplication::hasMidiController()
+{
+    return midiController != nullptr;
 }
