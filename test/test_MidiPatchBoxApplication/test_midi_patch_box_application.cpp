@@ -8,8 +8,15 @@ class MockUserInput : public UserInputInterface
 public:
     bool userButtonIsPressed() override 
     {
-        return true; // Simulate button press
+        return userButtonPressed; // Simulate button press
     }
+
+    void pressUserButton() 
+    {
+        userButtonPressed = true;
+    }
+private:
+    bool userButtonPressed = false;
 };
 
 class MockProgramSelector : public ProgramSelectorInterface 
@@ -72,6 +79,8 @@ void testShouldSelectNextProgramOnUserButtonPress(void)
     MockUserInput userInput;
     MockProgramSelector programSelector;
 
+    userInput.pressUserButton();
+
     app.setUserInput(&userInput)
        ->setProgramSelector(&programSelector);
     
@@ -87,6 +96,8 @@ void testShouldSendProgramChangeOnUserButtonPress(void)
     MockUserInput userInput;
     MockMidiController midiController;
     MockProgramSelector programSelector;
+
+    userInput.pressUserButton();
 
     app.setUserInput(&userInput)
        ->setMidiController(&midiController)
