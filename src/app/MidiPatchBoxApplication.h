@@ -14,7 +14,7 @@ private:
     bool hasProgramSelector();
     bool hasUserInput();
     bool hasMidiController();
-    // void selectNextProgram();
+    bool rightButtonIsPressed(void);
 public:
     void tick();
     MidiPatchBoxApplication* setUserInput(UserInputInterface *userInput);

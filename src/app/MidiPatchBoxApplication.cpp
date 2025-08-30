@@ -27,6 +27,10 @@ void MidiPatchBoxApplication::tick(void)
     if (userButtonIsPressed()) {
         handleNextButtonPress();
     }
+
+    if (rightButtonIsPressed()) {
+        handleNextButtonPress();
+    }
 }
 
 bool MidiPatchBoxApplication::userButtonIsPressed(void)
@@ -36,6 +40,15 @@ bool MidiPatchBoxApplication::userButtonIsPressed(void)
     }
 
     return userInput->userButtonIsPressed();
+}
+
+bool MidiPatchBoxApplication::rightButtonIsPressed(void)
+{
+    if (false == hasUserInput()) {
+        return false;
+    }
+
+    return userInput->rightButtonIsPressed();
 }
 
 void MidiPatchBoxApplication::handleNextButtonPress(void)
