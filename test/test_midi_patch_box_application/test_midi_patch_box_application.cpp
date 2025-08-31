@@ -40,7 +40,7 @@ public:
         selectedProgram++;
     }
 
-    int getSelectedProgram() const 
+    int getSelectedProgramNumber() const 
     {
         return selectedProgram;
     }
@@ -97,7 +97,7 @@ void testShouldSelectNextProgramOnUserButtonPress(void)
     
     app.tick();
 
-    TEST_ASSERT_EQUAL_INT16(3, programSelector.getSelectedProgram());
+    TEST_ASSERT_EQUAL_INT16(3, programSelector.getSelectedProgramNumber());
 }
 
 void testShouldSendProgramChangeOnUserButtonPress(void) 
@@ -133,7 +133,7 @@ void testShouldSelectNextProgramOnRightButtonPress(void)
     
     app.tick();
     
-    TEST_ASSERT_EQUAL_INT16(3, programSelector.getSelectedProgram());
+    TEST_ASSERT_EQUAL_INT16(3, programSelector.getSelectedProgramNumber());
 }
 
 void testShouldSendProgramChangeOnRightButtonPress(void) 

@@ -63,7 +63,7 @@ void MidiPatchBoxApplication::handleNextButtonPress(void)
         return;
     }
 
-    int program = programSelector->getSelectedProgram();
+    int program = programSelector->getSelectedProgramNumber();
     midiController->sendProgramChange(program);
 }
 
