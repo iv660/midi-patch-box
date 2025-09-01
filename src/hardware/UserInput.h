@@ -1,8 +1,9 @@
 #pragma once
 
 #include <Arduino.h>
+#include "app/UserInputInterface.h"
 
-class UserInput {
+class UserInput: public UserInputInterface {
 private:
     static const uint8_t buttonPin;
     bool lastButtonState;
@@ -11,5 +12,6 @@ private:
 public:
     UserInput();
     void update();
-    bool usrButtonIsPressed();
+    bool userButtonIsPressed();
+    bool rightButtonIsPressed();
 };

@@ -16,7 +16,11 @@ void UserInput::update() {
     lastButtonState = currentState;
 }
 
-bool UserInput::usrButtonIsPressed() {
+bool UserInput::userButtonIsPressed() {
     return buttonPressed;
+}
+
+bool UserInput::rightButtonIsPressed() {
+    return false;
 }
 

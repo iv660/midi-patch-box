@@ -25,9 +25,20 @@ public:
     {
         rightButtonPressed = true;
     }
+    void update() override 
+    {
+        updateCalled = true;
+    }
+
+    bool getUpdateCalled() const
+    {
+        return updateCalled;
+    }
+
 private:
     bool userButtonPressed = false;
     bool rightButtonPressed = false;
+    bool updateCalled = false;
 };
 
 class MockProgramSelector : public ProgramSelectorInterface 
@@ -50,6 +61,7 @@ class MockMidiController : public MidiControllerInterface
 {
 private:
     bool programChangeIsSent = false;
+    bool isInitialized = false;
 
 public:
     void sendProgramChange(int program) override 
@@ -60,6 +72,16 @@ public:
     bool getProgramChangeIsSent() 
     {
         return programChangeIsSent;
+    }
+
+    void begin() override
+    {
+        isInitialized = true;
+    }
+
+    bool hasBeenInitialized() const
+    {
+        return isInitialized;
     }
 };
 
@@ -81,6 +103,30 @@ void testShouldSupportTickMethod(void)
     MidiPatchBoxApplication app;
 
     app.tick();
+}
+
+void testShouldCallUserInputUpdate(void) 
+{
+    MidiPatchBoxApplication app;
+
+    MockUserInput userInput;
+    app.setUserInput(&userInput);
+
+    app.tick();
+
+    TEST_ASSERT_TRUE(userInput.getUpdateCalled());
+}
+
+void testShouldInitializeMidiController(void) 
+{
+    MidiPatchBoxApplication app;
+
+    MockMidiController midiController;
+    app.setMidiController(&midiController);
+
+    app.begin();
+
+    TEST_ASSERT_TRUE(midiController.hasBeenInitialized());
 }
 
 void testShouldSelectNextProgramOnUserButtonPress(void) 
@@ -160,10 +206,12 @@ int main(void)
     UNITY_BEGIN();
 
     RUN_TEST(testShouldSupportTickMethod);
+    RUN_TEST(testShouldInitializeMidiController);
     RUN_TEST(testShouldSelectNextProgramOnUserButtonPress);
     RUN_TEST(testShouldSendProgramChangeOnUserButtonPress);
     RUN_TEST(testShouldSelectNextProgramOnRightButtonPress);
     RUN_TEST(testShouldSendProgramChangeOnRightButtonPress);
+    RUN_TEST(testShouldCallUserInputUpdate);
 
     return UNITY_END();
 }

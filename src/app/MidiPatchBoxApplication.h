@@ -17,6 +17,8 @@ private:
     bool rightButtonIsPressed(void);
 public:
     void tick();
+    void begin(void);
+    
     MidiPatchBoxApplication* setUserInput(UserInputInterface *userInput);
     MidiPatchBoxApplication* setProgramSelector(ProgramSelectorInterface *programSelector);
     MidiPatchBoxApplication* setMidiController(MidiControllerInterface *midiController);

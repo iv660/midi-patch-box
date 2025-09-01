@@ -1,6 +1,13 @@
 #include "MidiPatchBoxApplication.h"
 #include <stdint.h>
 
+void MidiPatchBoxApplication::begin(void)
+{
+    if (hasMidiController()) {
+        midiController->begin();
+    }
+}
+
 MidiPatchBoxApplication * MidiPatchBoxApplication::setUserInput(UserInputInterface * userInput)
 {
     this->userInput = userInput;
@@ -24,6 +31,10 @@ MidiPatchBoxApplication * MidiPatchBoxApplication::setMidiController(MidiControl
 
 void MidiPatchBoxApplication::tick(void)
 {
+    if (hasUserInput()) {
+        userInput->update();
+    }
+
     if (userButtonIsPressed()) {
         handleNextButtonPress();
     }

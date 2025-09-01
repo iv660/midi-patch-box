@@ -1,13 +1,18 @@
 #include <Arduino.h>
 #include <Adafruit_TinyUSB.h>
-#include "MidiController.h"
-#include "UserInput.h"
+#include "app/MidiPatchBoxApplication.h"
+#include "app/ProgramSelector.h"
+#include "hardware/UserInput.h"
+#include "hardware/MidiController.h"
+
 
 const uint8_t MIDI_CHANNEL = 0;
-bool programToggle = false; // false = program 2, true = program 42
 
-MidiController midiController(MIDI_CHANNEL);
+MidiPatchBoxApplication app;
+
+ProgramSelector programSelector;
 UserInput userInput;
+MidiController midiController(MIDI_CHANNEL);
 
 void setup()
 {
@@ -16,15 +21,12 @@ void setup()
     USBDevice.setProductDescriptor("MIDI Patch Box");
     USBDevice.setSerialDescriptor("0001"); // any serial number
 
-    midiController.begin();
+    app.setProgramSelector(&programSelector)
+        ->setUserInput(&userInput)
+        ->setMidiController(&midiController)
+        ->begin();
 }
 
 void loop() {
-    userInput.update();
-
-    if (userInput.usrButtonIsPressed()) {
-        uint8_t program = programToggle ? 41 : 1; // 42nd or 2nd program
-        midiController.sendProgramChange(program);
-        programToggle = !programToggle;
-    }
+    app.tick();
 }
