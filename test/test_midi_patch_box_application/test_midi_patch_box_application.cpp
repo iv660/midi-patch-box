@@ -51,9 +51,14 @@ public:
         selectedProgram++;
     }
 
-    int getSelectedProgramNumber() const 
+    int getSelectedProgramNumber() const override
     {
         return selectedProgram;
+    }
+
+    ProgramSelectorInterface* setPrograms(std::initializer_list<int> programs) override
+    {
+        return nullptr;
     }
 };
 

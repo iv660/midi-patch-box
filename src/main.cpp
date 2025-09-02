@@ -20,6 +20,8 @@ void setup()
     USBDevice.setManufacturerDescriptor("iv660");
     USBDevice.setProductDescriptor("MIDI Patch Box");
     USBDevice.setSerialDescriptor("0001"); // any serial number
+    
+    programSelector.setPrograms({0, 41, 112});
 
     app.setProgramSelector(&programSelector)
         ->setUserInput(&userInput)
