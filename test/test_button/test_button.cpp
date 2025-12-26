@@ -1,95 +1,10 @@
 #include <unity.h>
+#include "app/IoDriverInterface.h"
+#include "app/Button.h"
+#include "mocks/MockIoDriver.h"
 
 const int HIGH = 1;
 const int LOW = 0;
-
-class IoDriverInterface {
-public:
-    virtual int digitalRead(int pin) = 0;
-    virtual void delay(unsigned long ms) = 0;
-    virtual unsigned long millis() = 0;
-};
-
-class MockIoDriver : public IoDriverInterface {
-public:
-    int digitalRead(int pin) override {
-        return pin == BUTTON_PIN ? pinState : LOW;
-    }
-
-    void delay(unsigned long ms) override {
-        currentTime += ms;
-    }
-
-    unsigned long millis() override {
-        return currentTime;
-    }
-
-    void setPinState(int pin, int state) {
-        if (pin == BUTTON_PIN) {
-            pinState = state;
-        }
-    }
-
-    void resetTime() {
-        currentTime = 0;
-    }
-
-private:
-    int pinState = HIGH; // Emulate pull-up resistor
-    const int BUTTON_PIN = 2;
-    unsigned long currentTime = 0;
-};
-
-class Button {
-public:
-    Button() : ioDriver(nullptr), lastButtonState(HIGH), buttonPressed(false), pressStartTime(0), debounceThreshold(300) {}
-
-    Button* setIoDriver(IoDriverInterface* ioDriver) {
-        this->ioDriver = ioDriver;
-        return this;
-    }
-
-    void update() {
-        if (!ioDriver) return;
-        
-        bool currentState = ioDriver->digitalRead(BUTTON_PIN);
-        unsigned long currentTime = ioDriver->millis();
-        
-        // Detect button press and release cycle with debounce
-        if (lastButtonState == HIGH && currentState == LOW) {
-            // Button was just pressed - record start time
-            pressStartTime = currentTime;
-            buttonPressed = false; // Not yet a complete press
-        } else if (lastButtonState == LOW && currentState == HIGH) {
-            // Button was just released - check if press duration meets threshold
-            unsigned long pressDuration = currentTime - pressStartTime;
-            if (pressDuration >= debounceThreshold) {
-                buttonPressed = true; // Valid press detected
-            } else {
-                buttonPressed = false; // Too short, ignore
-            }
-        } else {
-            // Reset after one read
-            buttonPressed = false;
-        }
-        
-        lastButtonState = currentState;
-    }
-
-    bool isPressed() {
-        return buttonPressed;
-    }
-
-private:
-    IoDriverInterface* ioDriver;
-    bool lastButtonState;
-    bool buttonPressed;
-    unsigned long pressStartTime;
-    const unsigned long debounceThreshold; // 300ms debounce threshold
-    const int BUTTON_PIN = 2;
-};
-
-// ==============================================
 
 void setUp(void) {
 }
@@ -98,18 +13,18 @@ void tearDown(void) {
 }
 
 void testShouldInstantiateButton() {
-    Button button;
+    Button button(2);  // pin 2
 }
 
 void testShouldAcceptIoDriver() {
     MockIoDriver ioDriver;
-    Button button;
+    Button button(2);  // pin 2
     button.setIoDriver(&ioDriver);
 }
 
 void testShouldHandleKeyPress() {
     MockIoDriver ioDriver;
-    Button button;
+    Button button(2);  // pin 2
     button.setIoDriver(&ioDriver);
 
     ioDriver.setPinState(2, LOW);
@@ -126,7 +41,7 @@ void testShouldHandleKeyPress() {
 
 void testShouldNotDetectKeyPressUnderDebounceTrashold() {
     MockIoDriver ioDriver;
-    Button button;
+    Button button(2);  // pin 2
     button.setIoDriver(&ioDriver);
     
     // Simulate button press shorter than 300ms debounce threshold
