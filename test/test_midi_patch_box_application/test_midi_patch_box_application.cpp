@@ -2,6 +2,7 @@
 #include "app/MidiPatchBoxApplication.h"
 #include "app/UserInputInterface.h"
 #include "app/ProgramSelectorInterface.h"
+#include "app/ProgramSelectionViewInterface.h"
 
 class MockUserInput : public UserInputInterface 
 {
@@ -25,6 +26,7 @@ public:
     {
         rightButtonPressed = true;
     }
+    
     void update() override 
     {
         updateCalled = true;
@@ -62,19 +64,19 @@ public:
     }
 };
 
-class MockMidiController : public MidiControllerInterface 
+class MockMidiController : public MidiControllerInterface
 {
 private:
     bool programChangeIsSent = false;
     bool isInitialized = false;
 
 public:
-    void sendProgramChange(int program) override 
+    void sendProgramChange(int program) override
     {
         programChangeIsSent = true;
     }
 
-    bool getProgramChangeIsSent() 
+    bool getProgramChangeIsSent()
     {
         return programChangeIsSent;
     }
@@ -87,6 +89,24 @@ public:
     bool hasBeenInitialized() const
     {
         return isInitialized;
+    }
+};
+
+class MockProgramSelectionView : public ProgramSelectionViewInterface
+{
+private:
+    int lastProgramNumber = -1;
+
+public:
+    ProgramSelectionViewInterface* setSelectedProgramNumber(int programNumber) override
+    {
+        lastProgramNumber = programNumber;
+        return this;
+    }
+
+    int getLastProgramNumber() const
+    {
+        return lastProgramNumber;
     }
 };
 
@@ -187,7 +207,7 @@ void testShouldSelectNextProgramOnRightButtonPress(void)
     TEST_ASSERT_EQUAL_INT16(3, programSelector.getSelectedProgramNumber());
 }
 
-void testShouldSendProgramChangeOnRightButtonPress(void) 
+void testShouldSendProgramChangeOnRightButtonPress(void)
 {
     MidiPatchBoxApplication app;
 
@@ -206,7 +226,62 @@ void testShouldSendProgramChangeOnRightButtonPress(void)
     TEST_ASSERT_TRUE(midiController.getProgramChangeIsSent());
 }
 
-int main(void) 
+void testShouldSetProgramSelectionView(void)
+{
+    MidiPatchBoxApplication app;
+    MockProgramSelectionView mockView;
+
+    MidiPatchBoxApplication* result = app.setProgramSelectionView(&mockView);
+
+    TEST_ASSERT_EQUAL_PTR(&app, result);
+}
+
+void testShouldUpdateViewWhenProgramChanges(void)
+{
+    MidiPatchBoxApplication app;
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+
+    // Setup: button pressed, all components configured
+    userInput.pressUserButton();
+    
+    app.setUserInput(&userInput)
+       ->setProgramSelector(&programSelector)
+       ->setMidiController(&midiController)
+       ->setProgramSelectionView(&mockView);
+
+    // Action: tick() processes button press
+    app.tick();
+
+    // Assert: view received the selected program number for display
+    TEST_ASSERT_EQUAL_INT16(3, mockView.getLastProgramNumber()); // MockProgramSelector returns 3
+}
+
+void testShouldNotCrashWhenViewIsNull(void)
+{
+    MidiPatchBoxApplication app;
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+
+    // Setup: no view set, button pressed
+    userInput.pressUserButton();
+    
+    app.setUserInput(&userInput)
+       ->setProgramSelector(&programSelector)
+       ->setMidiController(&midiController);
+    // Note: deliberately NOT setting programSelectionView
+
+    // Action: tick() processes button press
+    app.tick();
+
+    // Assert: no crash occurred (test passes if we reach here)
+    TEST_ASSERT_TRUE(true);
+}
+
+int main(void)
 {
     UNITY_BEGIN();
 
@@ -217,6 +292,9 @@ int main(void)
     RUN_TEST(testShouldSelectNextProgramOnRightButtonPress);
     RUN_TEST(testShouldSendProgramChangeOnRightButtonPress);
     RUN_TEST(testShouldCallUserInputUpdate);
+    RUN_TEST(testShouldSetProgramSelectionView);
+    RUN_TEST(testShouldUpdateViewWhenProgramChanges);
+    RUN_TEST(testShouldNotCrashWhenViewIsNull);
 
     return UNITY_END();
 }

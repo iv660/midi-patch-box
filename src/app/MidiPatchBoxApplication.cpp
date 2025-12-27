@@ -29,6 +29,13 @@ MidiPatchBoxApplication * MidiPatchBoxApplication::setMidiController(MidiControl
     return this;
 }
 
+MidiPatchBoxApplication * MidiPatchBoxApplication::setProgramSelectionView(ProgramSelectionViewInterface * programSelectionView)
+{
+    this->programSelectionView = programSelectionView;
+
+    return this;
+}
+
 void MidiPatchBoxApplication::tick(void)
 {
     if (hasUserInput()) {
@@ -76,6 +83,11 @@ void MidiPatchBoxApplication::handleNextButtonPress(void)
 
     int program = programSelector->getSelectedProgramNumber();
     midiController->sendProgramChange(program);
+
+    // Update view with selected program number
+    if (hasProgramSelectionView()) {
+        programSelectionView->setSelectedProgramNumber(program);
+    }
 }
 
 bool MidiPatchBoxApplication::hasProgramSelector()
@@ -91,4 +103,9 @@ bool MidiPatchBoxApplication::hasUserInput()
 bool MidiPatchBoxApplication::hasMidiController()
 {
     return midiController != nullptr;
+}
+
+bool MidiPatchBoxApplication::hasProgramSelectionView()
+{
+    return programSelectionView != nullptr;
 }
