@@ -31,6 +31,7 @@ graph TB
         APP[MidiPatchBoxApplication]
         PS[ProgramSelector]
         BTN[Button]
+        UI[UserInput]
         
         subgraph "Interfaces"
             UII[UserInputInterface]
@@ -41,36 +42,41 @@ graph TB
     end
     
     subgraph "Hardware Layer (src/hardware/)"
-        UI[UserInput]
         MC[MidiController]
+        AIO[ArduinoIoDriver]
     end
     
     subgraph "Test Layer (test/)"
         TESTS[Unit Tests]
         MOCKS[Mock Objects]
+        MOCKIO[MockIoDriver]
     end
     
     subgraph "External Dependencies"
         ARDUINO[Arduino Framework]
-        TINYUSB[TinyUSB Library]
+        TINYUSB[Adafruit TinyUSB]
         UNITY[Unity Test Framework]
     end
     
     APP --> UII
     APP --> PSI
     APP --> MCI
+    UI --> UII
+    UI --> IOI
     BTN --> IOI
+    PS --> PSI
     
-    UI -.-> UII
     MC -.-> MCI
-    PS -.-> PSI
+    AIO -.-> IOI
     
     TESTS --> MOCKS
+    TESTS --> MOCKIO
     TESTS --> APP
     TESTS --> PS
     TESTS --> BTN
+    TESTS --> UI
     
-    UI --> ARDUINO
+    AIO --> ARDUINO
     MC --> TINYUSB
     TESTS --> UNITY
     
@@ -79,9 +85,9 @@ graph TB
     classDef testLayer fill:#e8f5e8
     classDef external fill:#fff3e0
     
-    class APP,PS,BTN,UII,PSI,MCI,IOI appLayer
-    class UI,MC hardwareLayer
-    class TESTS,MOCKS testLayer
+    class APP,PS,BTN,UI,UII,PSI,MCI,IOI appLayer
+    class MC,AIO hardwareLayer
+    class TESTS,MOCKS,MOCKIO testLayer
     class ARDUINO,TINYUSB,UNITY external
 ```
 
@@ -100,6 +106,7 @@ The application layer contains the core business logic and is designed to be pla
 **Components:**
 - [`MidiPatchBoxApplication`](src/app/MidiPatchBoxApplication.h) - Main application coordinator
 - [`ProgramSelector`](src/app/ProgramSelector.h) - Program list management and selection logic
+- [`UserInput`](src/app/UserInput.h) - User input coordination and button management
 - [`Button`](src/app/Button.h) - Button state management with debouncing
 - Abstract interfaces for hardware abstraction
 
@@ -114,8 +121,8 @@ The hardware layer provides concrete implementations of the application interfac
 - Manual testing approach
 
 **Components:**
-- [`UserInput`](src/hardware/UserInput.h) - Physical button and encoder handling
-- [`MidiController`](src/hardware/MidiController.h) - USB MIDI communication via TinyUSB
+- [`MidiController`](src/hardware/MidiController.h) - USB MIDI communication via Adafruit TinyUSB
+- [`ArduinoIoDriver`](src/hardware/ArduinoIoDriver.h) - Arduino-specific I/O operations implementation
 
 ### Test Layer (`test/`)
 
@@ -128,8 +135,8 @@ The test layer provides comprehensive unit testing infrastructure with mock obje
 - TDD workflow support
 
 **Structure:**
-- `test/mocks/` - Centralized mock object definitions
-- `test/test_*/` - Component-specific test suites
+- `test/mocks/` - Centralized mock object definitions ([`MockIoDriver`](test/mocks/MockIoDriver.h))
+- `test/test_*/` - Component-specific test suites (application, program_selector, button, user_input)
 - Native platform execution for fast feedback
 
 ## Core Components
@@ -198,35 +205,51 @@ graph LR
 
 ### UserInput
 
-**Purpose**: Hardware-specific implementation for reading physical button states on the RP2040.
+**Purpose**: Application-layer component that coordinates user button inputs through hardware abstraction.
 
 **Interface**: Implements [`UserInputInterface`](src/app/UserInputInterface.h)
 
 **Key Features**:
-- Direct GPIO pin reading
-- Hardware-specific button mapping
-- Arduino framework integration
-- Real-time input processing
+- Manages multiple button inputs (user button and right button)
+- Configurable pin assignments (default: user=24, right=15)
+- Hardware abstraction through [`IoDriverInterface`](src/app/IoDriverInterface.h)
+- Automatic button lifecycle management
 
-**Dependencies**: Arduino framework for GPIO operations
+**Dependencies**: [`IoDriverInterface`](src/app/IoDriverInterface.h), [`Button`](src/app/Button.h)
 
-**Testing**: Manual testing on hardware
+**Testing**: Comprehensive unit tests with [`MockIoDriver`](test/mocks/MockIoDriver.h)
 
 ### MidiController
 
-**Purpose**: Handles USB MIDI communication using the TinyUSB library for program change messages.
+**Purpose**: Handles USB MIDI communication using the Adafruit TinyUSB library for program change messages.
 
 **Interface**: Implements [`MidiControllerInterface`](src/app/MidiControllerInterface.h)
 
 **Key Features**:
 - USB MIDI device functionality
 - Program change message transmission
-- Configurable MIDI channel
-- TinyUSB integration
+- Configurable MIDI channel support
+- USB device descriptor management
 
 **Dependencies**: Adafruit TinyUSB Library
 
 **Testing**: Manual testing with MIDI monitoring tools
+
+### ArduinoIoDriver
+
+**Purpose**: Provides Arduino-specific implementation of I/O operations for hardware abstraction.
+
+**Interface**: Implements [`IoDriverInterface`](src/app/IoDriverInterface.h)
+
+**Key Features**:
+- Direct Arduino API mapping (digitalRead, pinMode, delay, millis)
+- Pin mode configuration support
+- Time-based operations for debouncing
+- Hardware abstraction for cross-platform testing
+
+**Dependencies**: Arduino Framework
+
+**Testing**: Abstracted through [`MockIoDriver`](test/mocks/MockIoDriver.h) for unit tests
 
 ## Design Patterns
 
@@ -288,16 +311,19 @@ graph TD
         APP --> PSI[ProgramSelectorInterface]
         APP --> MCI[MidiControllerInterface]
         
-        BTN[Button] --> IOI[IoDriverInterface]
+        UI[UserInput] --> UII
+        UI --> IOI[IoDriverInterface]
+        UI --> BTN[Button]
+        BTN --> IOI
         PS[ProgramSelector] --> PSI
     end
     
     subgraph "Hardware Dependencies"
-        UI[UserInput] --> UII
-        UI --> ARDUINO[Arduino Framework]
+        AIO[ArduinoIoDriver] --> IOI
+        AIO --> ARDUINO[Arduino Framework]
         
         MC[MidiController] --> MCI
-        MC --> TINYUSB[TinyUSB Library]
+        MC --> TINYUSB[Adafruit TinyUSB Library]
     end
     
     subgraph "Test Dependencies"
@@ -314,7 +340,7 @@ graph TD
     classDef external fill:#f8cecc
     
     class UII,PSI,MCI,IOI interface
-    class APP,BTN,PS,UI,MC,TESTS,MOCKS concrete
+    class APP,BTN,PS,UI,AIO,MC,TESTS,MOCKS concrete
     class ARDUINO,TINYUSB,UNITY external
 ```
 
@@ -327,7 +353,7 @@ graph TD
 ### External Dependencies
 
 - **Arduino Framework**: RP2040 hardware abstraction and GPIO operations
-- **TinyUSB Library**: USB MIDI device functionality
+- **Adafruit TinyUSB Library**: USB MIDI device functionality
 - **Unity Framework**: Unit testing infrastructure
 
 ## Testing Strategy
@@ -387,6 +413,8 @@ test/
 │   └── test_button.cpp             # Button logic tests
 ├── test_program_selector/
 │   └── test_program_selector.cpp   # Program selection tests
+├── test_user_input/
+│   └── test_user_input.cpp         # User input coordination tests
 └── test_midi_patch_box_application/
     └── test_midi_patch_box_application.cpp  # Main app tests
 ```
