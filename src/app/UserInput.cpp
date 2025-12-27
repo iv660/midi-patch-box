@@ -23,4 +23,3 @@ bool UserInput::userButtonIsPressed() {
 bool UserInput::rightButtonIsPressed() {
     return false;
 }
-

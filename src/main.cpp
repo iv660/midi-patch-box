@@ -2,7 +2,7 @@
 #include <Adafruit_TinyUSB.h>
 #include "app/MidiPatchBoxApplication.h"
 #include "app/ProgramSelector.h"
-#include "hardware/UserInput.h"
+#include "app/UserInput.h"
 #include "hardware/MidiController.h"
 
 

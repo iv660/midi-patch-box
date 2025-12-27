@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "app/UserInputInterface.h"
+#include "UserInputInterface.h"
 
 class UserInput: public UserInputInterface {
 private:
