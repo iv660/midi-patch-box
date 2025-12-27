@@ -1,17 +1,23 @@
 #pragma once
 
-#include <Arduino.h>
 #include "UserInputInterface.h"
+
+class IoDriverInterface; // Forward declaration
+class Button; // Forward declaration
 
 class UserInput: public UserInputInterface {
 private:
-    static const uint8_t buttonPin;
-    bool lastButtonState;
-    bool buttonPressed;
+    int userPin;
+    int rightPin;
+    IoDriverInterface* ioDriver;
+    Button* userButton;
+    Button* rightButton;
 
 public:
-    UserInput();
-    void update();
-    bool userButtonIsPressed();
-    bool rightButtonIsPressed();
+    UserInput(int userPin = 24, int rightPin = 25);
+    ~UserInput();
+    UserInput* setIoDriver(IoDriverInterface* driver);
+    void update() override;
+    bool userButtonIsPressed() override;
+    bool rightButtonIsPressed() override;
 };

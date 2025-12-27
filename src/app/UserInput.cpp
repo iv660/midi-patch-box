@@ -1,25 +1,41 @@
 #include "UserInput.h"
+#include "Button.h"
 
-const uint8_t UserInput::buttonPin = 24;
+UserInput::UserInput(int userPin, int rightPin)
+    : userPin(userPin), rightPin(rightPin), ioDriver(nullptr) {
+    userButton = new Button(userPin);
+    rightButton = new Button(rightPin);
+}
 
-UserInput::UserInput() : lastButtonState(HIGH), buttonPressed(false) {
-    pinMode(buttonPin, INPUT_PULLUP);
+UserInput::~UserInput() {
+    delete userButton;
+    delete rightButton;
+}
+
+UserInput* UserInput::setIoDriver(IoDriverInterface* driver) {
+    this->ioDriver = driver;
+    if (userButton) {
+        userButton->setIoDriver(driver);
+    }
+    if (rightButton) {
+        rightButton->setIoDriver(driver);
+    }
+    return this;
 }
 
 void UserInput::update() {
-    bool currentState = digitalRead(buttonPin);
-    if (lastButtonState == HIGH && currentState == LOW) {
-        buttonPressed = true;
-    } else {
-        buttonPressed = false;
+    if (userButton) {
+        userButton->update();
     }
-    lastButtonState = currentState;
+    if (rightButton) {
+        rightButton->update();
+    }
 }
 
 bool UserInput::userButtonIsPressed() {
-    return buttonPressed;
+    return userButton ? userButton->isPressed() : false;
 }
 
 bool UserInput::rightButtonIsPressed() {
-    return false;
+    return rightButton ? rightButton->isPressed() : false;
 }
