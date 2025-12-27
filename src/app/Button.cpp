@@ -11,6 +11,9 @@ Button::Button(int buttonPin)
 
 Button* Button::setIoDriver(IoDriverInterface* ioDriver) {
     this->ioDriver = ioDriver;
+    if (this->ioDriver) {
+        this->ioDriver->pinMode(buttonPin, IoDriverInterface::INPUT_PULLUP);
+    }
     return this;
 }
 

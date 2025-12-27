@@ -66,6 +66,17 @@ void testShouldNotDetectKeyPressUnderDebounceTrashold() {
     TEST_ASSERT_FALSE(button.isPressed());
 }
 
+void testShouldCallPinModeOnSetIoDriver() {
+    MockIoDriver ioDriver;
+    Button button(2);  // pin 2
+    
+    // Act: устанавливаем IoDriver
+    button.setIoDriver(&ioDriver);
+    
+    // Assert: проверяем что pinMode был вызван с правильными параметрами
+    TEST_ASSERT_TRUE(ioDriver.wasPinModeCalledWith(2, IoDriverInterface::INPUT_PULLUP));
+}
+
 int main( void ) {
     UNITY_BEGIN();
 
@@ -73,6 +84,7 @@ int main( void ) {
     RUN_TEST(testShouldAcceptIoDriver);
     RUN_TEST(testShouldHandleKeyPress);
     RUN_TEST(testShouldNotDetectKeyPressUnderDebounceTrashold);
+    RUN_TEST(testShouldCallPinModeOnSetIoDriver);
 
     return UNITY_END();
 }

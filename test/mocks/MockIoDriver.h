@@ -26,10 +26,26 @@ public:
         currentTime = 0;
     }
 
+    void pinMode(int pin, int mode) override {
+        pinModeWasCalled = true;
+        lastPinModePin = pin;
+        lastPinModeMode = mode;
+    }
+
+    bool wasPinModeCalledWith(int pin, int mode) {
+        return pinModeWasCalled &&
+               lastPinModePin == pin &&
+               lastPinModeMode == mode;
+    }
+
 private:
     int pinState = HIGH; // Emulate pull-up resistor
     const int BUTTON_PIN = 2;
     unsigned long currentTime = 0;
+    
+    bool pinModeWasCalled = false;
+    int lastPinModePin = -1;
+    int lastPinModeMode = -1;
     
     static const int HIGH = 1;
     static const int LOW = 0;

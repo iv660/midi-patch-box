@@ -14,7 +14,7 @@ private:
     Button* rightButton;
 
 public:
-    UserInput(int userPin = 24, int rightPin = 25);
+    UserInput(int userPin = 24, int rightPin = 15);
     ~UserInput();
     UserInput* setIoDriver(IoDriverInterface* driver);
     void update() override;

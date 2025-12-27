@@ -4,6 +4,7 @@
 #include "app/ProgramSelector.h"
 #include "app/UserInput.h"
 #include "hardware/MidiController.h"
+#include "hardware/ArduinoIoDriver.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
@@ -13,6 +14,7 @@ MidiPatchBoxApplication app;
 ProgramSelector programSelector;
 UserInput userInput;
 MidiController midiController(MIDI_CHANNEL);
+ArduinoIoDriver ioDriver;
 
 void setup()
 {
@@ -22,6 +24,8 @@ void setup()
     USBDevice.setSerialDescriptor("0001"); // any serial number
     
     programSelector.setPrograms({0, 41, 112});
+    
+    userInput.setIoDriver(&ioDriver);
 
     app.setProgramSelector(&programSelector)
         ->setUserInput(&userInput)
