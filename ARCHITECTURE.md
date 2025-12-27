@@ -38,12 +38,14 @@ graph TB
             PSI[ProgramSelectorInterface]
             MCI[MidiControllerInterface]
             IOI[IoDriverInterface]
+            PSVI[ProgramSelectionViewInterface]
         end
     end
     
     subgraph "Hardware Layer (src/hardware/)"
         MC[MidiController]
         AIO[ArduinoIoDriver]
+        DPSV[DisplayProgramSelectionView]
     end
     
     subgraph "Test Layer (test/)"
@@ -61,6 +63,7 @@ graph TB
     APP --> UII
     APP --> PSI
     APP --> MCI
+    APP --> PSVI
     UI --> UII
     UI --> IOI
     BTN --> IOI
@@ -68,6 +71,7 @@ graph TB
     
     MC -.-> MCI
     AIO -.-> IOI
+    DPSV -.-> PSVI
     
     TESTS --> MOCKS
     TESTS --> MOCKIO
@@ -85,8 +89,8 @@ graph TB
     classDef testLayer fill:#e8f5e8
     classDef external fill:#fff3e0
     
-    class APP,PS,BTN,UI,UII,PSI,MCI,IOI appLayer
-    class MC,AIO hardwareLayer
+    class APP,PS,BTN,UI,UII,PSI,MCI,IOI,PSVI appLayer
+    class MC,AIO,DPSV hardwareLayer
     class TESTS,MOCKS,MOCKIO testLayer
     class ARDUINO,TINYUSB,UNITY external
 ```
@@ -123,6 +127,7 @@ The hardware layer provides concrete implementations of the application interfac
 **Components:**
 - [`MidiController`](src/hardware/MidiController.h) - USB MIDI communication via Adafruit TinyUSB
 - [`ArduinoIoDriver`](src/hardware/ArduinoIoDriver.h) - Arduino-specific I/O operations implementation
+- [`DisplayProgramSelectionView`](src/hardware/DisplayProgramSelectionView.h) - Visual program selection feedback via display
 
 ### Test Layer (`test/`)
 
@@ -149,11 +154,13 @@ The test layer provides comprehensive unit testing infrastructure with mock obje
 - [`UserInputInterface`](src/app/UserInputInterface.h) - For reading button states
 - [`ProgramSelectorInterface`](src/app/ProgramSelectorInterface.h) - For program management
 - [`MidiControllerInterface`](src/app/MidiControllerInterface.h) - For MIDI communication
+- [`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h) - For displaying program selection
 
 **Key Responsibilities**:
 - Coordinate component interactions
 - Handle user input events
 - Trigger MIDI program changes
+- Update program selection display
 - Manage application lifecycle
 
 **Dependencies**: Receives all dependencies through fluent setter methods
@@ -165,10 +172,12 @@ graph LR
     APP[MidiPatchBoxApplication] --> UII[UserInputInterface]
     APP --> PSI[ProgramSelectorInterface]
     APP --> MCI[MidiControllerInterface]
+    APP --> PSVI[ProgramSelectionViewInterface]
     
     UII -.-> UI[UserInput]
     PSI -.-> PS[ProgramSelector]
     MCI -.-> MC[MidiController]
+    PSVI -.-> DPSV[DisplayProgramSelectionView]
 ```
 
 ### ProgramSelector
@@ -251,6 +260,22 @@ graph LR
 
 **Testing**: Abstracted through [`MockIoDriver`](test/mocks/MockIoDriver.h) for unit tests
 
+### DisplayProgramSelectionView
+
+**Purpose**: Provides visual feedback for program selection through display output, enabling users to see the currently selected program number.
+
+**Interface**: Implements [`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h)
+
+**Key Features**:
+- Real-time program number display updates
+- OLED display integration support
+- Fluent interface for method chaining
+- Hardware abstraction for different display types
+
+**Dependencies**: Display hardware libraries (OLED, LCD, etc.)
+
+**Testing**: Unit tested through [`MockProgramSelectionView`](test/mocks/MockProgramSelectionView.h)
+
 ## Design Patterns
 
 ### Dependency Injection
@@ -274,6 +299,12 @@ public:
     virtual void update() = 0;
     virtual bool userButtonIsPressed() = 0;
     virtual bool rightButtonIsPressed() = 0;
+};
+
+class ProgramSelectionViewInterface {
+public:
+    virtual ProgramSelectionViewInterface* setSelectedProgramNumber(int programNumber) = 0;
+    virtual ~ProgramSelectionViewInterface() = default;
 };
 ```
 
@@ -299,6 +330,7 @@ Method chaining provides intuitive configuration:
 app.setProgramSelector(&programSelector)
     ->setUserInput(&userInput)
     ->setMidiController(&midiController)
+    ->setProgramSelectionView(&displayView)
     ->begin();
 ```
 
@@ -310,6 +342,7 @@ graph TD
         APP[MidiPatchBoxApplication] --> UII[UserInputInterface]
         APP --> PSI[ProgramSelectorInterface]
         APP --> MCI[MidiControllerInterface]
+        APP --> PSVI[ProgramSelectionViewInterface]
         
         UI[UserInput] --> UII
         UI --> IOI[IoDriverInterface]
@@ -324,6 +357,9 @@ graph TD
         
         MC[MidiController] --> MCI
         MC --> TINYUSB[Adafruit TinyUSB Library]
+        
+        DPSV[DisplayProgramSelectionView] --> PSVI
+        DPSV --> DISPLAY[Display Libraries]
     end
     
     subgraph "Test Dependencies"
@@ -333,15 +369,16 @@ graph TD
         MOCKS --> UII
         MOCKS --> MCI
         MOCKS --> PSI
+        MOCKS --> PSVI
     end
     
     classDef interface fill:#fff2cc
     classDef concrete fill:#d5e8d4
     classDef external fill:#f8cecc
     
-    class UII,PSI,MCI,IOI interface
-    class APP,BTN,PS,UI,AIO,MC,TESTS,MOCKS concrete
-    class ARDUINO,TINYUSB,UNITY external
+    class UII,PSI,MCI,IOI,PSVI interface
+    class APP,BTN,PS,UI,AIO,MC,DPSV,TESTS,MOCKS concrete
+    class ARDUINO,TINYUSB,UNITY,DISPLAY external
 ```
 
 ### Dependency Flow

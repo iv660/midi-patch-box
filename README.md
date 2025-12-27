@@ -16,8 +16,16 @@ A programmable MIDI controller based on the RP2040 microcontroller, designed for
 
 - **Microcontroller**: Raspberry Pi Pico (RP2040)
 - **Input**: Push buttons and rotary encoder for program navigation
-- **Display**: Screen for program information (implementation dependent)
+- **Display**: OLED SSD1306 128x64 (I2C) for program information display
 - **USB Connection**: For MIDI communication with host devices
+
+### Display Specifications
+
+- **Model**: SSD1306 OLED Display
+- **Resolution**: 128x64 pixels
+- **Interface**: I2C (4-pin connection)
+- **Voltage**: 3.3V/5V compatible
+- **Size**: 0.96" diagonal (typical)
 
 ## Software Architecture
 
@@ -35,6 +43,7 @@ The project follows a modular, interface-based architecture:
 - **[`ProgramSelectorInterface`](src/app/ProgramSelectorInterface.h)**: Abstract interface for program selection
 - **[`UserInputInterface`](src/app/UserInputInterface.h)**: Abstract interface for user input handling
 - **[`MidiControllerInterface`](src/app/MidiControllerInterface.h)**: Abstract interface for MIDI communication
+- **[`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h)**: Abstract interface for program display
 
 This design enables easy testing, component swapping, and future extensions.
 
@@ -43,6 +52,8 @@ This design enables easy testing, component swapping, and future extensions.
 - **PlatformIO**: Build system and package manager
 - **Arduino Framework**: For RP2040 development (Earle Philhower core)
 - **Adafruit TinyUSB Library**: USB MIDI functionality
+- **Adafruit SSD1306**: OLED display driver library
+- **Adafruit GFX Library**: Graphics primitives for display rendering
 - **Unity**: Unit testing framework
 
 ## Building the Project
@@ -98,6 +109,50 @@ USBDevice.setProductDescriptor("MIDI Patch Box");
 USBDevice.setSerialDescriptor("0001");
 ```
 
+## Display Setup
+
+### Hardware Connection
+
+Connect the OLED display to your Raspberry Pi Pico using I2C:
+
+| OLED Pin | Pico Pin | Description |
+|----------|----------|-------------|
+| VCC      | 3V3      | Power (3.3V) |
+| GND      | GND      | Ground |
+| SDA      | GP20     | I2C Data |
+| SCL      | GP21     | I2C Clock |
+
+### Wiring Diagram
+
+```
+Raspberry Pi Pico          SSD1306 OLED
+┌─────────────────┐        ┌──────────────┐
+│             3V3 │────────│ VCC          │
+│             GND │────────│ GND          │
+│        GP20/SDA │────────│ SDA          │
+│        GP21/SCL │────────│ SCL          │
+└─────────────────┘        └──────────────┘
+```
+
+### Custom Pin Configuration
+
+If you need to use different I2C pins, modify the display initialization in [`main.cpp`](src/main.cpp):
+
+```cpp
+// Default pins: SDA=20, SCL=21, I2C Address=0x3C
+DisplayProgramSelectionView displayView;
+
+// Custom pins: SDA=18, SCL=19, I2C Address=0x3D
+DisplayProgramSelectionView displayView(18, 19, 0x3D);
+```
+
+### Display Features
+
+- **Startup Screen**: Shows "MIDI Patch Box" on initialization
+- **Program Display**: Large program number with "PROGRAM" label
+- **Auto-centering**: Text automatically centers for optimal readability
+- **Real-time Updates**: Display updates immediately when program changes
+
 ## Usage
 
 1. **Power On**: Connect the device via USB
@@ -125,7 +180,8 @@ The device sends MIDI Program Change messages when a new program is selected:
 │   │   └── *Interface.h         # Abstract interfaces
 │   └── hardware/                # Hardware abstraction layer
 │       ├── UserInput.*
-│       └── MidiController.*
+│       ├── MidiController.*
+│       └── DisplayProgramSelectionView.*
 ├── test/                        # Unit tests
 ├── lib/                         # External libraries
 └── include/                     # Global headers
@@ -176,6 +232,12 @@ This project is open source. Please refer to the license file for details.
 1. **Device Not Recognized**: Ensure proper USB cable and TinyUSB configuration
 2. **No MIDI Output**: Check MIDI channel configuration and host device settings
 3. **Input Not Responding**: Verify pin assignments and debouncing logic for buttons and encoder
+4. **Display Not Working**:
+   - Check I2C wiring (SDA/SCL connections)
+   - Verify display I2C address (default: 0x3C)
+   - Ensure 3.3V power supply to display
+   - Check for loose connections
+   - Try different I2C pins if needed
 
 ### Debug Mode
 

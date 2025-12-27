@@ -5,6 +5,7 @@
 #include "app/UserInput.h"
 #include "hardware/MidiController.h"
 #include "hardware/ArduinoIoDriver.h"
+#include "hardware/DisplayProgramSelectionView.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
@@ -15,6 +16,7 @@ ProgramSelector programSelector;
 UserInput userInput;
 MidiController midiController(MIDI_CHANNEL);
 ArduinoIoDriver ioDriver;
+DisplayProgramSelectionView displayView;
 
 void setup()
 {
@@ -30,6 +32,7 @@ void setup()
     app.setProgramSelector(&programSelector)
         ->setUserInput(&userInput)
         ->setMidiController(&midiController)
+        ->setProgramSelectionView(&displayView)
         ->begin();
 }
 
