@@ -5,6 +5,7 @@
 #include "app/UserInput.h"
 #include "app/StateMachine.h"
 #include "app/SplashScreenState.h"
+#include "app/MainApplicationStateFactory.h"
 #include "hardware/MidiController.h"
 #include "hardware/ArduinoIoDriver.h"
 #include "hardware/DisplayProgramSelectionView.h"
@@ -22,6 +23,8 @@ MidiController midiController(MIDI_CHANNEL);
 ArduinoIoDriver ioDriver;
 DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
+
+MainApplicationStateFactory stateFactory(&userInput, &programSelector, &midiController, &displayView);
 
 void setup()
 {
@@ -41,8 +44,8 @@ void setup()
         ->setStateMachine(&stateMachine)
         ->begin();
     
-    // Initialize State Machine with SplashScreenState
-    stateMachine.changeState(new SplashScreenState(&splashView));
+    // Initialize State Machine with SplashScreenState that will transition to MainApplicationState after 1 second
+    stateMachine.changeState(new SplashScreenState(&splashView, &ioDriver, &stateFactory));
 }
 
 void loop() {

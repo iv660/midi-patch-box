@@ -1,12 +1,13 @@
 #pragma once
 #include "State.h"
+#include "StateMachineInterface.h"
 
-class StateMachine {
+class StateMachine : public StateMachineInterface {
 private:
-    State* currentState = nullptr;
+    StateInterface* currentState = nullptr;
 
 public:
-    void changeState(State* newState) {
+    void changeState(StateInterface* newState) override {
         if (currentState) {
             currentState->exit();
             delete currentState;
@@ -20,7 +21,7 @@ public:
         }
     }
 
-    void update() {
+    void update() override {
         if (currentState) {
             currentState->update();
         }

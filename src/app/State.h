@@ -1,11 +1,12 @@
 #pragma once
+#include "StateInterface.h"
 
-class StateMachine; // Forward declaration
+class StateMachineInterface; // Forward declaration
 
 // Abstract base class for states
-class State {
+class State : public StateInterface {
 protected:
-    StateMachine* stateMachine = nullptr;
+    StateMachineInterface* stateMachine = nullptr;
 
 public:
     virtual void enter() = 0;
@@ -14,7 +15,7 @@ public:
     virtual ~State() = default;
 
     // Method for injecting state machine reference
-    void setStateMachine(StateMachine* stateMachine) {
+    void setStateMachine(StateMachineInterface* stateMachine) override {
         this->stateMachine = stateMachine;
     }
 };
