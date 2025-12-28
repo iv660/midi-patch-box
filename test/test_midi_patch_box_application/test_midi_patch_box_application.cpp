@@ -3,6 +3,7 @@
 #include "app/UserInputInterface.h"
 #include "app/ProgramSelectorInterface.h"
 #include "app/ProgramSelectionViewInterface.h"
+#include "app/StateMachine.h"
 
 class MockUserInput : public UserInputInterface 
 {
@@ -107,6 +108,24 @@ public:
     int getLastProgramNumber() const
     {
         return lastProgramNumber;
+    }
+};
+
+// Mock State for testing StateMachine
+class MockStateForStateMachine : public State {
+private:
+    bool updateCalled = false;
+
+public:
+    void enter() override {}
+    void exit() override {}
+    
+    void update() override {
+        updateCalled = true;
+    }
+
+    bool updateWasCalled() const {
+        return updateCalled;
     }
 };
 
@@ -281,6 +300,39 @@ void testShouldNotCrashWhenViewIsNull(void)
     TEST_ASSERT_TRUE(true);
 }
 
+void testShouldDelegateTickToStateMachine(void)
+{
+    MidiPatchBoxApplication app;
+    StateMachine stateMachine;
+    MockStateForStateMachine* mockState = new MockStateForStateMachine();
+    
+    stateMachine.changeState(mockState);
+    app.setStateMachine(&stateMachine);
+    
+    app.tick();
+    
+    TEST_ASSERT_TRUE(mockState->updateWasCalled());
+}
+
+void testShouldWorkWithoutStateMachine(void)
+{
+    MockUserInput mockUserInput;
+    MockProgramSelector mockProgramSelector;
+    MockProgramSelectionView mockView;
+    MockMidiController mockMidiController;
+    
+    MidiPatchBoxApplication app;
+    app.setUserInput(&mockUserInput);
+    app.setProgramSelector(&mockProgramSelector);
+    app.setProgramSelectionView(&mockView);
+    app.setMidiController(&mockMidiController);
+    
+    // No StateMachine set - should work in legacy mode
+    app.tick();
+    
+    TEST_ASSERT_TRUE(mockUserInput.getUpdateCalled());
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -295,6 +347,8 @@ int main(void)
     RUN_TEST(testShouldSetProgramSelectionView);
     RUN_TEST(testShouldUpdateViewWhenProgramChanges);
     RUN_TEST(testShouldNotCrashWhenViewIsNull);
+    RUN_TEST(testShouldDelegateTickToStateMachine);
+    RUN_TEST(testShouldWorkWithoutStateMachine);
 
     return UNITY_END();
 }

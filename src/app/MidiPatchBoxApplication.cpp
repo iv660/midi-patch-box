@@ -1,4 +1,5 @@
 #include "MidiPatchBoxApplication.h"
+#include "StateMachine.h"
 #include <stdint.h>
 
 void MidiPatchBoxApplication::begin(void)
@@ -36,8 +37,21 @@ MidiPatchBoxApplication * MidiPatchBoxApplication::setProgramSelectionView(Progr
     return this;
 }
 
+MidiPatchBoxApplication * MidiPatchBoxApplication::setStateMachine(StateMachine * stateMachine)
+{
+    this->stateMachine = stateMachine;
+
+    return this;
+}
+
 void MidiPatchBoxApplication::tick(void)
 {
+    if (stateMachine) {
+        stateMachine->update();
+        return;
+    }
+
+    // Fallback to old logic if no state machine is set
     if (hasUserInput()) {
         userInput->update();
     }

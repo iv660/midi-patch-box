@@ -3,20 +3,25 @@
 #include "app/MidiPatchBoxApplication.h"
 #include "app/ProgramSelector.h"
 #include "app/UserInput.h"
+#include "app/StateMachine.h"
+#include "app/SplashScreenState.h"
 #include "hardware/MidiController.h"
 #include "hardware/ArduinoIoDriver.h"
 #include "hardware/DisplayProgramSelectionView.h"
+#include "hardware/DisplaySplashScreenView.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
 
 MidiPatchBoxApplication app;
+StateMachine stateMachine;
 
 ProgramSelector programSelector;
 UserInput userInput;
 MidiController midiController(MIDI_CHANNEL);
 ArduinoIoDriver ioDriver;
 DisplayProgramSelectionView displayView;
+DisplaySplashScreenView splashView;
 
 void setup()
 {
@@ -33,7 +38,11 @@ void setup()
         ->setUserInput(&userInput)
         ->setMidiController(&midiController)
         ->setProgramSelectionView(&displayView)
+        ->setStateMachine(&stateMachine)
         ->begin();
+    
+    // Initialize State Machine with SplashScreenState
+    stateMachine.changeState(new SplashScreenState(&splashView));
 }
 
 void loop() {

@@ -4,12 +4,16 @@
 #include "MidiControllerInterface.h"
 #include "ProgramSelectionViewInterface.h"
 
+// Forward declaration to avoid circular dependency
+class StateMachine;
+
 class MidiPatchBoxApplication {
 private:
     UserInputInterface *userInput = nullptr;
     ProgramSelectorInterface *programSelector = nullptr;
     MidiControllerInterface *midiController = nullptr;
     ProgramSelectionViewInterface *programSelectionView = nullptr;
+    StateMachine *stateMachine = nullptr;
 
     bool userButtonIsPressed(void);
     void handleNextButtonPress(void);
@@ -26,4 +30,5 @@ public:
     MidiPatchBoxApplication* setProgramSelector(ProgramSelectorInterface *programSelector);
     MidiPatchBoxApplication* setMidiController(MidiControllerInterface *midiController);
     MidiPatchBoxApplication* setProgramSelectionView(ProgramSelectionViewInterface *programSelectionView);
+    MidiPatchBoxApplication* setStateMachine(StateMachine *stateMachine);
 };
