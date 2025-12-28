@@ -4,6 +4,8 @@
 #include "app/ProgramSelectorInterface.h"
 #include "app/MidiControllerInterface.h"
 #include "app/ProgramSelectionViewInterface.h"
+#include "app/ProgramsBankInterface.h"
+#include <cstring>
 
 class MockUserInput : public UserInputInterface 
 {
@@ -97,6 +99,7 @@ class MockProgramSelectionView : public ProgramSelectionViewInterface
 {
 private:
     int lastProgramNumber = -1;
+    char lastProgramName[17] = "";
 
 public:
     ProgramSelectionViewInterface* setSelectedProgramNumber(int programNumber) override
@@ -105,9 +108,39 @@ public:
         return this;
     }
 
+    ProgramSelectionViewInterface* displayProgramName(const char* programName) override
+    {
+        strncpy(lastProgramName, programName, 16);
+        lastProgramName[16] = '\0';
+        return this;
+    }
+
     int getLastProgramNumber() const
     {
         return lastProgramNumber;
+    }
+
+    const char* getLastProgramName() const
+    {
+        return lastProgramName;
+    }
+};
+
+class MockProgramsBank : public ProgramsBankInterface
+{
+public:
+    ProgramsBankInterface* addProgram(int programNumber, const char* programName) override
+    {
+        return this;
+    }
+
+    const char* getProgramName(int programNumber) override
+    {
+        // Return "Viola" for program 3 as expected by the test
+        if (programNumber == 3) {
+            return "Viola";
+        }
+        return "Unknown";
     }
 };
 
@@ -215,6 +248,7 @@ void testMainApplicationStateUpdatesViewWhenProgramChanges(void)
     MockProgramSelector programSelector;
     MockMidiController midiController;
     MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
 
     userInput.pressUserButton();
     
@@ -222,11 +256,13 @@ void testMainApplicationStateUpdatesViewWhenProgramChanges(void)
     mainState.setUserInput(&userInput)
              ->setProgramSelector(&programSelector)
              ->setMidiController(&midiController)
-             ->setProgramSelectionView(&mockView);
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
 
     mainState.update();
 
     TEST_ASSERT_EQUAL_INT16(3, mockView.getLastProgramNumber());
+    TEST_ASSERT_EQUAL_STRING("Viola", mockView.getLastProgramName());
 }
 
 int main(void)

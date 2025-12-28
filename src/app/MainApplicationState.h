@@ -4,6 +4,7 @@
 #include "ProgramSelectorInterface.h"
 #include "MidiControllerInterface.h"
 #include "ProgramSelectionViewInterface.h"
+#include "ProgramsBankInterface.h"
 
 class MainApplicationState : public State {
 private:
@@ -11,6 +12,7 @@ private:
     ProgramSelectorInterface* programSelector = nullptr;
     MidiControllerInterface* midiController = nullptr;
     ProgramSelectionViewInterface* programSelectionView = nullptr;
+    ProgramsBankInterface* programsBank = nullptr;
 
     bool userButtonIsPressed();
     bool rightButtonIsPressed();
@@ -19,6 +21,7 @@ private:
     bool hasUserInput();
     bool hasMidiController();
     bool hasProgramSelectionView();
+    bool hasProgramsBank();
 
 public:
     MainApplicationState() = default;
@@ -40,6 +43,11 @@ public:
     
     MainApplicationState* setProgramSelectionView(ProgramSelectionViewInterface* programSelectionView) {
         this->programSelectionView = programSelectionView;
+        return this;
+    }
+    
+    MainApplicationState* setProgramsBank(ProgramsBankInterface* programsBank) {
+        this->programsBank = programsBank;
         return this;
     }
     

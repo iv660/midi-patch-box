@@ -52,9 +52,14 @@ void MainApplicationState::handleNextButtonPress() {
     int program = programSelector->getSelectedProgramNumber();
     midiController->sendProgramChange(program);
 
-    // Update view with selected program number
+    // Update view with selected program number and name
     if (hasProgramSelectionView()) {
         programSelectionView->setSelectedProgramNumber(program);
+        
+        if (hasProgramsBank()) {
+            const char* programName = programsBank->getProgramName(program);
+            programSelectionView->displayProgramName(programName);
+        }
     }
 }
 
@@ -72,4 +77,8 @@ bool MainApplicationState::hasMidiController() {
 
 bool MainApplicationState::hasProgramSelectionView() {
     return programSelectionView != nullptr;
+}
+
+bool MainApplicationState::hasProgramsBank() {
+    return programsBank != nullptr;
 }

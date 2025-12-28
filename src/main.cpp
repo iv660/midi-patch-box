@@ -6,6 +6,7 @@
 #include "app/StateMachine.h"
 #include "app/SplashScreenState.h"
 #include "app/MainApplicationStateFactory.h"
+#include "app/ProgramsBank.h"
 #include "hardware/MidiController.h"
 #include "hardware/ArduinoIoDriver.h"
 #include "hardware/DisplayProgramSelectionView.h"
@@ -23,6 +24,7 @@ MidiController midiController(MIDI_CHANNEL);
 ArduinoIoDriver ioDriver;
 DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
+ProgramsBank programsBank;
 
 MainApplicationStateFactory stateFactory;
 
@@ -37,7 +39,13 @@ void setup()
     stateFactory.setUserInput(&userInput)
                ->setProgramSelector(&programSelector)
                ->setMidiController(&midiController)
-               ->setProgramSelectionView(&displayView);
+               ->setProgramSelectionView(&displayView)
+               ->setProgramsBank(&programsBank);
+    
+    // Initialize programs bank with program names
+    programsBank.addProgram(0, "Clean")
+               ->addProgram(41, "Viola")
+               ->addProgram(112, "Reverse");
     
     programSelector.setPrograms({0, 41, 112});
     

@@ -105,6 +105,12 @@ public:
         return this;
     }
 
+    ProgramSelectionViewInterface* displayProgramName(const char* programName) override
+    {
+        // Simple implementation for testing - just return this
+        return this;
+    }
+
     int getLastProgramNumber() const
     {
         return lastProgramNumber;

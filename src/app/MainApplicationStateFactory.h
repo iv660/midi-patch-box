@@ -5,6 +5,7 @@
 #include "ProgramSelectorInterface.h"
 #include "MidiControllerInterface.h"
 #include "ProgramSelectionViewInterface.h"
+#include "ProgramsBankInterface.h"
 
 class MainApplicationStateFactory : public StateFactory {
 private:
@@ -12,6 +13,7 @@ private:
     ProgramSelectorInterface* programSelector;
     MidiControllerInterface* midiController;
     ProgramSelectionViewInterface* programSelectionView;
+    ProgramsBankInterface* programsBank;
 
 public:
     MainApplicationStateFactory() = default;
@@ -35,12 +37,18 @@ public:
         this->programSelectionView = programSelectionView;
         return this;
     }
+    
+    MainApplicationStateFactory* setProgramsBank(ProgramsBankInterface* programsBank) {
+        this->programsBank = programsBank;
+        return this;
+    }
 
     StateInterface* createMainApplicationState() override {
         return (new MainApplicationState())
             ->setUserInput(userInput)
             ->setProgramSelector(programSelector)
             ->setMidiController(midiController)
-            ->setProgramSelectionView(programSelectionView);
+            ->setProgramSelectionView(programSelectionView)
+            ->setProgramsBank(programsBank);
     }
 };

@@ -17,19 +17,24 @@ public:
     DisplayProgramSelectionView& operator=(DisplayProgramSelectionView&&) = delete;
 
     ProgramSelectionViewInterface* setSelectedProgramNumber(int programNumber) override;
+    ProgramSelectionViewInterface* displayProgramName(const char* programName) override;
 
 private:
     static constexpr int SCREEN_WIDTH = 128;
     static constexpr int SCREEN_HEIGHT = 64;
     static constexpr int OLED_RESET = -1;
+    static constexpr int MAX_PROGRAM_NAME_LENGTH = 16;
     
     void initializeDisplay();
     void clearDisplay();
     void displayProgramNumber(int programNumber);
+    void updateDisplay();
     
     Adafruit_SSD1306 display;
     bool isInitialized;
     int lastProgramNumber;
+    char programName[MAX_PROGRAM_NAME_LENGTH + 1];
+    bool hasProgramName;
     int sdaPin;
     int sclPin;
     uint8_t i2cAddress;
