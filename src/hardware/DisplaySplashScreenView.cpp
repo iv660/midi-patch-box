@@ -58,16 +58,23 @@ void DisplaySplashScreenView::displaySplashMessage()
 {
     display.clearDisplay();
     
-    // Title
+    // Show "MIDI Patch Box" startup message
     display.setTextSize(2);
-    display.setCursor(0, 10);
-    display.println("MIDI");
-    display.println("Patch Box");
+    display.setTextColor(SSD1306_WHITE);
     
-    // Version
-    display.setTextSize(1);
-    display.setCursor(0, 50);
-    display.println("v1.0");
+    // Center "MIDI" text
+    int16_t x1, y1;
+    uint16_t w, h;
+    display.getTextBounds("MIDI", 0, 0, &x1, &y1, &w, &h);
+    int centerX = (SCREEN_WIDTH - w) / 2;
+    display.setCursor(centerX, 10);
+    display.println("MIDI");
+    
+    // Center "Patch Box" text
+    display.getTextBounds("Patch Box", 0, 0, &x1, &y1, &w, &h);
+    centerX = (SCREEN_WIDTH - w) / 2;
+    display.setCursor(centerX, 35);
+    display.println("Patch Box");
     
     display.display();
 }

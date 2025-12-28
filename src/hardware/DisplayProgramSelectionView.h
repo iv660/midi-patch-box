@@ -26,7 +26,6 @@ private:
     void initializeDisplay();
     void clearDisplay();
     void displayProgramNumber(int programNumber);
-    void showStartupMessage();
     
     Adafruit_SSD1306 display;
     bool isInitialized;
