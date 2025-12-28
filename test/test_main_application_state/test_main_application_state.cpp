@@ -121,24 +121,32 @@ void tearDown(void)
     // Called after each test
 }
 
-void testMainApplicationStateCallsUserInputUpdate(void) 
+void testMainApplicationStateCallsUserInputUpdate(void)
 {
     MockUserInput userInput;
-    MainApplicationState mainState(&userInput, nullptr, nullptr, nullptr);
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(nullptr)
+             ->setMidiController(nullptr)
+             ->setProgramSelectionView(nullptr);
 
     mainState.update();
 
     TEST_ASSERT_TRUE(userInput.updateWasCalled());
 }
 
-void testMainApplicationStateSelectsNextProgramOnUserButtonPress(void) 
+void testMainApplicationStateSelectsNextProgramOnUserButtonPress(void)
 {
     MockUserInput userInput;
     MockProgramSelector programSelector;
 
     userInput.pressUserButton();
 
-    MainApplicationState mainState(&userInput, &programSelector, nullptr, nullptr);
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(nullptr)
+             ->setProgramSelectionView(nullptr);
     
     mainState.update();
 
@@ -153,21 +161,29 @@ void testMainApplicationStateSendsProgramChangeOnUserButtonPress(void)
 
     userInput.pressUserButton();
 
-    MainApplicationState mainState(&userInput, &programSelector, &midiController, nullptr);
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(nullptr);
 
     mainState.update();
 
     TEST_ASSERT_TRUE(midiController.programChangeWasSent());
 }
 
-void testMainApplicationStateSelectsNextProgramOnRightButtonPress(void) 
+void testMainApplicationStateSelectsNextProgramOnRightButtonPress(void)
 {
     MockUserInput userInput;
     MockProgramSelector programSelector;
     
     userInput.pressRightButton();
     
-    MainApplicationState mainState(&userInput, &programSelector, nullptr, nullptr);
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(nullptr)
+             ->setProgramSelectionView(nullptr);
     
     mainState.update();
     
@@ -182,7 +198,11 @@ void testMainApplicationStateSendsProgramChangeOnRightButtonPress(void)
 
     userInput.pressRightButton();
 
-    MainApplicationState mainState(&userInput, &programSelector, &midiController, nullptr);
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(nullptr);
 
     mainState.update();
 
@@ -198,7 +218,11 @@ void testMainApplicationStateUpdatesViewWhenProgramChanges(void)
 
     userInput.pressUserButton();
     
-    MainApplicationState mainState(&userInput, &programSelector, &midiController, &mockView);
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView);
 
     mainState.update();
 

@@ -21,10 +21,27 @@ private:
     bool hasProgramSelectionView();
 
 public:
-    MainApplicationState(UserInputInterface* userInput, 
-                        ProgramSelectorInterface* programSelector,
-                        MidiControllerInterface* midiController,
-                        ProgramSelectionViewInterface* programSelectionView);
+    MainApplicationState() = default;
+    
+    MainApplicationState* setUserInput(UserInputInterface* userInput) {
+        this->userInput = userInput;
+        return this;
+    }
+    
+    MainApplicationState* setProgramSelector(ProgramSelectorInterface* programSelector) {
+        this->programSelector = programSelector;
+        return this;
+    }
+    
+    MainApplicationState* setMidiController(MidiControllerInterface* midiController) {
+        this->midiController = midiController;
+        return this;
+    }
+    
+    MainApplicationState* setProgramSelectionView(ProgramSelectionViewInterface* programSelectionView) {
+        this->programSelectionView = programSelectionView;
+        return this;
+    }
     
     void enter() override;
     void update() override;

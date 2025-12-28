@@ -24,7 +24,7 @@ ArduinoIoDriver ioDriver;
 DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
 
-MainApplicationStateFactory stateFactory(&userInput, &programSelector, &midiController, &displayView);
+MainApplicationStateFactory stateFactory;
 
 void setup()
 {
@@ -32,6 +32,12 @@ void setup()
     USBDevice.setManufacturerDescriptor("iv660");
     USBDevice.setProductDescriptor("MIDI Patch Box");
     USBDevice.setSerialDescriptor("0001"); // any serial number
+    
+    // Initialize state factory with dependencies
+    stateFactory.setUserInput(&userInput)
+               ->setProgramSelector(&programSelector)
+               ->setMidiController(&midiController)
+               ->setProgramSelectionView(&displayView);
     
     programSelector.setPrograms({0, 41, 112});
     
@@ -45,7 +51,10 @@ void setup()
         ->begin();
     
     // Initialize State Machine with SplashScreenState that will transition to MainApplicationState after 1 second
-    stateMachine.changeState(new SplashScreenState(&splashView, &ioDriver, &stateFactory));
+    stateMachine.changeState((new SplashScreenState())
+        ->setSplashScreenView(&splashView)
+        ->setIoDriver(&ioDriver)
+        ->setStateFactory(&stateFactory));
 }
 
 void loop() {

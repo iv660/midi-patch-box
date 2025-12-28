@@ -1,15 +1,5 @@
 #include "MainApplicationState.h"
 
-MainApplicationState::MainApplicationState(UserInputInterface* userInput, 
-                                          ProgramSelectorInterface* programSelector,
-                                          MidiControllerInterface* midiController,
-                                          ProgramSelectionViewInterface* programSelectionView)
-    : userInput(userInput)
-    , programSelector(programSelector)
-    , midiController(midiController)
-    , programSelectionView(programSelectionView) {
-}
-
 void MainApplicationState::enter() {
     // Empty implementation - no specific initialization needed
 }

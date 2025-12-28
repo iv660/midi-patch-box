@@ -1,9 +1,6 @@
 #include "SplashScreenState.h"
 #include "StateMachine.h"
 
-SplashScreenState::SplashScreenState(SplashScreenViewInterface* splashScreenView, IoDriverInterface* ioDriver, StateFactoryInterface* stateFactory)
-    : splashScreenView(splashScreenView), ioDriver(ioDriver), stateFactory(stateFactory) {
-}
 
 void SplashScreenState::enter() {
     if (splashScreenView) {

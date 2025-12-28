@@ -12,7 +12,22 @@ private:
     unsigned long startTime = 0;
 
 public:
-    SplashScreenState(SplashScreenViewInterface* splashScreenView, IoDriverInterface* ioDriver = nullptr, StateFactoryInterface* stateFactory = nullptr);
+    SplashScreenState() = default;
+    
+    SplashScreenState* setSplashScreenView(SplashScreenViewInterface* view) {
+        this->splashScreenView = view;
+        return this;
+    }
+    
+    SplashScreenState* setIoDriver(IoDriverInterface* driver) {
+        this->ioDriver = driver;
+        return this;
+    }
+    
+    SplashScreenState* setStateFactory(StateFactoryInterface* factory) {
+        this->stateFactory = factory;
+        return this;
+    }
     
     void enter() override;
     void update() override;

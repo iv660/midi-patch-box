@@ -78,7 +78,11 @@ void testSplashScreenStateShowsMessageOnEnter(void) {
     MockSplashScreenView mockView;
     MockIoDriver mockIoDriver;
     MockStateFactory mockFactory;
-    SplashScreenState splashState(&mockView, &mockIoDriver, &mockFactory);
+    SplashScreenState splashState;
+    
+    splashState.setSplashScreenView(&mockView)
+               ->setIoDriver(&mockIoDriver)
+               ->setStateFactory(&mockFactory);
     
     splashState.enter();
     
@@ -90,7 +94,12 @@ void testSplashScreenStateTransitionsAfterOneSecond(void) {
     MockIoDriver mockIoDriver;
     MockStateFactory mockFactory;
     MockStateMachine mockStateMachine;
-    SplashScreenState splashState(&mockView, &mockIoDriver, &mockFactory);
+    SplashScreenState splashState;
+    
+    // Configure state with fluent interface
+    splashState.setSplashScreenView(&mockView)
+               ->setIoDriver(&mockIoDriver)
+               ->setStateFactory(&mockFactory);
     
     // Inject mock state machine
     splashState.setStateMachine(&mockStateMachine);
