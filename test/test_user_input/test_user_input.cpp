@@ -37,7 +37,7 @@ void testShouldDetectUserButtonPress() {
     // Simulate press on pin 2 (user button)
     ioDriver.setPinState(2, 0);  // Press (LOW)
     userInput.update();
-    ioDriver.delay(500);         // Hold > 300ms (debounce via Button)
+    ioDriver.delay(100);         // Hold > 50ms (debounce via Button)
     ioDriver.setPinState(2, 1);  // Release (HIGH)
     userInput.update();
     

@@ -29,7 +29,7 @@ void testShouldHandleKeyPress() {
 
     ioDriver.setPinState(2, LOW);
     button.update();
-    ioDriver.delay(500);
+    ioDriver.delay(21);  // Hold > 20ms (debounce threshold)
     ioDriver.setPinState(2, HIGH);
     button.update();
     
@@ -44,15 +44,15 @@ void testShouldNotDetectKeyPressUnderDebounceTrashold() {
     Button button(2);  // pin 2
     button.setIoDriver(&ioDriver);
     
-    // Simulate button press shorter than 300ms debounce threshold
+    // Simulate button press shorter than 50ms debounce threshold
     ioDriver.resetTime();
     
     // Press button
     ioDriver.setPinState(2, LOW);
     button.update();
     
-    // Hold for only 200ms (under 300ms threshold)
-    ioDriver.delay(200);
+    // Hold for only 19ms (under 20ms threshold)
+    ioDriver.delay(19);
     
     // Release button
     ioDriver.setPinState(2, HIGH);

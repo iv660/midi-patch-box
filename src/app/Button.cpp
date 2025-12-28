@@ -5,7 +5,7 @@ Button::Button(int buttonPin)
       lastButtonState(HIGH), 
       buttonPressed(false), 
       pressStartTime(0), 
-      debounceThreshold(300),
+      debounceThreshold(20),
       buttonPin(buttonPin) {
 }
 

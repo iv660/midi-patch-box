@@ -16,7 +16,7 @@ private:
     bool lastButtonState;
     bool buttonPressed;
     unsigned long pressStartTime;
-    const unsigned long debounceThreshold; // 300ms debounce threshold
+    const unsigned long debounceThreshold;
     const int buttonPin;
     
     static const int HIGH = 1;
