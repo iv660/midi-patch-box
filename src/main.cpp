@@ -11,6 +11,7 @@
 #include "hardware/ArduinoIoDriver.h"
 #include "hardware/DisplayProgramSelectionView.h"
 #include "hardware/DisplaySplashScreenView.h"
+#include "hardware/DisplayBitmapSplashScreenView.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
@@ -24,6 +25,7 @@ MidiController midiController(MIDI_CHANNEL);
 ArduinoIoDriver ioDriver;
 DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
+DisplayBitmapSplashScreenView bitmapSplashView;
 ProgramsBank programsBank;
 
 MainApplicationStateFactory stateFactory;
@@ -60,7 +62,7 @@ void setup()
     
     // Initialize State Machine with SplashScreenState that will transition to MainApplicationState after 1 second
     stateMachine.changeState((new SplashScreenState())
-        ->setSplashScreenView(&splashView)
+        ->setSplashScreenView(&bitmapSplashView)
         ->setIoDriver(&ioDriver)
         ->setStateFactory(&stateFactory));
 }
