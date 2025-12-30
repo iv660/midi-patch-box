@@ -205,6 +205,12 @@ pio test -e native -f test_program_selector
 2. **New Functionality**: Extend existing classes or create new interface implementations
 3. **Testing**: Add corresponding unit tests in the `test/` directory
 
+## Useful Links
+
+- [x-design](https://www.x-design.com/ai-editor). AI-powered graphic design tool. Used to downscale images.
+- [Wix](ttps://manage.wix.com). AI logo creator.
+- [Image2Cpp](https://javl.github.io/image2cpp/). Convert images to C++ bytes array.
+
 ## Contributing
 
 1. Fork the repository
