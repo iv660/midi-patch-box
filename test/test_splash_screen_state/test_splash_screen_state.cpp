@@ -89,7 +89,7 @@ void testSplashScreenStateShowsMessageOnEnter(void) {
     TEST_ASSERT_TRUE(mockView.showMessageWasCalled());
 }
 
-void testSplashScreenStateTransitionsAfterOneSecond(void) {
+void testSplashScreenStateTransitionsAfterThreeSeconds(void) {
     MockSplashScreenView mockView;
     MockIoDriver mockIoDriver;
     MockStateFactory mockFactory;
@@ -109,7 +109,7 @@ void testSplashScreenStateTransitionsAfterOneSecond(void) {
     splashState.enter();
     
     // Simulate time passing - less than 1 second should not trigger transition
-    mockIoDriver.delay(999);
+    mockIoDriver.delay(1999);
     splashState.update();
     TEST_ASSERT_FALSE(mockFactory.createMainApplicationStateWasCalled());
     TEST_ASSERT_FALSE(mockStateMachine.changeStateWasCalled());
@@ -125,7 +125,7 @@ int main(void) {
     UNITY_BEGIN();
     
     RUN_TEST(testSplashScreenStateShowsMessageOnEnter);
-    RUN_TEST(testSplashScreenStateTransitionsAfterOneSecond);
+    RUN_TEST(testSplashScreenStateTransitionsAfterThreeSeconds);
     
     return UNITY_END();
 }

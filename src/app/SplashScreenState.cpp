@@ -14,7 +14,7 @@ void SplashScreenState::enter() {
 void SplashScreenState::update() {
     if (ioDriver && stateMachine && stateFactory) {
         unsigned long currentTime = ioDriver->millis();
-        if (currentTime - startTime >= 1000) {
+        if (currentTime - startTime >= splashScreenDuration) {
             StateInterface* mainState = stateFactory->createMainApplicationState();
             stateMachine->changeState(mainState);
         }

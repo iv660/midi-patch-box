@@ -11,6 +11,8 @@ private:
     StateFactoryInterface* stateFactory = nullptr;
     unsigned long startTime = 0;
 
+    const unsigned long splashScreenDuration = 2000;
+
 public:
     SplashScreenState() = default;
     
