@@ -136,6 +136,10 @@ public:
 
     const char* getProgramName(int programNumber) override
     {
+        if (programNumber == 2) {
+            return "Cello";
+        }
+
         // Return "Viola" for program 3 as expected by the test
         if (programNumber == 3) {
             return "Viola";
@@ -265,6 +269,47 @@ void testMainApplicationStateUpdatesViewWhenProgramChanges(void)
     TEST_ASSERT_EQUAL_STRING("Viola", mockView.getLastProgramName());
 }
 
+void testViewIsUpdatedWithCurrentlySelectedProgramOnEnter(void) {
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
+
+    userInput.pressUserButton();
+    
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
+
+    mainState.enter();
+
+    TEST_ASSERT_EQUAL_INT16(2, mockView.getLastProgramNumber());
+    TEST_ASSERT_EQUAL_STRING("Cello", mockView.getLastProgramName());
+}
+
+void testInitialProgramShouldBeSentOnEnter(void) {
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
+
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
+
+    mainState.enter();
+
+    TEST_ASSERT_TRUE(midiController.programChangeWasSent());
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -275,6 +320,8 @@ int main(void)
     RUN_TEST(testMainApplicationStateSelectsNextProgramOnRightButtonPress);
     RUN_TEST(testMainApplicationStateSendsProgramChangeOnRightButtonPress);
     RUN_TEST(testMainApplicationStateUpdatesViewWhenProgramChanges);
+    RUN_TEST(testViewIsUpdatedWithCurrentlySelectedProgramOnEnter);
+    RUN_TEST(testInitialProgramShouldBeSentOnEnter);
 
     return UNITY_END();
 }

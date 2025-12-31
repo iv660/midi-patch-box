@@ -1,7 +1,8 @@
 #include "MainApplicationState.h"
 
 void MainApplicationState::enter() {
-    // Empty implementation - no specific initialization needed
+    sendSelectedProgram();
+    updateProgramSelectionView();
 }
 
 void MainApplicationState::update() {
