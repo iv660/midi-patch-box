@@ -48,78 +48,10 @@ void MidiPatchBoxApplication::tick(void)
 {
     if (stateMachine) {
         stateMachine->update();
-        return;
     }
-
-    // Fallback to old logic if no state machine is set
-    if (hasUserInput()) {
-        userInput->update();
-    }
-
-    if (userButtonIsPressed()) {
-        handleNextButtonPress();
-    }
-
-    if (rightButtonIsPressed()) {
-        handleNextButtonPress();
-    }
-}
-
-bool MidiPatchBoxApplication::userButtonIsPressed(void)
-{
-    if (false == hasUserInput()) {
-        return false;
-    }
-
-    return userInput->userButtonIsPressed();
-}
-
-bool MidiPatchBoxApplication::rightButtonIsPressed(void)
-{
-    if (false == hasUserInput()) {
-        return false;
-    }
-
-    return userInput->rightButtonIsPressed();
-}
-
-void MidiPatchBoxApplication::handleNextButtonPress(void)
-{
-    if (false == hasProgramSelector()) {
-        return;
-    }
-
-    programSelector->selectNextProgram();
-
-    if (false == hasMidiController()) {
-        return;
-    }
-
-    int program = programSelector->getSelectedProgramNumber();
-    midiController->sendProgramChange(program);
-
-    // Update view with selected program number
-    if (hasProgramSelectionView()) {
-        programSelectionView->setSelectedProgramNumber(program);
-    }
-}
-
-bool MidiPatchBoxApplication::hasProgramSelector()
-{
-    return programSelector != nullptr;
-}
-
-bool MidiPatchBoxApplication::hasUserInput()
-{
-    return userInput != nullptr;
 }
 
 bool MidiPatchBoxApplication::hasMidiController()
 {
     return midiController != nullptr;
-}
-
-bool MidiPatchBoxApplication::hasProgramSelectionView()
-{
-    return programSelectionView != nullptr;
 }

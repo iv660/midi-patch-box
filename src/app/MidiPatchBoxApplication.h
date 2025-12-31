@@ -15,13 +15,7 @@ private:
     ProgramSelectionViewInterface *programSelectionView = nullptr;
     StateMachine *stateMachine = nullptr;
 
-    bool userButtonIsPressed(void);
-    void handleNextButtonPress(void);
-    bool hasProgramSelector();
-    bool hasUserInput();
     bool hasMidiController();
-    bool hasProgramSelectionView();
-    bool rightButtonIsPressed(void);
 public:
     void tick();
     void begin(void);
