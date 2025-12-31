@@ -17,6 +17,9 @@ private:
     bool userButtonIsPressed();
     bool rightButtonIsPressed();
     void handleNextButtonPress();
+    void selectNextProgram();
+    void sendSelectedProgram();
+    void updateProgramSelectionView();
     bool hasProgramSelector();
     bool hasUserInput();
     bool hasMidiController();

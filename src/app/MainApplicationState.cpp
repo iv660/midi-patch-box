@@ -39,27 +39,39 @@ bool MainApplicationState::rightButtonIsPressed() {
 }
 
 void MainApplicationState::handleNextButtonPress() {
+    selectNextProgram();
+    sendSelectedProgram();
+    updateProgramSelectionView();
+}
+
+void MainApplicationState::selectNextProgram() {
     if (false == hasProgramSelector()) {
         return;
     }
 
     programSelector->selectNextProgram();
+}
 
+void MainApplicationState::sendSelectedProgram() {
     if (false == hasMidiController()) {
         return;
     }
 
     int program = programSelector->getSelectedProgramNumber();
     midiController->sendProgramChange(program);
+}
 
-    // Update view with selected program number and name
-    if (hasProgramSelectionView()) {
-        programSelectionView->setSelectedProgramNumber(program);
-        
-        if (hasProgramsBank()) {
-            const char* programName = programsBank->getProgramName(program);
-            programSelectionView->displayProgramName(programName);
-        }
+void MainApplicationState::updateProgramSelectionView() {
+    if (false == hasProgramSelectionView()) {
+        return;
+    }
+
+    int program = programSelector->getSelectedProgramNumber();
+    programSelectionView->setSelectedProgramNumber(program);
+    
+    if (hasProgramsBank()) {
+        const char* programName = programsBank->getProgramName(program);
+        programSelectionView->displayProgramName(programName);
     }
 }
 
