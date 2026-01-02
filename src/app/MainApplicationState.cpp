@@ -18,8 +18,19 @@ void MainApplicationState::update() {
         handleNextButtonPress();
     }
 
-    if (encoderRotatedClockwise() || encoderRotatedCounterClockwise()) {
-        handleEncoderRotation();
+    bool clockwise = encoderRotatedClockwise();
+    bool counterClockwise = encoderRotatedCounterClockwise();
+    
+    if (clockwise || counterClockwise) {
+        // Handle rotation directly here while we have the flags
+        if (clockwise) {
+            selectNextProgram();
+        } else if (counterClockwise) {
+            selectPreviousProgram();
+        }
+        
+        // Note: Only update view, do NOT send MIDI for encoder rotation
+        updateProgramSelectionView();
     }
 
     if (encoderButtonPressed()) {
@@ -78,11 +89,8 @@ void MainApplicationState::handleNextButtonPress() {
 }
 
 void MainApplicationState::handleEncoderRotation() {
-    if (encoderRotatedClockwise()) {
-        selectNextProgram();
-    } else if (encoderRotatedCounterClockwise()) {
-        selectPreviousProgram();
-    }
+    // Note: Don't call encoder methods again here - flags were already consumed in update()
+    // This method is called with the knowledge that rotation was detected
     // Note: Only update view, do NOT send MIDI for encoder rotation
     updateProgramSelectionView();
 }

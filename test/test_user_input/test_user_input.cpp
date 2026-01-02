@@ -89,21 +89,17 @@ void testShouldDetectEncoderRotationSequence() {
     UserInput userInput(2, 3, 4, 5, 6); // user, right, encoderA, encoderB, encoderButton
     userInput.setIoDriver(&ioDriver);
     
-    // Initially no rotation detected
+    // Set initial state (A high, B low - matches lastEncoderA=1 initialization)
+    ioDriver.setPinState(4, 1); // A high
+    ioDriver.setPinState(5, 0); // B low
     userInput.update();
     TEST_ASSERT_FALSE(userInput.encoderRotatedClockwise());
     
-    // Simulate clockwise rotation: A leads B in quadrature
-    ioDriver.setPinState(4, 1); // A high
-    userInput.update();
-    ioDriver.setPinState(5, 1); // B high (after A)
-    userInput.update();
-    ioDriver.setPinState(4, 0); // A low
-    userInput.update();
-    ioDriver.setPinState(5, 0); // B low
+    // Simulate clockwise rotation: A goes low while B is low
+    ioDriver.setPinState(4, 0); // A low (transition that triggers detection)
     userInput.update();
     
-    // Should detect clockwise rotation
+    // Should detect clockwise rotation when A goes low while B is low
     TEST_ASSERT_TRUE(userInput.encoderRotatedClockwise());
 }
 

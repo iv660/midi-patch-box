@@ -73,25 +73,15 @@ void UserInput::updateEncoderRotation() {
     int currentA = ioDriver->digitalRead(encoderPinA);
     int currentB = ioDriver->digitalRead(encoderPinB);
     
-    // Quadrature encoder state machine
-    // Clockwise: 11 -> 01 -> 00 -> 10 -> 11
-    // Counter-clockwise: 11 -> 10 -> 00 -> 01 -> 11
-    
-    if (lastEncoderA != currentA || lastEncoderB != currentB) {
-        // Detect clockwise rotation
-        if ((lastEncoderA == 1 && lastEncoderB == 1 && currentA == 0 && currentB == 1) ||
-            (lastEncoderA == 0 && lastEncoderB == 1 && currentA == 0 && currentB == 0) ||
-            (lastEncoderA == 0 && lastEncoderB == 0 && currentA == 1 && currentB == 0) ||
-            (lastEncoderA == 1 && lastEncoderB == 0 && currentA == 1 && currentB == 1)) {
-            clockwiseRotationDetected = true;
-        }
-        
-        // Detect counter-clockwise rotation
-        if ((lastEncoderA == 1 && lastEncoderB == 1 && currentA == 1 && currentB == 0) ||
-            (lastEncoderA == 1 && lastEncoderB == 0 && currentA == 0 && currentB == 0) ||
-            (lastEncoderA == 0 && lastEncoderB == 0 && currentA == 0 && currentB == 1) ||
-            (lastEncoderA == 0 && lastEncoderB == 1 && currentA == 1 && currentB == 1)) {
-            counterClockwiseRotationDetected = true;
+    // Simple edge-based detection
+    if (lastEncoderA != currentA) {
+        // A pin changed
+        if (currentA == 0) { // A went LOW
+            if (currentB == 1) {
+                counterClockwiseRotationDetected = true;
+            } else {
+                clockwiseRotationDetected = true;
+            }
         }
     }
     

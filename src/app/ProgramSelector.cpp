@@ -38,10 +38,9 @@ void ProgramSelector::selectNextProgram()
 
     if (lastProgramIsSelected()) {
         selectFirstProgram();
-        return;
+    } else {
+        programsListPointer++;
     }
-
-    programsListPointer++;
 }
 
 void ProgramSelector::selectPreviousProgram()
@@ -53,10 +52,9 @@ void ProgramSelector::selectPreviousProgram()
     if (programsListPointer == 0) {
         // Wrap to last program
         programsListPointer = programsCount - 1;
-        return;
+    } else {
+        programsListPointer--;
     }
-
-    programsListPointer--;
 }
 
 int ProgramSelector::getSelectedProgramNumber() const
