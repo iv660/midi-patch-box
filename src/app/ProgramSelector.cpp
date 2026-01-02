@@ -44,6 +44,21 @@ void ProgramSelector::selectNextProgram()
     programsListPointer++;
 }
 
+void ProgramSelector::selectPreviousProgram()
+{
+    if (programsCount == 0) {
+        return;
+    }
+
+    if (programsListPointer == 0) {
+        // Wrap to last program
+        programsListPointer = programsCount - 1;
+        return;
+    }
+
+    programsListPointer--;
+}
+
 int ProgramSelector::getSelectedProgramNumber() const
 {
     if (programsCount == 0) {

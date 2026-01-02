@@ -1,170 +1,73 @@
-# Test-Driven Development (TDD) Guide
+## Quick TDD Guide for Cursor AI  
+*Project: C++ / RP2040 Pico / Arduino / PlatformIO*  
+*Test framework: PlatformIO Unity*  
 
-This guide demonstrates practical TDD implementation based on the State Machine refactoring performed in this project.
+---  
 
-## Core TDD Principles
+### 1. Architectural Constraints  
 
-**Red-Green-Refactor Cycle:**
-1. **Red**: Write a complete, failing test for one specific functionality
-2. **Green**: Write minimal code to make that test pass
-3. **Refactor**: Improve code quality while keeping tests green
+| Layer | Dependency direction | Test‑time handling |
+|-------|----------------------|--------------------|
+| **app** | **No** direct dependence on `hardware` or Arduino libraries. It only uses abstract interfaces that `hardware` implements. | All hardware‑level calls are **mocked**. Mocks are compiled in the native test environment. |
+| **hardware** | Implements the interfaces defined by `app`. | Not tested directly; its concrete code is replaced by the mocks during unit tests. |
 
-**Critical Rule**: Complete the full RGR cycle for each test method individually. Never move to the next test until the current one is fully working.
+---  
 
-## Red Phase Requirements
+### 2. Workflow Overview  
 
-The Red phase test must be:
-- **Complete and final** - written as if the implementation already exists
-- **Failing due to missing implementation** - not artificial FAIL() calls
-- **Testing real behavior** - verifying actual functionality, not test infrastructure
+| Phase | Action | Outcome |
+|-------|--------|---------|
+| **Plan** | AI drafts a short implementation plan, breaking the feature into **elementary pieces of functionality** (methods, classes). Test simulates usage of the desired piece of functionality as if it was already implemented. | User reviews & approves. |
+| **RGR Loop** (repeat for each piece) | 1️⃣ Propose a **red test** that uses the app‑level functionality with hardware calls **mocked**. <br>2️⃣ Run the test (`pio test -e native …`) – it must fail (red). <br>3️⃣ Fix any compilation errors (e.g., missing mock headers). <br>4️⃣ Implement the minimal app code to satisfy the test. <br>5️⃣ Run the test – it should pass (green). <br>6️⃣ Refactor if needed, then re‑run to keep it green. | Incremental, verified app logic, isolated from hardware. |
 
-**Example of proper Red phase**:
-```cpp
-void testShouldCallEnterOnStateChange(void) {
-    StateMachine stateMachine;
-    MockState* mockState = new MockState();
-    
-    stateMachine.changeState(mockState);  // This will fail - method doesn't exist yet
-    
-    TEST_ASSERT_TRUE(mockState->enterWasCalled());
-}
-```
+---  
 
-## Implementation-First Approach
+### 3. Detailed RGR Steps  
 
-**Test implementations, not interfaces**. Interfaces are design tools - we test the concrete classes that implement them.
+1. **Test Proposal**  
+   - AI writes a Unity test file that:  
+     * Includes the app header(s).  
+     * Instantiates the class under test.  
+     * Supplies **mock objects** for any hardware interfaces (e.g., `IADC`, `IGPIO`).  
+     * Calls the target method and asserts the expected result.  
+   - Sends the test to the user for approval or adjustments.  
 
-**Correct approach**:
-```cpp
-// Test the concrete implementation
-void testSplashScreenStateShowsMessageOnEnter(void) {
-    MockSplashScreenView mockView;
-    SplashScreenState state(&mockView);  // Testing concrete class
-    
-    state.enter();
-    
-    TEST_ASSERT_TRUE(mockView.showMessageWasCalled());
-}
-```
+2. **Red Confirmation**  
+   - After approval, AI runs:  
+     ```bash
+     pio test -e native -f test_my_feature
+     ```  
+   - The test must fail (red) because the functionality is not yet implemented.  
 
-## TDD Workflow Example
+3. **Compile‑Error Fix**  
+   - If the build fails, AI adds missing includes, forward declarations, or stub mock definitions **without adding real logic**.  
+   - Re‑run to ensure the test still fails for the intended reason.  
 
-### Step 1: Write One Red Test
-```cpp
-void testStateMachineCanChangeState(void) {
-    StateMachine stateMachine;
-    MockState* mockState = new MockState();
-    
-    stateMachine.changeState(mockState);  // Compilation fails - method missing
-    
-    TEST_ASSERT_TRUE(mockState->enterWasCalled());
-}
-```
+4. **Minimal Implementation**  
+   - AI writes the smallest amount of app‑level code (methods, class members) needed for the test to succeed.  
+   - The mock objects remain unchanged; they simply provide the expected responses.  
 
-### Step 2: Make It Compile (Green)
-```cpp
-// StateMachine.h
-class StateMachine {
-public:
-    void changeState(State* newState) {
-        // Minimal implementation
-        if (newState) {
-            newState->enter();
-        }
-    }
-};
-```
+5. **Green Verification**  
+   - Run the same command; the test should now pass (green).  
 
-### Step 3: Refactor If Needed
-```cpp
-// Improve code structure while keeping test green
-class StateMachine {
-private:
-    State* currentState = nullptr;
-    
-    bool hasCurrentState() const {
-        return currentState != nullptr;
-    }
-    
-public:
-    void changeState(State* newState) {
-        if (hasCurrentState()) {
-            currentState->exit();
-        }
-    }
-};
-```
+6. **Refactor (optional)**  
+   - Apply style, extract helpers, improve naming, etc., while keeping the mocks untouched.  
+   - Re‑run to confirm the test stays green.  
 
-### Step 4: Move to Next Test
-Only after the first test is completely working, write the next test:
+---  
 
-```cpp
-void testStateMachineCallsExitOnPreviousState(void) {
-    StateMachine stateMachine;
-    MockState* firstState = new MockState();
-    MockState* secondState = new MockState();
-    
-    stateMachine.changeState(firstState);
-    stateMachine.changeState(secondState);
-    
-    TEST_ASSERT_TRUE(firstState->exitWasCalled());
-}
-```
+### 4. Test Execution Commands  
 
-## Mock Object Pattern
+- **Run all tests:**  
+  ```bash
+  pio test -e native
+  ```  
 
-Keep mocks simple and focused:
+- **Run a specific suite:**  
+  ```bash
+  pio test -e native -f test_state_machine
+  ```  
 
-```cpp
-class MockState : public State {
-private:
-    bool enterCalled = false;
-    bool exitCalled = false;
-    bool updateCalled = false;
+---  
 
-public:
-    void enter() override { enterCalled = true; }
-    void exit() override { exitCalled = true; }
-    void update() override { updateCalled = true; }
-
-    bool enterWasCalled() const { return enterCalled; }
-    bool exitWasCalled() const { return exitCalled; }
-    bool updateWasCalled() const { return updateCalled; }
-};
-```
-
-## Test Structure
-
-```cpp
-void testShouldDoSpecificBehaviorWhenCondition(void) {
-    // Arrange - Set up test data and mocks
-    MockDependency mockDep;
-    ComponentUnderTest component(&mockDep);
-    
-    // Act - Execute the behavior being tested
-    component.performAction();
-    
-    // Assert - Verify expected outcomes
-    TEST_ASSERT_TRUE(mockDep.expectedMethodWasCalled());
-}
-```
-
-## Key Rules
-
-1. **One test at a time** - Complete RGR cycle before moving to next test
-2. **Red phase must be real** - Test should fail due to missing implementation, not artificial failures
-3. **Test implementations** - Focus on concrete classes, not abstract interfaces
-4. **Minimal Green** - Write just enough code to make the test pass
-5. **Refactor fearlessly** - Improve code while keeping tests green
-
-## Running Tests
-
-```bash
-# Run all tests
-pio test -e native
-
-# Run specific test suite
-pio test -e native -f test_state_machine
-```
-
-This disciplined TDD approach ensures robust, well-tested code that can be refactored with confidence.
+Follow this RGR cycle for every elementary piece of functionality in the plan. The approach guarantees **test‑first development**, full isolation from hardware via mocks, and clean OOP code that respects the app‑hardware dependency direction.

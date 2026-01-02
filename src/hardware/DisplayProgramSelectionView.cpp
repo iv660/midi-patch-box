@@ -7,6 +7,7 @@ DisplayProgramSelectionView::DisplayProgramSelectionView(int sda_pin, int scl_pi
     , isInitialized(false)
     , lastProgramNumber(-1)
     , hasProgramName(false)
+    , isHighlighted(false)
     , sdaPin(sda_pin)
     , sclPin(scl_pin)
     , i2cAddress(i2c_address)
@@ -44,6 +45,20 @@ ProgramSelectionViewInterface* DisplayProgramSelectionView::displayProgramName(c
         hasProgramName = false;
     }
     
+    updateDisplay();
+    return this;
+}
+
+ProgramSelectionViewInterface* DisplayProgramSelectionView::highlightProgram()
+{
+    isHighlighted = true;
+    updateDisplay();
+    return this;
+}
+
+ProgramSelectionViewInterface* DisplayProgramSelectionView::clearHighlight()
+{
+    isHighlighted = false;
     updateDisplay();
     return this;
 }
@@ -103,7 +118,17 @@ void DisplayProgramSelectionView::updateDisplay()
     if (hasProgramName && strlen(programName) > 0) {
         display.getTextBounds(programName, 0, 0, &x1, &y1, &w, &h);
         int labelX = (SCREEN_WIDTH - w) / 2;
-        display.setCursor(labelX, SCREEN_HEIGHT - h - 4);
+        int labelY = SCREEN_HEIGHT - h - 4;
+        
+        // If highlighted, invert the program name area
+        if (isHighlighted) {
+            display.fillRect(0, labelY - 2, SCREEN_WIDTH, h + 4, SSD1306_WHITE);
+            display.setTextColor(SSD1306_BLACK);
+        } else {
+            display.setTextColor(SSD1306_WHITE);
+        }
+        
+        display.setCursor(labelX, labelY);
         display.print(programName);
     }
     // If no program name is set, display nothing at the bottom

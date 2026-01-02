@@ -5,7 +5,11 @@
 class MockIoDriver : public IoDriverInterface {
 public:
     int digitalRead(int pin) override {
-        return pin == BUTTON_PIN ? pinState : LOW;
+        if (pin == BUTTON_PIN) return pinState;
+        if (pin == 4) return encoderPinAState;
+        if (pin == 5) return encoderPinBState;
+        if (pin == 6) return encoderButtonState;
+        return LOW;
     }
 
     void delay(unsigned long ms) override {
@@ -19,6 +23,12 @@ public:
     void setPinState(int pin, int state) {
         if (pin == BUTTON_PIN) {
             pinState = state;
+        } else if (pin == 4) {
+            encoderPinAState = state;
+        } else if (pin == 5) {
+            encoderPinBState = state;
+        } else if (pin == 6) {
+            encoderButtonState = state;
         }
     }
 
@@ -40,6 +50,9 @@ public:
 
 private:
     int pinState = HIGH; // Emulate pull-up resistor
+    int encoderPinAState = HIGH; // Encoder pin A state
+    int encoderPinBState = HIGH; // Encoder pin B state
+    int encoderButtonState = HIGH; // Encoder button state
     const int BUTTON_PIN = 2;
     unsigned long currentTime = 0;
     

@@ -46,7 +46,20 @@ void testShouldSetProgramsList(void) {
     TEST_ASSERT_EQUAL_INT(4, programSelector.getSelectedProgramNumber());
 }
 
-int main(int argc, char** argv) 
+void testShouldSelectPreviousProgram() {
+    ProgramSelector programSelector;
+    programSelector.setPrograms({0, 1, 2});
+    
+    // Move to second program first
+    programSelector.selectNextProgram();
+    TEST_ASSERT_EQUAL_INT(1, programSelector.getSelectedProgramNumber());
+    
+    // Then go back to first
+    programSelector.selectPreviousProgram();
+    TEST_ASSERT_EQUAL_INT(0, programSelector.getSelectedProgramNumber());
+}
+
+int main(int argc, char** argv)
 {
     UNITY_BEGIN();
 
@@ -54,6 +67,7 @@ int main(int argc, char** argv)
     RUN_TEST(testShouldSelectNextProgram);
     RUN_TEST(testShouldWrapAroundProgramSelection);
     RUN_TEST(testShouldSetProgramsList);
+    RUN_TEST(testShouldSelectPreviousProgram);
 
     return UNITY_END();
 }

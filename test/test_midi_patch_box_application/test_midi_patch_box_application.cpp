@@ -111,6 +111,18 @@ public:
         return this;
     }
 
+    ProgramSelectionViewInterface* highlightProgram() override
+    {
+        // Simple implementation for testing - just return this
+        return this;
+    }
+
+    ProgramSelectionViewInterface* clearHighlight() override
+    {
+        // Simple implementation for testing - just return this
+        return this;
+    }
+
     int getLastProgramNumber() const
     {
         return lastProgramNumber;

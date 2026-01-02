@@ -13,11 +13,18 @@ private:
     MidiControllerInterface* midiController = nullptr;
     ProgramSelectionViewInterface* programSelectionView = nullptr;
     ProgramsBankInterface* programsBank = nullptr;
+    int lastSentProgram = -1;
 
     bool userButtonIsPressed();
     bool rightButtonIsPressed();
+    bool encoderRotatedClockwise();
+    bool encoderRotatedCounterClockwise();
+    bool encoderButtonPressed();
     void handleNextButtonPress();
+    void handleEncoderRotation();
+    void handleEncoderButtonPress();
     void selectNextProgram();
+    void selectPreviousProgram();
     void sendSelectedProgram();
     void updateProgramSelectionView();
     bool hasProgramSelector();

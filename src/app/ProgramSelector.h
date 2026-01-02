@@ -15,6 +15,7 @@ public:
     ProgramSelector& operator=(ProgramSelector&&) = delete;
 
     void selectNextProgram() override;
+    void selectPreviousProgram() override;
     int getSelectedProgramNumber() const override;
     ProgramSelectorInterface* setPrograms(std::initializer_list<int> programs) override;
 

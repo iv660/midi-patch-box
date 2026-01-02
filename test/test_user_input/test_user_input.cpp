@@ -73,6 +73,40 @@ void testShouldHandleMissingIoDriver() {
     TEST_ASSERT_FALSE(userInput.rightButtonIsPressed());
 }
 
+// Test 7: Encoder clockwise rotation detection
+void testShouldDetectEncoderClockwiseRotation() {
+    MockIoDriver ioDriver;
+    UserInput userInput(2, 3); // Use existing constructor for now
+    userInput.setIoDriver(&ioDriver);
+    
+    // This test will fail until we implement encoder support
+    TEST_ASSERT_FALSE(userInput.encoderRotatedClockwise());
+}
+
+// Test 8: Encoder with actual rotation sequence
+void testShouldDetectEncoderRotationSequence() {
+    MockIoDriver ioDriver;
+    UserInput userInput(2, 3, 4, 5, 6); // user, right, encoderA, encoderB, encoderButton
+    userInput.setIoDriver(&ioDriver);
+    
+    // Initially no rotation detected
+    userInput.update();
+    TEST_ASSERT_FALSE(userInput.encoderRotatedClockwise());
+    
+    // Simulate clockwise rotation: A leads B in quadrature
+    ioDriver.setPinState(4, 1); // A high
+    userInput.update();
+    ioDriver.setPinState(5, 1); // B high (after A)
+    userInput.update();
+    ioDriver.setPinState(4, 0); // A low
+    userInput.update();
+    ioDriver.setPinState(5, 0); // B low
+    userInput.update();
+    
+    // Should detect clockwise rotation
+    TEST_ASSERT_TRUE(userInput.encoderRotatedClockwise());
+}
+
 int main(void) {
     UNITY_BEGIN();
     
@@ -82,6 +116,8 @@ int main(void) {
     RUN_TEST(testShouldDetectUserButtonPress);
     RUN_TEST(testShouldHandleRightButtonWhenNotSupported);
     RUN_TEST(testShouldHandleMissingIoDriver);
+    RUN_TEST(testShouldDetectEncoderClockwiseRotation);
+    RUN_TEST(testShouldDetectEncoderRotationSequence);
     
     return UNITY_END();
 }

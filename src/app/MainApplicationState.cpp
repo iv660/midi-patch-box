@@ -17,6 +17,14 @@ void MainApplicationState::update() {
     if (rightButtonIsPressed()) {
         handleNextButtonPress();
     }
+
+    if (encoderRotatedClockwise() || encoderRotatedCounterClockwise()) {
+        handleEncoderRotation();
+    }
+
+    if (encoderButtonPressed()) {
+        handleEncoderButtonPress();
+    }
 }
 
 void MainApplicationState::exit() {
@@ -39,8 +47,47 @@ bool MainApplicationState::rightButtonIsPressed() {
     return userInput->rightButtonIsPressed();
 }
 
+bool MainApplicationState::encoderRotatedClockwise() {
+    if (false == hasUserInput()) {
+        return false;
+    }
+
+    return userInput->encoderRotatedClockwise();
+}
+
+bool MainApplicationState::encoderRotatedCounterClockwise() {
+    if (false == hasUserInput()) {
+        return false;
+    }
+
+    return userInput->encoderRotatedCounterClockwise();
+}
+
+bool MainApplicationState::encoderButtonPressed() {
+    if (false == hasUserInput()) {
+        return false;
+    }
+
+    return userInput->encoderButtonPressed();
+}
+
 void MainApplicationState::handleNextButtonPress() {
     selectNextProgram();
+    sendSelectedProgram();
+    updateProgramSelectionView();
+}
+
+void MainApplicationState::handleEncoderRotation() {
+    if (encoderRotatedClockwise()) {
+        selectNextProgram();
+    } else if (encoderRotatedCounterClockwise()) {
+        selectPreviousProgram();
+    }
+    // Note: Only update view, do NOT send MIDI for encoder rotation
+    updateProgramSelectionView();
+}
+
+void MainApplicationState::handleEncoderButtonPress() {
     sendSelectedProgram();
     updateProgramSelectionView();
 }
@@ -53,6 +100,14 @@ void MainApplicationState::selectNextProgram() {
     programSelector->selectNextProgram();
 }
 
+void MainApplicationState::selectPreviousProgram() {
+    if (false == hasProgramSelector()) {
+        return;
+    }
+
+    programSelector->selectPreviousProgram();
+}
+
 void MainApplicationState::sendSelectedProgram() {
     if (false == hasMidiController()) {
         return;
@@ -60,6 +115,7 @@ void MainApplicationState::sendSelectedProgram() {
 
     int program = programSelector->getSelectedProgramNumber();
     midiController->sendProgramChange(program);
+    lastSentProgram = program;
 }
 
 void MainApplicationState::updateProgramSelectionView() {
@@ -73,6 +129,13 @@ void MainApplicationState::updateProgramSelectionView() {
     if (hasProgramsBank()) {
         const char* programName = programsBank->getProgramName(program);
         programSelectionView->displayProgramName(programName);
+    }
+    
+    // Highlight program only if it matches the last sent program
+    if (lastSentProgram != -1 && program == lastSentProgram) {
+        programSelectionView->highlightProgram();
+    } else {
+        programSelectionView->clearHighlight();
     }
 }
 

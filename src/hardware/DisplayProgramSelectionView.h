@@ -18,6 +18,8 @@ public:
 
     ProgramSelectionViewInterface* setSelectedProgramNumber(int programNumber) override;
     ProgramSelectionViewInterface* displayProgramName(const char* programName) override;
+    ProgramSelectionViewInterface* highlightProgram() override;
+    ProgramSelectionViewInterface* clearHighlight() override;
 
 private:
     static constexpr int SCREEN_WIDTH = 128;
@@ -35,6 +37,7 @@ private:
     int lastProgramNumber;
     char programName[MAX_PROGRAM_NAME_LENGTH + 1];
     bool hasProgramName;
+    bool isHighlighted;
     int sdaPin;
     int sclPin;
     uint8_t i2cAddress;

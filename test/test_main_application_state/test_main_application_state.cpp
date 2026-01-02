@@ -7,10 +7,10 @@
 #include "app/ProgramsBankInterface.h"
 #include <cstring>
 
-class MockUserInput : public UserInputInterface 
+class MockUserInput : public UserInputInterface
 {
 public:
-    bool userButtonIsPressed() override 
+    bool userButtonIsPressed() override
     {
         return userButtonPressed;
     }
@@ -20,7 +20,22 @@ public:
         return rightButtonPressed;
     }
 
-    void pressUserButton() 
+    bool encoderRotatedClockwise() override
+    {
+        return encoderClockwise;
+    }
+
+    bool encoderRotatedCounterClockwise() override
+    {
+        return encoderCounterClockwise;
+    }
+
+    bool encoderButtonPressed() override
+    {
+        return encoderButtonPress;
+    }
+
+    void pressUserButton()
     {
         userButtonPressed = true;
     }
@@ -29,8 +44,23 @@ public:
     {
         rightButtonPressed = true;
     }
+
+    void pressEncoderButton()
+    {
+        encoderButtonPress = true;
+    }
+
+    void rotateEncoderClockwise()
+    {
+        encoderClockwise = true;
+    }
     
-    void update() override 
+    void rotateCounterClockwise()
+    {
+        encoderCounterClockwise = true;
+    }
+    
+    void update() override
     {
         updateCalled = true;
     }
@@ -43,17 +73,30 @@ public:
 private:
     bool userButtonPressed = false;
     bool rightButtonPressed = false;
+    bool encoderClockwise = false;
+    bool encoderCounterClockwise = false;
+    bool encoderButtonPress = false;
     bool updateCalled = false;
 };
 
-class MockProgramSelector : public ProgramSelectorInterface 
+class MockProgramSelector : public ProgramSelectorInterface
 {
 private:
     int selectedProgram = 2;
+    bool nextProgramSelected = false;
+    bool previousProgramSelected = false;
+    
 public:
-    void selectNextProgram() override 
+    void selectNextProgram() override
     {
         selectedProgram++;
+        nextProgramSelected = true;
+    }
+
+    void selectPreviousProgram() override
+    {
+        selectedProgram--;
+        previousProgramSelected = true;
     }
 
     int getSelectedProgramNumber() const override
@@ -64,6 +107,22 @@ public:
     ProgramSelectorInterface* setPrograms(std::initializer_list<int> programs) override
     {
         return nullptr;
+    }
+
+    bool nextProgramWasSelected() const
+    {
+        return nextProgramSelected;
+    }
+
+    bool previousProgramWasSelected() const
+    {
+        return previousProgramSelected;
+    }
+
+    void reset()
+    {
+        nextProgramSelected = false;
+        previousProgramSelected = false;
     }
 };
 
@@ -93,6 +152,11 @@ public:
     {
         return isInitialized;
     }
+
+    void reset()
+    {
+        programChangeIsSent = false;
+    }
 };
 
 class MockProgramSelectionView : public ProgramSelectionViewInterface
@@ -100,6 +164,7 @@ class MockProgramSelectionView : public ProgramSelectionViewInterface
 private:
     int lastProgramNumber = -1;
     char lastProgramName[17] = "";
+    bool programHighlighted = false;
 
 public:
     ProgramSelectionViewInterface* setSelectedProgramNumber(int programNumber) override
@@ -115,6 +180,18 @@ public:
         return this;
     }
 
+    ProgramSelectionViewInterface* highlightProgram() override
+    {
+        programHighlighted = true;
+        return this;
+    }
+
+    ProgramSelectionViewInterface* clearHighlight() override
+    {
+        programHighlighted = false;
+        return this;
+    }
+
     int getLastProgramNumber() const
     {
         return lastProgramNumber;
@@ -123,6 +200,16 @@ public:
     const char* getLastProgramName() const
     {
         return lastProgramName;
+    }
+
+    bool programWasHighlighted() const
+    {
+        return programHighlighted;
+    }
+
+    void resetHighlight()
+    {
+        programHighlighted = false;
     }
 };
 
@@ -310,6 +397,125 @@ void testInitialProgramShouldBeSentOnEnter(void) {
     TEST_ASSERT_TRUE(midiController.programChangeWasSent());
 }
 
+void testEncoderClockwiseSelectsNextProgramWithoutSendingMidi(void) {
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
+
+    userInput.rotateEncoderClockwise();
+    
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
+
+    mainState.update();
+
+    // Should select next program
+    TEST_ASSERT_TRUE(programSelector.nextProgramWasSelected());
+    // But should NOT send MIDI
+    TEST_ASSERT_FALSE(midiController.programChangeWasSent());
+}
+
+void testEncoderButtonPressSendsMidi(void) {
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
+
+    userInput.pressEncoderButton();
+    
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
+
+    mainState.update();
+
+    // Should send MIDI for currently selected program
+    TEST_ASSERT_TRUE(midiController.programChangeWasSent());
+}
+
+void testViewHighlightsProgramWhenMidiSent(void) {
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
+
+    userInput.pressUserButton();
+    
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
+
+    mainState.update();
+
+    // Should highlight program when MIDI is sent
+    TEST_ASSERT_TRUE(mockView.programWasHighlighted());
+}
+
+void testEncoderCounterClockwiseSelectsPreviousProgramWithoutSendingMidi(void) {
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
+
+    userInput.rotateCounterClockwise();
+    
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
+
+    mainState.update();
+
+    // Should select previous program
+    TEST_ASSERT_TRUE(programSelector.previousProgramWasSelected());
+    // But should NOT send MIDI
+    TEST_ASSERT_FALSE(midiController.programChangeWasSent());
+}
+
+void testEncoderRotationClearsHighlightAfterMidiSent(void) {
+    MockUserInput userInput;
+    MockProgramSelector programSelector;
+    MockMidiController midiController;
+    MockProgramSelectionView mockView;
+    MockProgramsBank mockProgramsBank;
+
+    MainApplicationState mainState;
+    mainState.setUserInput(&userInput)
+             ->setProgramSelector(&programSelector)
+             ->setMidiController(&midiController)
+             ->setProgramSelectionView(&mockView)
+             ->setProgramsBank(&mockProgramsBank);
+
+    // First: send MIDI by pressing button
+    userInput.pressUserButton();
+    mainState.update();
+    TEST_ASSERT_TRUE(mockView.programWasHighlighted());
+    
+    // Then: rotate encoder (should clear highlight)
+    userInput.rotateEncoderClockwise();
+    mainState.update();
+    
+    // Highlight should be cleared (not set again)
+    TEST_ASSERT_FALSE(mockView.programWasHighlighted());
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -322,6 +528,11 @@ int main(void)
     RUN_TEST(testMainApplicationStateUpdatesViewWhenProgramChanges);
     RUN_TEST(testViewIsUpdatedWithCurrentlySelectedProgramOnEnter);
     RUN_TEST(testInitialProgramShouldBeSentOnEnter);
+    RUN_TEST(testEncoderClockwiseSelectsNextProgramWithoutSendingMidi);
+    RUN_TEST(testEncoderButtonPressSendsMidi);
+    RUN_TEST(testViewHighlightsProgramWhenMidiSent);
+    RUN_TEST(testEncoderCounterClockwiseSelectsPreviousProgramWithoutSendingMidi);
+    RUN_TEST(testEncoderRotationClearsHighlightAfterMidiSent);
 
     return UNITY_END();
 }

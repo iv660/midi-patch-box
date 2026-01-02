@@ -20,9 +20,9 @@ MidiPatchBoxApplication app;
 StateMachine stateMachine;
 
 ProgramSelector programSelector;
-UserInput userInput;
 MidiController midiController(MIDI_CHANNEL);
 ArduinoIoDriver ioDriver;
+UserInput userInput(24, 17, 27, 28, 29);
 DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
 DisplayBitmapSplashScreenView bitmapSplashView;
@@ -36,7 +36,7 @@ void setup()
     USBDevice.setManufacturerDescriptor("iv660");
     USBDevice.setProductDescriptor("MIDI Patch Box");
     USBDevice.setSerialDescriptor("0001"); // any serial number
-    
+
     // Initialize state factory with dependencies
     stateFactory.setUserInput(&userInput)
                ->setProgramSelector(&programSelector)
