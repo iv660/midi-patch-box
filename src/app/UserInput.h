@@ -4,6 +4,7 @@
 
 class IoDriverInterface; // Forward declaration
 class Button; // Forward declaration
+class EncoderInterface; // Forward declaration
 
 class UserInput: public UserInputInterface {
 private:
@@ -16,14 +17,10 @@ private:
     Button* userButton;
     Button* rightButton;
     Button* encoderButton;
-    
-    // Encoder state tracking
-    int lastEncoderA;
-    int lastEncoderB;
-    bool clockwiseRotationDetected;
-    bool counterClockwiseRotationDetected;
+    EncoderInterface* encoder;
     
     void updateEncoderRotation();
+    bool hasEncoder() const;
 
 public:
     UserInput(int userPin = 24, int rightPin = 15);
