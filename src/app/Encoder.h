@@ -23,6 +23,7 @@ private:
     void updateCurrentReadouts();
     bool aWentLow() const;
     bool bIsHigh() const;
+    bool bIsLow() const;
     void detectClockwiseRotation();
     void detectCounterClockwiseRotation();
     void keepLastReadouts();

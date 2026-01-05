@@ -29,17 +29,19 @@ void Encoder::update() {
 
     updateCurrentReadouts();
 
-    if (false == aWentLow()) {
-        keepLastReadouts();
-        return;
-    }
-
-    if (bIsHigh()) {
+    if (aWentLow() && bIsHigh()) {
         detectCounterClockwiseRotation();
         keepLastReadouts();
         return;
-    } else {
+    } 
+    
+    if (aWentLow() && bIsLow()) {
         detectClockwiseRotation();
+        keepLastReadouts();
+        return;
+    }
+    
+    if (false == aWentLow()) {
         keepLastReadouts();
         return;
     }
@@ -62,6 +64,10 @@ bool Encoder::aWentLow() const {
 
 bool Encoder::bIsHigh() const {
     return (currentEncoderB == 1);
+}
+
+bool Encoder::bIsLow() const {
+    return (currentEncoderB == 0);
 }
 
 void Encoder::detectClockwiseRotation() {
