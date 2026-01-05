@@ -3,6 +3,7 @@
 
 Encoder::Encoder() : pinA(-1), pinB(-1), ioDriver(nullptr),
                      lastEncoderA(-1), lastEncoderB(-1),
+                     currentEncoderA(-1), currentEncoderB(-1),
                      clockwiseRotationDetected(false), counterClockwiseRotationDetected(false) {
 }
 
@@ -22,27 +23,60 @@ Encoder* Encoder::setIoDriver(IoDriverInterface* driver) {
 }
 
 void Encoder::update() {
-    if (pinA < 0 || pinB < 0 || !ioDriver) {
+    if (false == isProperlyInitialized()) {
+        return;
+    }
+
+    updateCurrentReadouts();
+
+    if (false == aWentLow()) {
+        keepLastReadouts();
+        return;
+    }
+
+    if (bIsHigh()) {
+        detectCounterClockwiseRotation();
+        keepLastReadouts();
+        return;
+    } else {
+        detectClockwiseRotation();
+        keepLastReadouts();
         return;
     }
     
-    int currentA = ioDriver->digitalRead(pinA);
-    int currentB = ioDriver->digitalRead(pinB);
-    
-    // Simple edge-based detection (copied from UserInput logic)
-    if (lastEncoderA != currentA) {
-        // A pin changed
-        if (currentA == 0) { // A went LOW
-            if (currentB == 1) {
-                counterClockwiseRotationDetected = true;
-            } else {
-                clockwiseRotationDetected = true;
-            }
-        }
-    }
-    
-    lastEncoderA = currentA;
-    lastEncoderB = currentB;
+    // Should never get here
+}
+
+bool Encoder::isProperlyInitialized() const {
+    return (pinA >= 0 && pinB >= 0 && ioDriver != nullptr);
+}
+
+void Encoder::updateCurrentReadouts() {
+    currentEncoderA = ioDriver->digitalRead(pinA);
+    currentEncoderB = ioDriver->digitalRead(pinB);
+}
+
+bool Encoder::aWentLow() const {
+    return (lastEncoderA != currentEncoderA && currentEncoderA == 0);
+}
+
+bool Encoder::bIsHigh() const {
+    return (currentEncoderB == 1);
+}
+
+void Encoder::detectClockwiseRotation() {
+    clockwiseRotationDetected = true;
+    counterClockwiseRotationDetected = false;
+}
+
+void Encoder::detectCounterClockwiseRotation() {
+    counterClockwiseRotationDetected = true;
+    clockwiseRotationDetected = false;
+}
+
+void Encoder::keepLastReadouts() {
+    lastEncoderA = currentEncoderA;
+    lastEncoderB = currentEncoderB;
 }
 
 bool Encoder::rotatedClockwise() {

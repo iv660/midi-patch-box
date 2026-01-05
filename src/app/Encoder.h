@@ -13,8 +13,19 @@ private:
     // Encoder state tracking
     int lastEncoderA;
     int lastEncoderB;
+    int currentEncoderA;
+    int currentEncoderB;
     bool clockwiseRotationDetected;
     bool counterClockwiseRotationDetected;
+    
+    // Private helper methods for refactored update()
+    bool isProperlyInitialized() const;
+    void updateCurrentReadouts();
+    bool aWentLow() const;
+    bool bIsHigh() const;
+    void detectClockwiseRotation();
+    void detectCounterClockwiseRotation();
+    void keepLastReadouts();
 
 public:
     Encoder();
