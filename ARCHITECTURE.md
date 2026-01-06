@@ -2,7 +2,7 @@
 
 ## Overview
 
-MIDI Patch Box is a programmable MIDI controller built on the RP2040 microcontroller platform. The project implements a clean, modular architecture with strict separation of concerns, enabling reliable MIDI program selection through hardware buttons and rotary encoder input.
+MIDI Patch Box is a programmable USB MIDI controller built on the RP2040 microcontroller platform. The project implements a clean, modular architecture with strict separation of concerns, enabling reliable MIDI program selection through hardware buttons and rotary encoder input.
 
 The architecture follows modern C++ design principles with interface-based abstraction, dependency injection, and comprehensive unit testing using the Test-Driven Development (TDD) approach.
 
@@ -230,11 +230,14 @@ The test layer provides comprehensive unit testing infrastructure with mock obje
 
 ```mermaid
 graph LR
-    APP[MidiPatchBoxApplication] --> UII[UserInputInterface]
+    APP[MidiPatchBoxApplication] --> SM[StateMachine]
+    APP --> UII[UserInputInterface]
     APP --> PSI[ProgramSelectorInterface]
     APP --> MCI[MidiControllerInterface]
     APP --> PSVI[ProgramSelectionViewInterface]
     
+    SM -.-> SPS[SplashScreenState]
+    SM -.-> MAS[MainApplicationState]
     UII -.-> UI[UserInput]
     PSI -.-> PS[ProgramSelector]
     MCI -.-> MC[MidiController]
@@ -261,6 +264,8 @@ graph LR
 
 **Purpose**: Provides debounced button state management with configurable timing thresholds.
 
+**Interface**: Implements [`ButtonInterface`](src/app/ButtonInterface.h)
+
 **Interface Used**: [`IoDriverInterface`](src/app/IoDriverInterface.h) - For GPIO operations
 
 **Key Features**:
@@ -275,19 +280,19 @@ graph LR
 
 ### UserInput
 
-**Purpose**: Application-layer component that coordinates user button inputs through hardware abstraction.
+**Purpose**: Application-layer component that coordinates user input from buttons and encoder through interface abstraction.
 
 **Interface**: Implements [`UserInputInterface`](src/app/UserInputInterface.h)
 
 **Key Features**:
-- Manages multiple button inputs (user button and right button)
-- Configurable pin assignments (default: user=24, right=15)
-- Hardware abstraction through [`IoDriverInterface`](src/app/IoDriverInterface.h)
-- Automatic button lifecycle management
+- Manages multiple button inputs (user button, right button, encoder button)
+- Manages rotary encoder input
+- Hardware abstraction through interface dependencies
+- Configurable with ready-made control element instances
 
-**Dependencies**: [`IoDriverInterface`](src/app/IoDriverInterface.h), [`Button`](src/app/Button.h)
+**Dependencies**: [`ButtonInterface`](src/app/ButtonInterface.h), [`EncoderInterface`](src/app/EncoderInterface.h)
 
-**Testing**: Comprehensive unit tests with [`MockIoDriver`](test/mocks/MockIoDriver.h)
+**Testing**: Comprehensive unit tests with [`MockButton`](test/mocks/MockButton.h) and [`MockEncoder`](test/mocks/MockEncoder.h)
 
 ### StateMachine
 
@@ -666,13 +671,27 @@ graph TB
 ```
 test/
 ├── mocks/
-│   └── MockIoDriver.h              # GPIO operations mock
+│   ├── MockIoDriver.h              # GPIO operations mock
+│   ├── MockButton.h                # Button interface mock
+│   └── MockEncoder.h               # Encoder interface mock
 ├── test_button/
 │   └── test_button.cpp             # Button logic tests
+├── test_encoder/
+│   └── test_encoder.cpp            # Encoder logic tests
 ├── test_program_selector/
 │   └── test_program_selector.cpp   # Program selection tests
+├── test_programs_bank/
+│   └── test_programs_bank.cpp      # Program name storage tests
 ├── test_user_input/
 │   └── test_user_input.cpp         # User input coordination tests
+├── test_state_machine/
+│   └── test_state_machine.cpp      # State machine tests
+├── test_splash_screen_state/
+│   └── test_splash_screen_state.cpp # Splash screen state tests
+├── test_main_application_state/
+│   └── test_main_application_state.cpp # Main application state tests
+├── test_splash_screen_view/
+│   └── test_splash_screen_view.cpp  # Splash screen view tests
 └── test_midi_patch_box_application/
     └── test_midi_patch_box_application.cpp  # Main app tests
 ```
@@ -680,9 +699,11 @@ test/
 ### Testing Scope
 
 - **Unit Tests**: Application layer components (100% coverage goal)
-- **Integration Tests**: Component interaction verification
-- **Manual Tests**: Hardware layer functionality
-- **System Tests**: End-to-end MIDI functionality
+- **Integration Tests**: Component interaction verification (manual testing)
+- **Manual Tests**: Hardware layer functionality and system integration
+- **System Tests**: End-to-end MIDI functionality (manual testing)
+
+**Note**: System and integration testing is performed manually due to hardware dependencies and real-time MIDI communication requirements.
 
 ## Build and Development
 
