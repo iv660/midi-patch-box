@@ -699,9 +699,7 @@ test/
 ### Testing Scope
 
 - **Unit Tests**: Application layer components (100% coverage goal)
-- **Integration Tests**: Component interaction verification (manual testing)
 - **Manual Tests**: Hardware layer functionality and system integration
-- **System Tests**: End-to-end MIDI functionality (manual testing)
 
 **Note**: System and integration testing is performed manually due to hardware dependencies and real-time MIDI communication requirements.
 
