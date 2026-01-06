@@ -1,8 +1,9 @@
 #pragma once
 
 #include "IoDriverInterface.h"
+#include "ButtonInterface.h"
 
-class Button {
+class Button : public ButtonInterface {
 public:
     Button(int buttonPin);
     virtual ~Button() = default;

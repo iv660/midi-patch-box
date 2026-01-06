@@ -2,31 +2,26 @@
 
 #include "UserInputInterface.h"
 
-class IoDriverInterface; // Forward declaration
-class Button; // Forward declaration
+class ButtonInterface; // Forward declaration
 class EncoderInterface; // Forward declaration
 
 class UserInput: public UserInputInterface {
 private:
-    int userPin;
-    int rightPin;
-    int encoderPinA;
-    int encoderPinB;
-    int encoderButtonPin;
-    IoDriverInterface* ioDriver;
-    Button* userButton;
-    Button* rightButton;
-    Button* encoderButton;
+    ButtonInterface* userButton;
+    ButtonInterface* rightButton;
+    ButtonInterface* encoderButton;
     EncoderInterface* encoder;
     
     void updateEncoderRotation();
     bool hasEncoder() const;
 
 public:
-    UserInput(int userPin = 24, int rightPin = 15);
-    UserInput(int userPin, int rightPin, int encoderPinA, int encoderPinB, int encoderButtonPin);
+    UserInput();
     ~UserInput();
-    UserInput* setIoDriver(IoDriverInterface* driver);
+    UserInput* setUserButton(ButtonInterface* button);
+    UserInput* setRightButton(ButtonInterface* button);
+    UserInput* setEncoderButton(ButtonInterface* button);
+    UserInput* setEncoder(EncoderInterface* encoder);
     void update() override;
     bool userButtonIsPressed() override;
     bool rightButtonIsPressed() override;

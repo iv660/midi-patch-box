@@ -3,6 +3,8 @@
 #include "app/MidiPatchBoxApplication.h"
 #include "app/ProgramSelector.h"
 #include "app/UserInput.h"
+#include "app/Button.h"
+#include "app/Encoder.h"
 #include "app/StateMachine.h"
 #include "app/SplashScreenState.h"
 #include "app/MainApplicationStateFactory.h"
@@ -22,7 +24,14 @@ StateMachine stateMachine;
 ProgramSelector programSelector;
 MidiController midiController(MIDI_CHANNEL);
 ArduinoIoDriver ioDriver;
-UserInput userInput(24, 17, 27, 28, 29);
+
+// Create button and encoder instances
+Button userButton(24);
+Button rightButton(17);
+Button encoderButton(29);
+Encoder encoder;
+UserInput userInput;
+
 DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
 DisplayBitmapSplashScreenView bitmapSplashView;
@@ -51,7 +60,17 @@ void setup()
     
     programSelector.setPrograms({0, 41, 112});
     
-    userInput.setIoDriver(&ioDriver);
+    // Configure hardware components
+    userButton.setIoDriver(&ioDriver);
+    rightButton.setIoDriver(&ioDriver);
+    encoderButton.setIoDriver(&ioDriver);
+    encoder.setPinA(27)->setPinB(28)->setIoDriver(&ioDriver);
+    
+    // Configure UserInput with dependency injection
+    userInput.setUserButton(&userButton)
+             ->setRightButton(&rightButton)
+             ->setEncoderButton(&encoderButton)
+             ->setEncoder(&encoder);
 
     app.setProgramSelector(&programSelector)
         ->setUserInput(&userInput)

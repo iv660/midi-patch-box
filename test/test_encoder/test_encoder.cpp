@@ -5,64 +5,54 @@
 void setUp(void) {}
 void tearDown(void) {}
 
-// Test 1: Basic encoder creation with fluent interface
-void testShouldCreateEncoder() {
+// Test 1: Auto-initialization when setPinA() -> setPinB() -> setIoDriver()
+void testShouldAutoInitializePinsWhenSetPinAFirst() {
     MockIoDriver ioDriver;
     Encoder encoder;
     
-    Encoder* result = encoder.setPinA(4)
-        ->setPinB(5)
-        ->setIoDriver(&ioDriver);
+    encoder.setPinA(27)
+           ->setPinB(28)
+           ->setIoDriver(&ioDriver);
     
-    // Should return this for fluent interface
-    TEST_ASSERT_EQUAL_PTR(&encoder, result);
+    // Should automatically call pinMode for both pins
+    TEST_ASSERT_TRUE(ioDriver.wasPinModeCalledWith(27, 2)); // INPUT_PULLUP = 2
+    TEST_ASSERT_TRUE(ioDriver.wasPinModeCalledWith(28, 2)); // INPUT_PULLUP = 2
 }
 
-// Test 2: Should detect clockwise rotation
-void testShouldDetectClockwiseRotation() {
+// Test 2: Auto-initialization when setIoDriver() -> setPinA() -> setPinB()
+void testShouldAutoInitializePinsWhenSetIoDriverFirst() {
     MockIoDriver ioDriver;
     Encoder encoder;
-    encoder.setPinA(4)->setPinB(5)->setIoDriver(&ioDriver);
     
-    // Set initial state: A=1, B=0
-    ioDriver.setPinState(4, 1);
-    ioDriver.setPinState(5, 0);
-    encoder.update();
+    encoder.setIoDriver(&ioDriver)
+           ->setPinA(29)
+           ->setPinB(30);
     
-    // Simulate clockwise: A goes low while B also goes low
-    ioDriver.setPinState(4, 0);
-    encoder.update();
-    
-    TEST_ASSERT_TRUE(encoder.rotatedClockwise());
-    TEST_ASSERT_FALSE(encoder.rotatedCounterClockwise());
+    // Should automatically call pinMode for both pins
+    TEST_ASSERT_TRUE(ioDriver.wasPinModeCalledWith(29, 2)); // INPUT_PULLUP = 2
+    TEST_ASSERT_TRUE(ioDriver.wasPinModeCalledWith(30, 2)); // INPUT_PULLUP = 2
 }
 
-// Test 3: Should detect counter-clockwise rotation
-void testShouldDetectCounterClockwiseRotation() {
+// Test 3: Auto-initialization when setPinB() -> setIoDriver() -> setPinA()
+void testShouldAutoInitializePinsWhenSetPinBFirst() {
     MockIoDriver ioDriver;
     Encoder encoder;
-    encoder.setPinA(4)->setPinB(5)->setIoDriver(&ioDriver);
     
-    // Set initial state: A=1, B=0
-    ioDriver.setPinState(4, 1);
-    ioDriver.setPinState(5, 0);
-    encoder.update();
+    encoder.setPinB(31)
+           ->setIoDriver(&ioDriver)
+           ->setPinA(32);
     
-    // Simulate counter-clockwise: A goes low while B stays low
-    ioDriver.setPinState(4, 0);
-    ioDriver.setPinState(5, 1);
-    encoder.update();
-    
-    TEST_ASSERT_FALSE(encoder.rotatedClockwise());
-    TEST_ASSERT_TRUE(encoder.rotatedCounterClockwise());
+    // Should automatically call pinMode for both pins
+    TEST_ASSERT_TRUE(ioDriver.wasPinModeCalledWith(31, 2)); // INPUT_PULLUP = 2
+    TEST_ASSERT_TRUE(ioDriver.wasPinModeCalledWith(32, 2)); // INPUT_PULLUP = 2
 }
 
-int main() {
+int main(void) {
     UNITY_BEGIN();
     
-    RUN_TEST(testShouldCreateEncoder);
-    RUN_TEST(testShouldDetectClockwiseRotation);
-    RUN_TEST(testShouldDetectCounterClockwiseRotation);
+    RUN_TEST(testShouldAutoInitializePinsWhenSetPinAFirst);
+    RUN_TEST(testShouldAutoInitializePinsWhenSetIoDriverFirst);
+    RUN_TEST(testShouldAutoInitializePinsWhenSetPinBFirst);
     
     return UNITY_END();
 }

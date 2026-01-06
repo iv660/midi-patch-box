@@ -1,50 +1,31 @@
 #include "UserInput.h"
-#include "Button.h"
-#include "Encoder.h"
+#include "ButtonInterface.h"
+#include "EncoderInterface.h"
 
-UserInput::UserInput(int userPin, int rightPin)
-    : userPin(userPin), rightPin(rightPin), encoderPinA(-1), encoderPinB(-1), encoderButtonPin(-1), ioDriver(nullptr) {
-    userButton = new Button(userPin);
-    rightButton = new Button(rightPin);
-    encoderButton = nullptr;
-    encoder = nullptr;
-}
-
-UserInput::UserInput(int userPin, int rightPin, int encoderPinA, int encoderPinB, int encoderButtonPin)
-    : userPin(userPin), rightPin(rightPin), encoderPinA(encoderPinA), encoderPinB(encoderPinB), encoderButtonPin(encoderButtonPin), ioDriver(nullptr) {
-    userButton = new Button(userPin);
-    rightButton = new Button(rightPin);
-    encoderButton = new Button(encoderButtonPin);
-    encoder = new Encoder();
+UserInput::UserInput() : userButton(nullptr), rightButton(nullptr), encoderButton(nullptr), encoder(nullptr) {
 }
 
 UserInput::~UserInput() {
-    delete userButton;
-    delete rightButton;
-    delete encoderButton;
-    delete encoder;
+    // Don't delete injected dependencies - they are owned by the client
 }
 
-UserInput* UserInput::setIoDriver(IoDriverInterface* driver) {
-    this->ioDriver = driver;
-    if (userButton) {
-        userButton->setIoDriver(driver);
-    }
-    if (rightButton) {
-        rightButton->setIoDriver(driver);
-    }
-    if (encoderButton) {
-        encoderButton->setIoDriver(driver);
-    }
-    
-    // Configure encoder if present
-    if (encoder && encoderPinA >= 0 && encoderPinB >= 0 && driver) {
-        Encoder* concreteEncoder = static_cast<Encoder*>(encoder);
-        concreteEncoder->setPinA(encoderPinA)->setPinB(encoderPinB)->setIoDriver(driver);
-        driver->pinMode(encoderPinA, 2); // INPUT_PULLUP = 2
-        driver->pinMode(encoderPinB, 2); // INPUT_PULLUP = 2
-    }
-    
+UserInput* UserInput::setUserButton(ButtonInterface* button) {
+    this->userButton = button;
+    return this;
+}
+
+UserInput* UserInput::setRightButton(ButtonInterface* button) {
+    this->rightButton = button;
+    return this;
+}
+
+UserInput* UserInput::setEncoderButton(ButtonInterface* button) {
+    this->encoderButton = button;
+    return this;
+}
+
+UserInput* UserInput::setEncoder(EncoderInterface* encoder) {
+    this->encoder = encoder;
     return this;
 }
 
@@ -59,9 +40,8 @@ void UserInput::update() {
         encoderButton->update();
     }
     
-    // Process encoder rotation if encoder pins are configured
-    if (encoderPinA >= 0 && encoderPinB >= 0 && ioDriver) {
-        updateEncoderRotation();
+    if (hasEncoder()) {
+        encoder->update();
     }
 }
 
@@ -84,11 +64,17 @@ bool UserInput::hasEncoder() const {
 }
 
 bool UserInput::encoderRotatedClockwise() {
-    return hasEncoder() ? encoder->rotatedClockwise() : false;
+    if (!hasEncoder()) {
+        return false;
+    }
+    return encoder->rotatedClockwise();
 }
 
 bool UserInput::encoderRotatedCounterClockwise() {
-    return hasEncoder() ? encoder->rotatedCounterClockwise() : false;
+    if (!hasEncoder()) {
+        return false;
+    }
+    return encoder->rotatedCounterClockwise();
 }
 
 bool UserInput::encoderButtonPressed() {

@@ -1,28 +1,40 @@
 #include <unity.h>
 #include "app/UserInput.h"
+#include "app/Button.h"
+#include "app/Encoder.h"
 #include "mocks/MockIoDriver.h"
+#include "mocks/MockButton.h"
+#include "mocks/MockEncoder.h"
 
 void setUp(void) {}
 void tearDown(void) {}
 
 // Test 1: Basic initialization with default pins
 void testShouldCreateUserInputWithDefaultPins() {
-    UserInput userInput; // Default pins: user=24, right=25
+    UserInput userInput;
     TEST_ASSERT_NOT_NULL(&userInput);
 }
 
-// Test 2: Custom pins initialization
+// Test 2: Custom pins initialization - now tests fluent interface
 void testShouldCreateUserInputWithCustomPins() {
-    UserInput userInput(10, 11); // Custom pins
+    MockButton userButton;
+    MockButton rightButton;
+    
+    UserInput userInput;
+    userInput.setUserButton(&userButton)
+             ->setRightButton(&rightButton);
+    
     TEST_ASSERT_NOT_NULL(&userInput);
 }
 
-// Test 3: Dependency injection with fluent interface
+// Test 3: Dependency injection with fluent interface - updated for new API
 void testShouldAcceptIoDriver() {
-    MockIoDriver ioDriver;
-    UserInput userInput(24, 25);
+    MockButton userButton;
+    MockButton rightButton;
     
-    UserInput* result = userInput.setIoDriver(&ioDriver);
+    UserInput userInput;
+    UserInput* result = userInput.setUserButton(&userButton)
+                                ->setRightButton(&rightButton);
     
     // Should return this for fluent interface
     TEST_ASSERT_EQUAL_PTR(&userInput, result);
@@ -31,8 +43,14 @@ void testShouldAcceptIoDriver() {
 // Test 4: User button press detection via Button composition
 void testShouldDetectUserButtonPress() {
     MockIoDriver ioDriver;
-    UserInput userInput(2, 3); // Use pin 2 (MockIoDriver supports pin 2)
-    userInput.setIoDriver(&ioDriver);
+    Button userButton(2);  // Use pin 2 (MockIoDriver supports pin 2)
+    Button rightButton(3);
+    userButton.setIoDriver(&ioDriver);
+    rightButton.setIoDriver(&ioDriver);
+    
+    UserInput userInput;
+    userInput.setUserButton(&userButton)
+             ->setRightButton(&rightButton);
     
     // Simulate press on pin 2 (user button)
     ioDriver.setPinState(2, 0);  // Press (LOW)
@@ -52,8 +70,14 @@ void testShouldDetectUserButtonPress() {
 // Test 5: Right button limitation with MockIoDriver
 void testShouldHandleRightButtonWhenNotSupported() {
     MockIoDriver ioDriver;
-    UserInput userInput(2, 3); // Pin 3 not supported by MockIoDriver
-    userInput.setIoDriver(&ioDriver);
+    Button userButton(2);  // Pin 2 supported by MockIoDriver
+    Button rightButton(3); // Pin 3 not supported by MockIoDriver
+    userButton.setIoDriver(&ioDriver);
+    rightButton.setIoDriver(&ioDriver);
+    
+    UserInput userInput;
+    userInput.setUserButton(&userButton)
+             ->setRightButton(&rightButton);
     
     userInput.update();
     
@@ -62,10 +86,10 @@ void testShouldHandleRightButtonWhenNotSupported() {
     TEST_ASSERT_FALSE(userInput.userButtonIsPressed()); // User button also not pressed
 }
 
-// Test 6: Graceful degradation without IoDriver
+// Test 6: Graceful degradation without buttons
 void testShouldHandleMissingIoDriver() {
-    UserInput userInput(24, 25);
-    // Don't set IoDriver
+    UserInput userInput;
+    // Don't set any buttons
     
     userInput.update(); // Should not crash
     
@@ -75,19 +99,32 @@ void testShouldHandleMissingIoDriver() {
 
 // Test 7: Encoder clockwise rotation detection
 void testShouldDetectEncoderClockwiseRotation() {
-    MockIoDriver ioDriver;
-    UserInput userInput(2, 3); // Use existing constructor for now
-    userInput.setIoDriver(&ioDriver);
+    MockEncoder encoder;
     
-    // This test will fail until we implement encoder support
+    UserInput userInput;
+    userInput.setEncoder(&encoder);
+    
     TEST_ASSERT_FALSE(userInput.encoderRotatedClockwise());
 }
 
 // Test 8: Encoder with actual rotation sequence
 void testShouldDetectEncoderRotationSequence() {
     MockIoDriver ioDriver;
-    UserInput userInput(2, 3, 4, 5, 6); // user, right, encoderA, encoderB, encoderButton
-    userInput.setIoDriver(&ioDriver);
+    Button userButton(2);
+    Button rightButton(3);
+    Button encoderButton(6);
+    Encoder encoder;
+    
+    userButton.setIoDriver(&ioDriver);
+    rightButton.setIoDriver(&ioDriver);
+    encoderButton.setIoDriver(&ioDriver);
+    encoder.setPinA(4)->setPinB(5)->setIoDriver(&ioDriver);
+    
+    UserInput userInput;
+    userInput.setUserButton(&userButton)
+             ->setRightButton(&rightButton)
+             ->setEncoderButton(&encoderButton)
+             ->setEncoder(&encoder);
     
     // Set initial state (A high, B low - matches lastEncoderA=1 initialization)
     ioDriver.setPinState(4, 1); // A high
@@ -103,6 +140,40 @@ void testShouldDetectEncoderRotationSequence() {
     TEST_ASSERT_TRUE(userInput.encoderRotatedClockwise());
 }
 
+void testShouldInitilizeUsingFluentSetters(void) {
+    MockButton userButton;
+    MockButton rightButton;
+    MockButton encoderButton;
+    MockEncoder encoder;
+
+    UserInput userInput;
+
+    userInput.setUserButton(&userButton)
+        ->setRightButton(&rightButton)
+        ->setEncoderButton(&encoderButton)
+        ->setEncoder(&encoder);
+
+    userButton.press();
+    userInput.update();
+    TEST_ASSERT_TRUE(userInput.userButtonIsPressed());
+
+    rightButton.press();
+    userInput.update();
+    TEST_ASSERT_TRUE(userInput.rightButtonIsPressed());
+
+    encoder.rotateClockwise();
+    userInput.update();
+    TEST_ASSERT_TRUE(userInput.encoderRotatedClockwise());
+
+    encoder.rotateCounterClockwise();
+    userInput.update();
+    TEST_ASSERT_TRUE(userInput.encoderRotatedCounterClockwise());
+
+    encoderButton.press();
+    userInput.update();
+    TEST_ASSERT_TRUE(userInput.encoderButtonPressed()); 
+}
+
 int main(void) {
     UNITY_BEGIN();
     
@@ -114,6 +185,7 @@ int main(void) {
     RUN_TEST(testShouldHandleMissingIoDriver);
     RUN_TEST(testShouldDetectEncoderClockwiseRotation);
     RUN_TEST(testShouldDetectEncoderRotationSequence);
+    RUN_TEST(testShouldInitilizeUsingFluentSetters);
     
     return UNITY_END();
 }

@@ -9,16 +9,39 @@ Encoder::Encoder() : pinA(-1), pinB(-1), ioDriver(nullptr),
 
 Encoder* Encoder::setPinA(int pin) {
     this->pinA = pin;
+    
+    // Auto-initialize pin if ioDriver is already set
+    if (ioDriver != nullptr && pin >= 0) {
+        ioDriver->pinMode(pin, 2); // INPUT_PULLUP = 2
+    }
+    
     return this;
 }
 
 Encoder* Encoder::setPinB(int pin) {
     this->pinB = pin;
+    
+    // Auto-initialize pin if ioDriver is already set
+    if (ioDriver != nullptr && pin >= 0) {
+        ioDriver->pinMode(pin, 2); // INPUT_PULLUP = 2
+    }
+    
     return this;
 }
 
 Encoder* Encoder::setIoDriver(IoDriverInterface* driver) {
     this->ioDriver = driver;
+    
+    // Auto-initialize pins if they are already set
+    if (driver != nullptr) {
+        if (pinA >= 0) {
+            driver->pinMode(pinA, 2); // INPUT_PULLUP = 2
+        }
+        if (pinB >= 0) {
+            driver->pinMode(pinB, 2); // INPUT_PULLUP = 2
+        }
+    }
+    
     return this;
 }
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "app/IoDriverInterface.h"
+#include <vector>
+#include <utility>
 
 class MockIoDriver : public IoDriverInterface {
 public:
@@ -40,12 +42,21 @@ public:
         pinModeWasCalled = true;
         lastPinModePin = pin;
         lastPinModeMode = mode;
+        pinModeCalls.push_back(std::make_pair(pin, mode));
     }
 
     bool wasPinModeCalledWith(int pin, int mode) {
-        return pinModeWasCalled &&
-               lastPinModePin == pin &&
-               lastPinModeMode == mode;
+        for (const auto& call : pinModeCalls) {
+            if (call.first == pin && call.second == mode) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void clearPinModeCalls() {
+        pinModeCalls.clear();
+        pinModeWasCalled = false;
     }
 
 private:
@@ -59,6 +70,7 @@ private:
     bool pinModeWasCalled = false;
     int lastPinModePin = -1;
     int lastPinModeMode = -1;
+    std::vector<std::pair<int, int>> pinModeCalls; // Track all pinMode calls
     
     static const int HIGH = 1;
     static const int LOW = 0;
