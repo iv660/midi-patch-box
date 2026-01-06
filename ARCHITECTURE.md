@@ -22,16 +22,25 @@ The architecture follows modern C++ design principles with interface-based abstr
 2. **Interface-Based Design**: All cross-layer communication happens through abstract interfaces
 3. **Dependency Injection**: Components receive their dependencies through setter methods
 4. **Mock-Based Testing**: Hardware dependencies are mocked for isolated unit testing
+5. **State Machine Pattern**: Application flow managed through discrete states with clear transitions
+6. **Factory Pattern**: State creation abstracted through factory interfaces for flexible instantiation
 
 ## System Architecture
 
 ```mermaid
-graph TB
+graph LR
     subgraph "Application Layer (src/app/)"
         APP[MidiPatchBoxApplication]
+        SM[StateMachine]
+        SPS[SplashScreenState]
+        MAS[MainApplicationState]
         PS[ProgramSelector]
+        PB[ProgramsBank]
         BTN[Button]
+        ENC[Encoder]
         UI[UserInput]
+        SF[StateFactory]
+        MASF[MainApplicationStateFactory]
         
         subgraph "Interfaces"
             UII[UserInputInterface]
@@ -39,6 +48,13 @@ graph TB
             MCI[MidiControllerInterface]
             IOI[IoDriverInterface]
             PSVI[ProgramSelectionViewInterface]
+            SSVI[SplashScreenViewInterface]
+            PBI[ProgramsBankInterface]
+            SI[StateInterface]
+            SMI[StateMachineInterface]
+            SFI[StateFactoryInterface]
+            EI[EncoderInterface]
+            BI[ButtonInterface]
         end
     end
     
@@ -46,42 +62,79 @@ graph TB
         MC[MidiController]
         AIO[ArduinoIoDriver]
         DPSV[DisplayProgramSelectionView]
+        DSSV[DisplaySplashScreenView]
+        DBSSV[DisplayBitmapSplashScreenView]
     end
     
     subgraph "Test Layer (test/)"
         TESTS[Unit Tests]
         MOCKS[Mock Objects]
         MOCKIO[MockIoDriver]
+        MOCKBTN[MockButton]
+        MOCKENC[MockEncoder]
     end
     
     subgraph "External Dependencies"
         ARDUINO[Arduino Framework]
         TINYUSB[Adafruit TinyUSB]
         UNITY[Unity Test Framework]
+        ADAFRUIT[Adafruit GFX/SSD1306]
     end
     
+    APP --> SM
     APP --> UII
     APP --> PSI
     APP --> MCI
     APP --> PSVI
+    SM --> SMI
+    SM --> SI
+    SPS --> SI
+    SPS --> SSVI
+    SPS --> IOI
+    SPS --> SFI
+    MAS --> SI
+    MAS --> UII
+    MAS --> PSI
+    MAS --> MCI
+    MAS --> PSVI
+    MAS --> PBI
     UI --> UII
-    UI --> IOI
+    UI --> BI
+    UI --> EI
+    BTN --> BI
     BTN --> IOI
+    ENC --> EI
+    ENC --> IOI
     PS --> PSI
+    PB --> PBI
+    SF --> SFI
+    MASF --> SFI
     
     MC -.-> MCI
     AIO -.-> IOI
     DPSV -.-> PSVI
+    DSSV -.-> SSVI
+    DBSSV -.-> SSVI
     
     TESTS --> MOCKS
     TESTS --> MOCKIO
+    TESTS --> MOCKBTN
+    TESTS --> MOCKENC
     TESTS --> APP
+    TESTS --> SM
+    TESTS --> SPS
+    TESTS --> MAS
     TESTS --> PS
+    TESTS --> PB
     TESTS --> BTN
+    TESTS --> ENC
     TESTS --> UI
     
     AIO --> ARDUINO
     MC --> TINYUSB
+    DPSV --> ADAFRUIT
+    DSSV --> ADAFRUIT
+    DBSSV --> ADAFRUIT
     TESTS --> UNITY
     
     classDef appLayer fill:#e1f5fe
@@ -89,10 +142,10 @@ graph TB
     classDef testLayer fill:#e8f5e8
     classDef external fill:#fff3e0
     
-    class APP,PS,BTN,UI,UII,PSI,MCI,IOI,PSVI appLayer
-    class MC,AIO,DPSV hardwareLayer
-    class TESTS,MOCKS,MOCKIO testLayer
-    class ARDUINO,TINYUSB,UNITY external
+    class APP,SM,SPS,MAS,PS,PB,BTN,ENC,UI,SF,MASF,UII,PSI,MCI,IOI,PSVI,SSVI,PBI,SI,SMI,SFI,EI,BI appLayer
+    class MC,AIO,DPSV,DSSV,DBSSV hardwareLayer
+    class TESTS,MOCKS,MOCKIO,MOCKBTN,MOCKENC testLayer
+    class ARDUINO,TINYUSB,UNITY,ADAFRUIT external
 ```
 
 ## Layers
@@ -109,9 +162,16 @@ The application layer contains the core business logic and is designed to be pla
 
 **Components:**
 - [`MidiPatchBoxApplication`](src/app/MidiPatchBoxApplication.h) - Main application coordinator
+- [`StateMachine`](src/app/StateMachine.h) - State management and transitions
+- [`SplashScreenState`](src/app/SplashScreenState.h) - Initial application state with splash screen
+- [`MainApplicationState`](src/app/MainApplicationState.h) - Main operational state handling user input
 - [`ProgramSelector`](src/app/ProgramSelector.h) - Program list management and selection logic
+- [`ProgramsBank`](src/app/ProgramsBank.h) - Program name management
 - [`UserInput`](src/app/UserInput.h) - User input coordination and button management
 - [`Button`](src/app/Button.h) - Button state management with debouncing
+- [`Encoder`](src/app/Encoder.h) - Rotary encoder input handling
+- [`StateFactory`](src/app/StateFactory.h) - Abstract factory for state creation
+- [`MainApplicationStateFactory`](src/app/MainApplicationStateFactory.h) - Concrete factory for main state
 - Abstract interfaces for hardware abstraction
 
 ### Hardware Layer (`src/hardware/`)
@@ -128,6 +188,8 @@ The hardware layer provides concrete implementations of the application interfac
 - [`MidiController`](src/hardware/MidiController.h) - USB MIDI communication via Adafruit TinyUSB
 - [`ArduinoIoDriver`](src/hardware/ArduinoIoDriver.h) - Arduino-specific I/O operations implementation
 - [`DisplayProgramSelectionView`](src/hardware/DisplayProgramSelectionView.h) - Visual program selection feedback via display
+- [`DisplaySplashScreenView`](src/hardware/DisplaySplashScreenView.h) - Text-based splash screen display
+- [`DisplayBitmapSplashScreenView`](src/hardware/DisplayBitmapSplashScreenView.h) - Bitmap-based splash screen display
 
 ### Test Layer (`test/`)
 
@@ -140,8 +202,8 @@ The test layer provides comprehensive unit testing infrastructure with mock obje
 - TDD workflow support
 
 **Structure:**
-- `test/mocks/` - Centralized mock object definitions ([`MockIoDriver`](test/mocks/MockIoDriver.h))
-- `test/test_*/` - Component-specific test suites (application, program_selector, button, user_input)
+- `test/mocks/` - Centralized mock object definitions ([`MockIoDriver`](test/mocks/MockIoDriver.h), [`MockButton`](test/mocks/MockButton.h), [`MockEncoder`](test/mocks/MockEncoder.h))
+- `test/test_*/` - Component-specific test suites (application, state_machine, splash_screen_state, main_application_state, program_selector, programs_bank, button, encoder, user_input)
 - Native platform execution for fast feedback
 
 ## Core Components
@@ -155,13 +217,12 @@ The test layer provides comprehensive unit testing infrastructure with mock obje
 - [`ProgramSelectorInterface`](src/app/ProgramSelectorInterface.h) - For program management
 - [`MidiControllerInterface`](src/app/MidiControllerInterface.h) - For MIDI communication
 - [`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h) - For displaying program selection
+- [`StateMachine`](src/app/StateMachine.h) - For application state management
 
 **Key Responsibilities**:
-- Coordinate component interactions
-- Handle user input events
-- Trigger MIDI program changes
-- Update program selection display
-- Manage application lifecycle
+- Coordinate component interactions through dependency injection
+- Manage application lifecycle (begin/tick)
+- Provide centralized component access
 
 **Dependencies**: Receives all dependencies through fluent setter methods
 
@@ -228,6 +289,87 @@ graph LR
 
 **Testing**: Comprehensive unit tests with [`MockIoDriver`](test/mocks/MockIoDriver.h)
 
+### StateMachine
+
+**Purpose**: Manages application states and handles transitions between different operational modes.
+
+**Interface**: Implements [`StateMachineInterface`](src/app/StateMachineInterface.h)
+
+**Key Features**:
+- State lifecycle management (enter/update/exit)
+- Automatic state cleanup and memory management
+- Template-based state transitions
+- State machine reference injection into states
+
+**Dependencies**: Manages [`StateInterface`](src/app/StateInterface.h) implementations
+
+**Testing**: Unit tested with mock states for transition verification
+
+### SplashScreenState
+
+**Purpose**: Initial application state that displays splash screen for a configured duration before transitioning to main application.
+
+**Interface**: Implements [`StateInterface`](src/app/StateInterface.h)
+
+**Key Features**:
+- 2-second splash screen duration
+- Automatic transition to [`MainApplicationState`](src/app/MainApplicationState.h)
+- Factory-based state creation
+- Display abstraction through [`SplashScreenViewInterface`](src/app/SplashScreenViewInterface.h)
+
+**Dependencies**: [`SplashScreenViewInterface`](src/app/SplashScreenViewInterface.h), [`IoDriverInterface`](src/app/IoDriverInterface.h), [`StateFactoryInterface`](src/app/StateFactoryInterface.h)
+
+**Testing**: Unit tested with mock dependencies and time simulation
+
+### MainApplicationState
+
+**Purpose**: Primary operational state handling user input, program selection, and MIDI communication.
+
+**Interface**: Implements [`StateInterface`](src/app/StateInterface.h)
+
+**Key Features**:
+- User input processing (buttons and encoder)
+- Program selection logic with encoder rotation
+- MIDI program change transmission
+- Display updates for program selection
+- Integration with [`ProgramsBank`](src/app/ProgramsBank.h) for program names
+
+**Dependencies**: [`UserInputInterface`](src/app/UserInputInterface.h), [`ProgramSelectorInterface`](src/app/ProgramSelectorInterface.h), [`MidiControllerInterface`](src/app/MidiControllerInterface.h), [`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h), [`ProgramsBankInterface`](src/app/ProgramsBankInterface.h)
+
+**Testing**: Comprehensive unit tests with mocked dependencies
+
+### ProgramsBank
+
+**Purpose**: Manages program names and provides lookup functionality for MIDI program numbers.
+
+**Interface**: Implements [`ProgramsBankInterface`](src/app/ProgramsBankInterface.h)
+
+**Key Features**:
+- Program name storage (up to 128 programs)
+- Fluent interface for program addition
+- Name lookup by program number
+- Memory-efficient storage with fixed-size names (16 characters)
+
+**Dependencies**: None (self-contained data structure)
+
+**Testing**: Unit tested for storage and retrieval operations
+
+### Encoder
+
+**Purpose**: Handles rotary encoder input with proper state tracking and rotation detection.
+
+**Interface**: Implements [`EncoderInterface`](src/app/EncoderInterface.h)
+
+**Key Features**:
+- Dual-pin encoder reading (A and B phases)
+- Clockwise and counter-clockwise rotation detection
+- State change tracking with proper debouncing
+- Hardware abstraction through [`IoDriverInterface`](src/app/IoDriverInterface.h)
+
+**Dependencies**: [`IoDriverInterface`](src/app/IoDriverInterface.h)
+
+**Testing**: Unit tested with [`MockIoDriver`](test/mocks/MockIoDriver.h) for rotation simulation
+
 ### MidiController
 
 **Purpose**: Handles USB MIDI communication using the Adafruit TinyUSB library for program change messages.
@@ -277,6 +419,57 @@ graph LR
 **Testing**: Unit tested through [`MockProgramSelectionView`](test/mocks/MockProgramSelectionView.h)
 
 ## Design Patterns
+
+### State Machine Pattern
+
+The application uses a finite state machine to manage different operational modes with clear state transitions and lifecycle management.
+
+```cpp
+class StateMachine : public StateMachineInterface {
+public:
+    void changeState(StateInterface* newState) override {
+        if (currentState) {
+            currentState->exit();
+            delete currentState;
+        }
+        currentState = newState;
+        if (currentState) {
+            currentState->setStateMachine(this);
+            currentState->enter();
+        }
+    }
+};
+```
+
+**Key Benefits**:
+- Clear separation of application modes
+- Automatic state lifecycle management
+- Memory safety with RAII principles
+- Testable state transitions
+
+### Factory Pattern
+
+State creation is abstracted through factory interfaces, enabling flexible state instantiation and dependency injection.
+
+```cpp
+class MainApplicationStateFactory : public StateFactory {
+public:
+    StateInterface* createMainApplicationState() override {
+        return (new MainApplicationState())
+            ->setUserInput(userInput)
+            ->setProgramSelector(programSelector)
+            ->setMidiController(midiController)
+            ->setProgramSelectionView(programSelectionView)
+            ->setProgramsBank(programsBank);
+    }
+};
+```
+
+**Key Benefits**:
+- Centralized state creation logic
+- Dependency injection at creation time
+- Easy testing with mock factories
+- Flexible state configuration
 
 ### Dependency Injection
 
@@ -337,18 +530,37 @@ app.setProgramSelector(&programSelector)
 ## Dependencies
 
 ```mermaid
-graph TD
+graph LR
     subgraph "Application Dependencies"
-        APP[MidiPatchBoxApplication] --> UII[UserInputInterface]
+        APP[MidiPatchBoxApplication] --> SM[StateMachine]
+        APP --> UII[UserInputInterface]
         APP --> PSI[ProgramSelectorInterface]
         APP --> MCI[MidiControllerInterface]
         APP --> PSVI[ProgramSelectionViewInterface]
         
+        SM --> SMI[StateMachineInterface]
+        SM --> SI[StateInterface]
+        SPS[SplashScreenState] --> SI
+        SPS --> SSVI[SplashScreenViewInterface]
+        SPS --> IOI[IoDriverInterface]
+        SPS --> SFI[StateFactoryInterface]
+        MAS[MainApplicationState] --> SI
+        MAS --> UII
+        MAS --> PSI
+        MAS --> MCI
+        MAS --> PSVI
+        MAS --> PBI[ProgramsBankInterface]
+        
         UI[UserInput] --> UII
-        UI --> IOI[IoDriverInterface]
+        UI --> IOI
         UI --> BTN[Button]
+        UI --> ENC[Encoder]
         BTN --> IOI
+        ENC --> IOI
         PS[ProgramSelector] --> PSI
+        PB[ProgramsBank] --> PBI
+        SF[StateFactory] --> SFI
+        MASF[MainApplicationStateFactory] --> SFI
     end
     
     subgraph "Hardware Dependencies"
@@ -359,7 +571,11 @@ graph TD
         MC --> TINYUSB[Adafruit TinyUSB Library]
         
         DPSV[DisplayProgramSelectionView] --> PSVI
-        DPSV --> DISPLAY[Display Libraries]
+        DPSV --> ADAFRUIT[Adafruit GFX/SSD1306]
+        DSSV[DisplaySplashScreenView] --> SSVI
+        DSSV --> ADAFRUIT
+        DBSSV[DisplayBitmapSplashScreenView] --> SSVI
+        DBSSV --> ADAFRUIT
     end
     
     subgraph "Test Dependencies"
@@ -370,15 +586,20 @@ graph TD
         MOCKS --> MCI
         MOCKS --> PSI
         MOCKS --> PSVI
+        MOCKS --> SSVI
+        MOCKS --> PBI
+        MOCKS --> SI
+        MOCKS --> SMI
+        MOCKS --> SFI
     end
     
     classDef interface fill:#fff2cc
     classDef concrete fill:#d5e8d4
     classDef external fill:#f8cecc
     
-    class UII,PSI,MCI,IOI,PSVI interface
-    class APP,BTN,PS,UI,AIO,MC,DPSV,TESTS,MOCKS concrete
-    class ARDUINO,TINYUSB,UNITY,DISPLAY external
+    class UII,PSI,MCI,IOI,PSVI,SSVI,PBI,SI,SMI,SFI interface
+    class APP,SM,SPS,MAS,BTN,ENC,PS,PB,UI,AIO,MC,DPSV,DSSV,DBSSV,SF,MASF,TESTS,MOCKS concrete
+    class ARDUINO,TINYUSB,UNITY,ADAFRUIT external
 ```
 
 ### Dependency Flow
