@@ -7,7 +7,7 @@
 #include "app/Encoder.h"
 #include "app/StateMachine.h"
 #include "app/SplashScreenState.h"
-#include "app/MainApplicationStateFactory.h"
+#include "app/StateFactory.h"
 #include "app/ProgramsBank.h"
 #include "hardware/MidiController.h"
 #include "hardware/ArduinoIoDriver.h"
@@ -37,7 +37,7 @@ DisplaySplashScreenView splashView;
 DisplayBitmapSplashScreenView bitmapSplashView;
 ProgramsBank programsBank;
 
-MainApplicationStateFactory stateFactory;
+StateFactory stateFactory;
 
 void setup()
 {
