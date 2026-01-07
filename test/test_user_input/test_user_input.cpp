@@ -171,7 +171,27 @@ void testShouldInitilizeUsingFluentSetters(void) {
 
     encoderButton.press();
     userInput.update();
-    TEST_ASSERT_TRUE(userInput.encoderButtonPressed()); 
+    TEST_ASSERT_TRUE(userInput.encoderButtonPressed());
+}
+
+void testShouldDetectEncoderButtonLongPress(void) {
+    MockButton encoderButton;
+    UserInput userInput;
+    
+    userInput.setEncoderButton(&encoderButton);
+    
+    encoderButton.longPress();
+    userInput.update();
+    
+    TEST_ASSERT_TRUE(userInput.encoderButtonLongPressed());
+}
+
+void testShouldNotDetectLongPressWhenEncoderButtonNotSet(void) {
+    UserInput userInput;
+    
+    userInput.update();
+    
+    TEST_ASSERT_FALSE(userInput.encoderButtonLongPressed());
 }
 
 int main(void) {
@@ -186,6 +206,8 @@ int main(void) {
     RUN_TEST(testShouldDetectEncoderClockwiseRotation);
     RUN_TEST(testShouldDetectEncoderRotationSequence);
     RUN_TEST(testShouldInitilizeUsingFluentSetters);
+    RUN_TEST(testShouldDetectEncoderButtonLongPress);
+    RUN_TEST(testShouldNotDetectLongPressWhenEncoderButtonNotSet);
     
     return UNITY_END();
 }

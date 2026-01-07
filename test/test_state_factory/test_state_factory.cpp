@@ -15,6 +15,7 @@ public:
     bool encoderRotatedClockwise() override { return false; }
     bool encoderRotatedCounterClockwise() override { return false; }
     bool encoderButtonPressed() override { return false; }
+    bool encoderButtonLongPressed() override { return false; }
 };
 
 class MockProgramSelector : public ProgramSelectorInterface {

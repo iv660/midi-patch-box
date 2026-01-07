@@ -28,4 +28,5 @@ public:
     bool encoderRotatedClockwise() override;
     bool encoderRotatedCounterClockwise() override;
     bool encoderButtonPressed() override;
+    bool encoderButtonLongPressed() override;
 };

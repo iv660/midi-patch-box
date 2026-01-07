@@ -80,3 +80,7 @@ bool UserInput::encoderRotatedCounterClockwise() {
 bool UserInput::encoderButtonPressed() {
     return encoderButton ? encoderButton->isPressed() : false;
 }
+
+bool UserInput::encoderButtonLongPressed() {
+    return encoderButton ? encoderButton->isLongPressed() : false;
+}

@@ -8,4 +8,5 @@ public:
     virtual bool encoderRotatedClockwise() = 0;
     virtual bool encoderRotatedCounterClockwise() = 0;
     virtual bool encoderButtonPressed() = 0;
+    virtual bool encoderButtonLongPressed() = 0;
 };

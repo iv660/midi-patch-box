@@ -33,6 +33,11 @@ public:
         updateCalled = true;
     }
 
+    bool encoderRotatedClockwise() override { return false; }
+    bool encoderRotatedCounterClockwise() override { return false; }
+    bool encoderButtonPressed() override { return false; }
+    bool encoderButtonLongPressed() override { return false; }
+
     bool getUpdateCalled() const
     {
         return updateCalled;

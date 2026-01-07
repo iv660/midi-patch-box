@@ -35,6 +35,11 @@ public:
         return encoderButtonPress;
     }
 
+    bool encoderButtonLongPressed() override
+    {
+        return encoderButtonLongPress;
+    }
+
     void pressUserButton()
     {
         userButtonPressed = true;
@@ -76,6 +81,7 @@ private:
     bool encoderClockwise = false;
     bool encoderCounterClockwise = false;
     bool encoderButtonPress = false;
+    bool encoderButtonLongPress = false;
     bool updateCalled = false;
 };
 
