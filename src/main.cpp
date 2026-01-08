@@ -9,6 +9,7 @@
 #include "app/SplashScreenState.h"
 #include "app/StateFactory.h"
 #include "app/ProgramsBank.h"
+#include "app/DiContainer.h"
 #include "hardware/MidiController.h"
 #include "hardware/ArduinoIoDriver.h"
 #include "hardware/DisplayProgramSelectionView.h"
@@ -40,6 +41,7 @@ DisplayConfigMenuView configMenuView;
 ProgramsBank programsBank;
 
 StateFactory stateFactory;
+DiContainer diContainer;
 
 void setup()
 {
@@ -84,12 +86,15 @@ void setup()
         ->setStateMachine(&stateMachine)
         ->begin();
     
-    // Initialize State Machine with SplashScreenState that will transition to MainApplicationState after 1 second
-    stateMachine.changeState((new SplashScreenState())
-        ->setSplashScreenView(&bitmapSplashView)
+    // Setup DiContainer with dependencies for SplashScreenState
+    diContainer.setSplashScreenView(&bitmapSplashView)
         ->setIoDriver(&ioDriver)
-        ->setStateFactory(&stateFactory)
-        ->setStateMachine(&stateMachine));
+        ->setStateFactory(&stateFactory);
+    
+    // Initialize State Machine with SplashScreenState using DiContainer
+    SplashScreenState* splashScreenState = new SplashScreenState(&diContainer);
+    splashScreenState->setStateMachine(&stateMachine);
+    stateMachine.changeState(splashScreenState);
 }
 
 void loop() {

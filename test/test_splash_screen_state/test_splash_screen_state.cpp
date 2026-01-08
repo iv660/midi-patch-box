@@ -5,6 +5,7 @@
 #include "app/StateMachineInterface.h"
 #include "app/MainApplicationState.h"
 #include "app/StateFactoryInterface.h"
+#include "app/DiContainer.h"
 #include "mocks/MockIoDriver.h"
 #include <typeinfo>
 
@@ -129,11 +130,33 @@ void testSplashScreenStateTransitionsAfterThreeSeconds(void) {
     TEST_ASSERT_TRUE(mockStateMachine.changeStateWasCalled());
 }
 
+void testSplashScreenStateConstructorWithDiContainer(void) {
+    MockSplashScreenView mockView;
+    MockIoDriver mockIoDriver;
+    MockStateFactory mockFactory;
+    
+    // Setup DiContainer with dependencies
+    DiContainer container;
+    container.setSplashScreenView(&mockView)
+             ->setIoDriver(&mockIoDriver)
+             ->setStateFactory(&mockFactory);
+    
+    // Create SplashScreenState using DiContainer constructor
+    SplashScreenState splashState(&container);
+    
+    // Test that dependencies are properly injected by calling enter()
+    splashState.enter();
+    
+    // Verify that the view was called (proving dependency injection worked)
+    TEST_ASSERT_TRUE(mockView.showMessageWasCalled());
+}
+
 int main(void) {
     UNITY_BEGIN();
     
     RUN_TEST(testSplashScreenStateShowsMessageOnEnter);
     RUN_TEST(testSplashScreenStateTransitionsAfterThreeSeconds);
+    RUN_TEST(testSplashScreenStateConstructorWithDiContainer);
     
     return UNITY_END();
 }

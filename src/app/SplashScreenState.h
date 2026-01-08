@@ -3,6 +3,7 @@
 #include "SplashScreenViewInterface.h"
 #include "IoDriverInterface.h"
 #include "StateFactoryInterface.h"
+#include "DiContainerInterface.h"
 
 class SplashScreenState : public State {
 private:
@@ -15,6 +16,15 @@ private:
 
 public:
     SplashScreenState() = default;
+    
+    // Constructor with DiContainer for dependency injection
+    explicit SplashScreenState(DiContainerInterface* container) {
+        if (!container) return;
+        
+        splashScreenView = container->getSplashScreenView();
+        ioDriver = container->getIoDriver();
+        stateFactory = container->getStateFactory();
+    }
     
     SplashScreenState* setSplashScreenView(SplashScreenViewInterface* view) {
         this->splashScreenView = view;
