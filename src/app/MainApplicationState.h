@@ -16,7 +16,6 @@ private:
     ProgramSelectionViewInterface* programSelectionView = nullptr;
     ProgramsBankInterface* programsBank = nullptr;
     StateFactoryInterface* stateFactory = nullptr;
-    StateMachineInterface* stateMachine = nullptr;
     int lastSentProgram = -1;
 
     bool userButtonIsPressed();
@@ -72,11 +71,6 @@ public:
     
     MainApplicationState* setStateFactory(StateFactoryInterface* stateFactory) {
         this->stateFactory = stateFactory;
-        return this;
-    }
-    
-    MainApplicationState* withStateMachine(StateMachineInterface* stateMachine) {
-        this->stateMachine = stateMachine;
         return this;
     }
     

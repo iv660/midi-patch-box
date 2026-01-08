@@ -54,7 +54,8 @@ void setup()
         ->setMidiController(&midiController)
         ->setProgramSelectionView(&displayView)
         ->setProgramsBank(&programsBank)
-        ->setConfigMenuView(&configMenuView);
+        ->setConfigMenuView(&configMenuView)
+        ->setStateMachine(&stateMachine);
     
     // Initialize programs bank with program names
     programsBank.addProgram(0, "Clean")

@@ -1,5 +1,4 @@
 #include "MainApplicationState.h"
-#include <Arduino.h>
 
 void MainApplicationState::enter() {
     sendSelectedProgram();

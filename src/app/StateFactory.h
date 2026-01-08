@@ -8,6 +8,7 @@
 #include "ProgramSelectionViewInterface.h"
 #include "ProgramsBankInterface.h"
 #include "ConfigMenuViewInterface.h"
+#include "StateMachineInterface.h"
 
 class StateFactory : public StateFactoryInterface {
 private:
@@ -17,6 +18,7 @@ private:
     ProgramSelectionViewInterface* programSelectionView = nullptr;
     ProgramsBankInterface* programsBank = nullptr;
     ConfigMenuViewInterface* configMenuView = nullptr;
+    StateMachineInterface* stateMachine = nullptr;
 
 public:
     StateFactory() = default;
@@ -51,6 +53,11 @@ public:
         this->configMenuView = configMenuView;
         return this;
     }
+    
+    StateFactory* setStateMachine(StateMachineInterface* stateMachine) {
+        this->stateMachine = stateMachine;
+        return this;
+    }
 
     StateInterface* createMainApplicationState() override {
         return (new MainApplicationState())
@@ -59,14 +66,16 @@ public:
             ->setMidiController(midiController)
             ->setProgramSelectionView(programSelectionView)
             ->setProgramsBank(programsBank)
-            ->setStateFactory(this);
+            ->setStateFactory(this)
+            ->setStateMachine(stateMachine);
     }
     
     StateInterface* createConfigMenuState() override {
         return (new ConfigMenuState())
             ->setUserInput(userInput)
             ->setConfigMenuView(configMenuView)
-            ->setStateFactory(this);
+            ->setStateFactory(this)
+            ->setStateMachine(stateMachine);
     }
     
     StateInterface* createEditSetlistState() override {
