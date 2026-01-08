@@ -90,11 +90,6 @@ void setup()
         ->setIoDriver(&ioDriver)
         ->setStateFactory(&stateFactory)
         ->setStateMachine(&stateMachine));
-    // stateMachine.changeState((new ConfigMenuState())
-    //     ->setStateFactory(&stateFactory)
-    //     ->setUserInput(&userInput)
-    //     ->setConfigMenuView(&configMenuView)
-    //     ->setStateMachine(&stateMachine));
 }
 
 void loop() {
