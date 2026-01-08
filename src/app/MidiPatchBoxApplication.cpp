@@ -5,7 +5,7 @@
 void MidiPatchBoxApplication::begin(void)
 {
     if (hasMidiController()) {
-        midiController->begin();
+        getMidiController()->begin();
     }
 }
 
@@ -44,14 +44,21 @@ MidiPatchBoxApplication * MidiPatchBoxApplication::setStateMachine(StateMachine 
     return this;
 }
 
+MidiPatchBoxApplication * MidiPatchBoxApplication::setDiContainer(DiContainerInterface * diContainer)
+{
+    this->diContainer = diContainer;
+
+    return this;
+}
+
 void MidiPatchBoxApplication::tick(void)
 {
-    if (stateMachine) {
-        stateMachine->update();
+    if (getStateMachine()) {
+        getStateMachine()->update();
     }
 }
 
 bool MidiPatchBoxApplication::hasMidiController()
 {
-    return midiController != nullptr;
+    return getMidiController() != nullptr;
 }

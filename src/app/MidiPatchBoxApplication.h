@@ -15,20 +15,32 @@ private:
     MidiControllerInterface *midiController = nullptr;
     ProgramSelectionViewInterface *programSelectionView = nullptr;
     StateMachine *stateMachine = nullptr;
+    DiContainerInterface *diContainer = nullptr;
 
     bool hasMidiController();
+    
+    // Private getters
+    MidiControllerInterface* getMidiController() const {
+        return midiController ? midiController : (diContainer ? diContainer->getMidiController() : nullptr);
+    }
+    StateMachine* getStateMachine() const {
+        return stateMachine ? stateMachine : (diContainer ? diContainer->getStateMachine() : nullptr);
+    }
+    UserInputInterface* getUserInput() const {
+        return userInput ? userInput : (diContainer ? diContainer->getUserInput() : nullptr);
+    }
+    ProgramSelectorInterface* getProgramSelector() const {
+        return programSelector ? programSelector : (diContainer ? diContainer->getProgramSelector() : nullptr);
+    }
+    ProgramSelectionViewInterface* getProgramSelectionView() const {
+        return programSelectionView ? programSelectionView : (diContainer ? diContainer->getProgramSelectionView() : nullptr);
+    }
 public:
     MidiPatchBoxApplication() = default;
     
     // Constructor with DiContainer for dependency injection
-    explicit MidiPatchBoxApplication(DiContainerInterface* container) {
-        if (!container) return;
-        
-        userInput = container->getUserInput();
-        programSelector = container->getProgramSelector();
-        midiController = container->getMidiController();
-        programSelectionView = container->getProgramSelectionView();
-        stateMachine = container->getStateMachine();
+    explicit MidiPatchBoxApplication(DiContainerInterface* container) : diContainer(container) {
+        // Dependencies will be resolved lazily through getters
     }
     
     void tick();
@@ -39,4 +51,5 @@ public:
     MidiPatchBoxApplication* setMidiController(MidiControllerInterface *midiController);
     MidiPatchBoxApplication* setProgramSelectionView(ProgramSelectionViewInterface *programSelectionView);
     MidiPatchBoxApplication* setStateMachine(StateMachine *stateMachine);
+    MidiPatchBoxApplication* setDiContainer(DiContainerInterface *diContainer);
 };
