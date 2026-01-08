@@ -1,4 +1,5 @@
 #include "MainApplicationState.h"
+#include <Arduino.h>
 
 void MainApplicationState::enter() {
     sendSelectedProgram();
@@ -33,7 +34,9 @@ void MainApplicationState::update() {
         updateProgramSelectionView();
     }
 
-    if (encoderButtonPressed()) {
+    if (encoderButtonLongPressed()) {
+        handleEncoderButtonLongPress();
+    } else if (encoderButtonPressed()) {
         handleEncoderButtonPress();
     }
 }
@@ -82,6 +85,14 @@ bool MainApplicationState::encoderButtonPressed() {
     return userInput->encoderButtonPressed();
 }
 
+bool MainApplicationState::encoderButtonLongPressed() {
+    if (false == hasUserInput()) {
+        return false;
+    }
+
+    return userInput->encoderButtonLongPressed();
+}
+
 void MainApplicationState::handleNextButtonPress() {
     selectNextProgram();
     sendSelectedProgram();
@@ -98,6 +109,10 @@ void MainApplicationState::handleEncoderRotation() {
 void MainApplicationState::handleEncoderButtonPress() {
     sendSelectedProgram();
     updateProgramSelectionView();
+}
+
+void MainApplicationState::handleEncoderButtonLongPress() {
+    changeToConfigMenuState();
 }
 
 void MainApplicationState::selectNextProgram() {
@@ -165,4 +180,19 @@ bool MainApplicationState::hasProgramSelectionView() {
 
 bool MainApplicationState::hasProgramsBank() {
     return programsBank != nullptr;
+}
+
+bool MainApplicationState::hasStateFactory() {
+    return stateFactory != nullptr;
+}
+
+bool MainApplicationState::hasStateMachine() {
+    return stateMachine != nullptr;
+}
+
+void MainApplicationState::changeToConfigMenuState() {
+    if (hasStateFactory() && hasStateMachine()) {
+        StateInterface* configMenuState = stateFactory->createConfigMenuState();
+        stateMachine->changeState(configMenuState);
+    }
 }

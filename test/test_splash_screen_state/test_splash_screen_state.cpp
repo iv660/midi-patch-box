@@ -37,6 +37,14 @@ public:
         createMainApplicationStateCalled = true;
         return nullptr; // Return nullptr for testing - we only care about the call
     }
+    
+    StateInterface* createConfigMenuState() override {
+        return nullptr; // Return nullptr for testing
+    }
+    
+    StateInterface* createEditSetlistState() override {
+        return nullptr; // Return nullptr for testing
+    }
 
     bool createMainApplicationStateWasCalled() const {
         return createMainApplicationStateCalled;

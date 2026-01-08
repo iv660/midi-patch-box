@@ -56,7 +56,10 @@
 
 ---  
 
-### 4. Test Execution Commands  
+### 4. General Testing Principles
+- **One class - one test suite.** Don't add test suites for each use case - place them in a single suite matching the class under test. E. g.: `test_state_machine` is for the `StateMachine` class.
+
+### 5. Test Execution Commands  
 
 - **Run all tests:**  
   ```bash

@@ -8,5 +8,5 @@ public:
     virtual void enter() = 0;
     virtual void update() = 0;
     virtual void exit() = 0;
-    virtual void setStateMachine(StateMachineInterface* stateMachine) = 0;
+    virtual StateInterface* setStateMachine(StateMachineInterface* stateMachine) = 0;
 };

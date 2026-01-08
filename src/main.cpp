@@ -14,6 +14,7 @@
 #include "hardware/DisplayProgramSelectionView.h"
 #include "hardware/DisplaySplashScreenView.h"
 #include "hardware/DisplayBitmapSplashScreenView.h"
+#include "hardware/DisplayConfigMenuView.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
@@ -35,6 +36,7 @@ UserInput userInput;
 DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
 DisplayBitmapSplashScreenView bitmapSplashView;
+DisplayConfigMenuView configMenuView;
 ProgramsBank programsBank;
 
 StateFactory stateFactory;
@@ -48,29 +50,31 @@ void setup()
 
     // Initialize state factory with dependencies
     stateFactory.setUserInput(&userInput)
-               ->setProgramSelector(&programSelector)
-               ->setMidiController(&midiController)
-               ->setProgramSelectionView(&displayView)
-               ->setProgramsBank(&programsBank);
+        ->setProgramSelector(&programSelector)
+        ->setMidiController(&midiController)
+        ->setProgramSelectionView(&displayView)
+        ->setProgramsBank(&programsBank)
+        ->setConfigMenuView(&configMenuView);
     
     // Initialize programs bank with program names
     programsBank.addProgram(0, "Clean")
-               ->addProgram(41, "Viola")
-               ->addProgram(112, "Reverse");
+        ->addProgram(41, "Viola")
+        ->addProgram(112, "Reverse");
     
     programSelector.setPrograms({0, 41, 112});
     
     // Configure hardware components
     userButton.setIoDriver(&ioDriver);
     rightButton.setIoDriver(&ioDriver);
-    encoderButton.setIoDriver(&ioDriver);
+    encoderButton.setIoDriver(&ioDriver)
+        ->enableLongPressDetection();
     encoder.setPinA(27)->setPinB(28)->setIoDriver(&ioDriver);
     
     // Configure UserInput with dependency injection
     userInput.setUserButton(&userButton)
-             ->setRightButton(&rightButton)
-             ->setEncoderButton(&encoderButton)
-             ->setEncoder(&encoder);
+        ->setRightButton(&rightButton)
+        ->setEncoderButton(&encoderButton)
+        ->setEncoder(&encoder);
 
     app.setProgramSelector(&programSelector)
         ->setUserInput(&userInput)
@@ -83,7 +87,13 @@ void setup()
     stateMachine.changeState((new SplashScreenState())
         ->setSplashScreenView(&bitmapSplashView)
         ->setIoDriver(&ioDriver)
-        ->setStateFactory(&stateFactory));
+        ->setStateFactory(&stateFactory)
+        ->setStateMachine(&stateMachine));
+    // stateMachine.changeState((new ConfigMenuState())
+    //     ->setStateFactory(&stateFactory)
+    //     ->setUserInput(&userInput)
+    //     ->setConfigMenuView(&configMenuView)
+    //     ->setStateMachine(&stateMachine));
 }
 
 void loop() {

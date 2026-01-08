@@ -15,7 +15,8 @@ public:
     virtual ~State() = default;
 
     // Method for injecting state machine reference
-    void setStateMachine(StateMachineInterface* stateMachine) override {
+    StateInterface* setStateMachine(StateMachineInterface* stateMachine) override {
         this->stateMachine = stateMachine;
+        return this;
     }
 };

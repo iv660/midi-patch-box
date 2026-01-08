@@ -1,11 +1,13 @@
 #pragma once
 #include "StateFactoryInterface.h"
 #include "MainApplicationState.h"
+#include "ConfigMenuState.h"
 #include "UserInputInterface.h"
 #include "ProgramSelectorInterface.h"
 #include "MidiControllerInterface.h"
 #include "ProgramSelectionViewInterface.h"
 #include "ProgramsBankInterface.h"
+#include "ConfigMenuViewInterface.h"
 
 class StateFactory : public StateFactoryInterface {
 private:
@@ -14,6 +16,7 @@ private:
     MidiControllerInterface* midiController = nullptr;
     ProgramSelectionViewInterface* programSelectionView = nullptr;
     ProgramsBankInterface* programsBank = nullptr;
+    ConfigMenuViewInterface* configMenuView = nullptr;
 
 public:
     StateFactory() = default;
@@ -43,6 +46,11 @@ public:
         this->programsBank = programsBank;
         return this;
     }
+    
+    StateFactory* setConfigMenuView(ConfigMenuViewInterface* configMenuView) {
+        this->configMenuView = configMenuView;
+        return this;
+    }
 
     StateInterface* createMainApplicationState() override {
         return (new MainApplicationState())
@@ -50,6 +58,19 @@ public:
             ->setProgramSelector(programSelector)
             ->setMidiController(midiController)
             ->setProgramSelectionView(programSelectionView)
-            ->setProgramsBank(programsBank);
+            ->setProgramsBank(programsBank)
+            ->setStateFactory(this);
+    }
+    
+    StateInterface* createConfigMenuState() override {
+        return (new ConfigMenuState())
+            ->setUserInput(userInput)
+            ->setConfigMenuView(configMenuView)
+            ->setStateFactory(this);
+    }
+    
+    StateInterface* createEditSetlistState() override {
+        // TODO: Implement EditSetlistState
+        return nullptr;
     }
 };

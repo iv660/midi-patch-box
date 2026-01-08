@@ -5,6 +5,8 @@
 #include "app/MidiControllerInterface.h"
 #include "app/ProgramSelectionViewInterface.h"
 #include "app/ProgramsBankInterface.h"
+#include "app/StateFactoryInterface.h"
+#include "app/StateMachineInterface.h"
 #include <cstring>
 
 class MockUserInput : public UserInputInterface
@@ -63,6 +65,11 @@ public:
     void rotateCounterClockwise()
     {
         encoderCounterClockwise = true;
+    }
+    
+    void longPressEncoderButton()
+    {
+        encoderButtonLongPress = true;
     }
     
     void update() override
@@ -129,6 +136,75 @@ public:
     {
         nextProgramSelected = false;
         previousProgramSelected = false;
+    }
+};
+
+class MockStateFactory : public StateFactoryInterface
+{
+private:
+    bool configMenuStateCreated = false;
+    StateInterface* mockConfigMenuState = nullptr;
+
+public:
+    StateInterface* createMainApplicationState() override
+    {
+        return nullptr;
+    }
+
+    StateInterface* createConfigMenuState() override
+    {
+        configMenuStateCreated = true;
+        return mockConfigMenuState;
+    }
+
+    StateInterface* createEditSetlistState() override
+    {
+        return nullptr;
+    }
+
+    void setMockConfigMenuState(StateInterface* state)
+    {
+        mockConfigMenuState = state;
+    }
+
+    bool configMenuStateWasCreated() const
+    {
+        return configMenuStateCreated;
+    }
+
+    void reset()
+    {
+        configMenuStateCreated = false;
+    }
+};
+
+class MockStateMachine : public StateMachineInterface
+{
+private:
+    StateInterface* changedToState = nullptr;
+    bool stateWasChanged = false;
+
+public:
+    void changeState(StateInterface* newState) override
+    {
+        changedToState = newState;
+        stateWasChanged = true;
+    }
+
+    StateInterface* getChangedToState() const
+    {
+        return changedToState;
+    }
+
+    bool stateChangeWasCalled() const
+    {
+        return stateWasChanged;
+    }
+
+    void reset()
+    {
+        changedToState = nullptr;
+        stateWasChanged = false;
     }
 };
 

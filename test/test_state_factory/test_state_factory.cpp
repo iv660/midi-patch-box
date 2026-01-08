@@ -2,6 +2,7 @@
 #include "app/StateFactory.h"
 #include "app/StateFactoryInterface.h"
 #include "app/MainApplicationState.h"
+#include "app/ConfigMenuViewInterface.h"
 #include "mocks/MockIoDriver.h"
 #include "mocks/MockButton.h"
 #include "mocks/MockEncoder.h"
@@ -44,6 +45,13 @@ class MockProgramsBank : public ProgramsBankInterface {
 public:
     ProgramsBankInterface* addProgram(int programNumber, const char* programName) override { return this; }
     const char* getProgramName(int programNumber) override { return "Test"; }
+};
+
+class MockConfigMenuView : public ConfigMenuViewInterface {
+public:
+    ConfigMenuViewInterface* showMenu() override { return this; }
+    ConfigMenuViewInterface* setSelectedItem(int itemIndex) override { return this; }
+    ConfigMenuViewInterface* displayMenuItem(int itemIndex, const char* itemName) override { return this; }
 };
 
 void setUp(void) {
@@ -103,11 +111,31 @@ void test_state_factory_fluent_interface() {
     TEST_ASSERT_EQUAL_PTR(&factory, result);
 }
 
+void test_state_factory_can_create_config_menu_state() {
+    // Arrange
+    StateFactory factory;
+    MockUserInput mockUserInput;
+    MockConfigMenuView mockConfigMenuView;
+    
+    factory.setUserInput(&mockUserInput)
+        ->setConfigMenuView(&mockConfigMenuView);
+    
+    // Act
+    StateInterface* state = factory.createConfigMenuState();
+    
+    // Assert
+    TEST_ASSERT_NOT_NULL(state);
+    
+    // Clean up
+    delete state;
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     
     RUN_TEST(test_state_factory_creates_main_application_state);
     RUN_TEST(test_state_factory_fluent_interface);
+    RUN_TEST(test_state_factory_can_create_config_menu_state);
     
     return UNITY_END();
 }
