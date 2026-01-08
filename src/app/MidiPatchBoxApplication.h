@@ -3,6 +3,7 @@
 #include "ProgramSelectorInterface.h"
 #include "MidiControllerInterface.h"
 #include "ProgramSelectionViewInterface.h"
+#include "DiContainerInterface.h"
 
 // Forward declaration to avoid circular dependency
 class StateMachine;
@@ -17,6 +18,19 @@ private:
 
     bool hasMidiController();
 public:
+    MidiPatchBoxApplication() = default;
+    
+    // Constructor with DiContainer for dependency injection
+    explicit MidiPatchBoxApplication(DiContainerInterface* container) {
+        if (!container) return;
+        
+        userInput = container->getUserInput();
+        programSelector = container->getProgramSelector();
+        midiController = container->getMidiController();
+        programSelectionView = container->getProgramSelectionView();
+        stateMachine = container->getStateMachine();
+    }
+    
     void tick();
     void begin(void);
     

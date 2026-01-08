@@ -79,17 +79,19 @@ void setup()
         ->setEncoderButton(&encoderButton)
         ->setEncoder(&encoder);
 
-    app.setProgramSelector(&programSelector)
-        ->setUserInput(&userInput)
-        ->setMidiController(&midiController)
-        ->setProgramSelectionView(&displayView)
-        ->setStateMachine(&stateMachine)
-        ->begin();
-    
-    // Setup DiContainer with dependencies for SplashScreenState
+    // Setup DiContainer with all dependencies
     diContainer.setSplashScreenView(&bitmapSplashView)
         ->setIoDriver(&ioDriver)
-        ->setStateFactory(&stateFactory);
+        ->setStateFactory(&stateFactory)
+        ->setUserInput(&userInput)
+        ->setProgramSelector(&programSelector)
+        ->setMidiController(&midiController)
+        ->setProgramSelectionView(&displayView)
+        ->setStateMachine(&stateMachine);
+
+    // Initialize MidiPatchBoxApplication using DiContainer
+    app = MidiPatchBoxApplication(&diContainer);
+    app.begin();
     
     // Initialize State Machine with SplashScreenState using DiContainer
     SplashScreenState* splashScreenState = new SplashScreenState(&diContainer);

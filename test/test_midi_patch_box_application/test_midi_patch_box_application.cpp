@@ -4,6 +4,7 @@
 #include "app/ProgramSelectorInterface.h"
 #include "app/ProgramSelectionViewInterface.h"
 #include "app/StateMachine.h"
+#include "app/DiContainer.h"
 
 class MockUserInput : public UserInputInterface 
 {
@@ -49,14 +50,19 @@ private:
     bool updateCalled = false;
 };
 
-class MockProgramSelector : public ProgramSelectorInterface 
+class MockProgramSelector : public ProgramSelectorInterface
 {
 private:
     int selectedProgram = 2;
 public:
-    void selectNextProgram() override 
+    void selectNextProgram() override
     {
         selectedProgram++;
+    }
+    
+    void selectPreviousProgram() override
+    {
+        selectedProgram--;
     }
 
     int getSelectedProgramNumber() const override
@@ -208,6 +214,32 @@ void testShouldDelegateTickToStateMachine(void)
     TEST_ASSERT_TRUE(mockState->updateWasCalled());
 }
 
+void testMidiPatchBoxApplicationConstructorWithDiContainer(void)
+{
+    MockUserInput mockUserInput;
+    MockProgramSelector mockProgramSelector;
+    MockMidiController mockMidiController;
+    MockProgramSelectionView mockProgramSelectionView;
+    StateMachine stateMachine;
+    
+    // Setup DiContainer with dependencies
+    DiContainer container;
+    container.setUserInput(&mockUserInput)
+             ->setProgramSelector(&mockProgramSelector)
+             ->setMidiController(&mockMidiController)
+             ->setProgramSelectionView(&mockProgramSelectionView)
+             ->setStateMachine(&stateMachine);
+    
+    // Create MidiPatchBoxApplication using DiContainer constructor
+    MidiPatchBoxApplication app(&container);
+    
+    // Test that dependencies are properly injected by calling begin()
+    app.begin();
+    
+    // Verify that the MIDI controller was initialized (proving dependency injection worked)
+    TEST_ASSERT_TRUE(mockMidiController.hasBeenInitialized());
+}
+
 
 int main(void)
 {
@@ -217,6 +249,7 @@ int main(void)
     RUN_TEST(testShouldInitializeMidiController);
     RUN_TEST(testShouldSetProgramSelectionView);
     RUN_TEST(testShouldDelegateTickToStateMachine);
+    RUN_TEST(testMidiPatchBoxApplicationConstructorWithDiContainer);
 
     return UNITY_END();
 }
