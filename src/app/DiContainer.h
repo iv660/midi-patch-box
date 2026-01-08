@@ -7,7 +7,10 @@
 #include "ProgramSelectorInterface.h"
 #include "MidiControllerInterface.h"
 #include "ProgramSelectionViewInterface.h"
+#include "ProgramsBankInterface.h"
+#include "ConfigMenuViewInterface.h"
 #include "StateMachine.h"
+#include "StateMachineInterface.h"
 
 class DiContainer : public DiContainerInterface {
 private:
@@ -19,6 +22,8 @@ private:
     MidiControllerInterface* midiController = nullptr;
     ProgramSelectionViewInterface* programSelectionView = nullptr;
     StateMachine* stateMachine = nullptr;
+    ProgramsBankInterface* programsBank = nullptr;
+    ConfigMenuViewInterface* configMenuView = nullptr;
 
 public:
     DiContainer() = default;
@@ -66,6 +71,17 @@ public:
         return this;
     }
     
+    // Setters for StateFactory dependencies
+    DiContainer* setProgramsBank(ProgramsBankInterface* bank) {
+        this->programsBank = bank;
+        return this;
+    }
+    
+    DiContainer* setConfigMenuView(ConfigMenuViewInterface* view) {
+        this->configMenuView = view;
+        return this;
+    }
+    
     // Getters for SplashScreenState dependencies
     SplashScreenViewInterface* getSplashScreenView() const override {
         return splashScreenView;
@@ -98,5 +114,18 @@ public:
     
     StateMachine* getStateMachine() const override {
         return stateMachine;
+    }
+    
+    // Getters for StateFactory dependencies
+    ProgramsBankInterface* getProgramsBank() const override {
+        return programsBank;
+    }
+    
+    ConfigMenuViewInterface* getConfigMenuView() const override {
+        return configMenuView;
+    }
+    
+    StateMachineInterface* getStateMachineInterface() const override {
+        return stateMachine; // StateMachine implements StateMachineInterface
     }
 };

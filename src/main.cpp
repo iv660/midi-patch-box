@@ -50,14 +50,8 @@ void setup()
     USBDevice.setProductDescriptor("MIDI Patch Box");
     USBDevice.setSerialDescriptor("0001"); // any serial number
 
-    // Initialize state factory with dependencies
-    stateFactory.setUserInput(&userInput)
-        ->setProgramSelector(&programSelector)
-        ->setMidiController(&midiController)
-        ->setProgramSelectionView(&displayView)
-        ->setProgramsBank(&programsBank)
-        ->setConfigMenuView(&configMenuView)
-        ->setStateMachine(&stateMachine);
+    // Initialize StateFactory using DiContainer
+    stateFactory = StateFactory(&diContainer);
     
     // Initialize programs bank with program names
     programsBank.addProgram(0, "Clean")
@@ -71,7 +65,9 @@ void setup()
     rightButton.setIoDriver(&ioDriver);
     encoderButton.setIoDriver(&ioDriver)
         ->enableLongPressDetection();
-    encoder.setPinA(27)->setPinB(28)->setIoDriver(&ioDriver);
+    encoder.setPinA(27)
+        ->setPinB(28)
+        ->setIoDriver(&ioDriver);
     
     // Configure UserInput with dependency injection
     userInput.setUserButton(&userButton)
@@ -87,6 +83,8 @@ void setup()
         ->setProgramSelector(&programSelector)
         ->setMidiController(&midiController)
         ->setProgramSelectionView(&displayView)
+        ->setProgramsBank(&programsBank)
+        ->setConfigMenuView(&configMenuView)
         ->setStateMachine(&stateMachine);
 
     // Initialize MidiPatchBoxApplication using DiContainer
@@ -95,7 +93,6 @@ void setup()
     
     // Initialize State Machine with SplashScreenState using DiContainer
     SplashScreenState* splashScreenState = new SplashScreenState(&diContainer);
-    splashScreenState->setStateMachine(&stateMachine);
     stateMachine.changeState(splashScreenState);
 }
 
