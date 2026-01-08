@@ -3,26 +3,26 @@
 
 
 void SplashScreenState::enter() {
-    if (splashScreenView) {
-        splashScreenView->showMessage();
+    if (getSplashScreenView()) {
+        getSplashScreenView()->showMessage();
     }
-    if (ioDriver) {
-        startTime = ioDriver->millis();
+    if (getIoDriver()) {
+        startTime = getIoDriver()->millis();
     }
 }
 
 void SplashScreenState::update() {
-    if (ioDriver && stateMachine && stateFactory) {
-        unsigned long currentTime = ioDriver->millis();
+    if (getIoDriver() && stateMachine && getStateFactory()) {
+        unsigned long currentTime = getIoDriver()->millis();
         if (currentTime - startTime >= splashScreenDuration) {
-            StateInterface* mainState = stateFactory->createMainApplicationState();
+            StateInterface* mainState = getStateFactory()->createMainApplicationState();
             stateMachine->changeState(mainState);
         }
     }
 }
 
 void SplashScreenState::exit() {
-    if (splashScreenView) {
-        splashScreenView->hide();
+    if (getSplashScreenView()) {
+        getSplashScreenView()->hide();
     }
 }

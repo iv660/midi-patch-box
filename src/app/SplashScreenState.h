@@ -10,20 +10,28 @@ private:
     SplashScreenViewInterface* splashScreenView = nullptr;
     IoDriverInterface* ioDriver = nullptr;
     StateFactoryInterface* stateFactory = nullptr;
+    DiContainerInterface* diContainer = nullptr;
     unsigned long startTime = 0;
 
     const unsigned long splashScreenDuration = 2000;
+    
+    // Private getters
+    SplashScreenViewInterface* getSplashScreenView() const {
+        return splashScreenView ? splashScreenView : (diContainer ? diContainer->getSplashScreenView() : nullptr);
+    }
+    IoDriverInterface* getIoDriver() const {
+        return ioDriver ? ioDriver : (diContainer ? diContainer->getIoDriver() : nullptr);
+    }
+    StateFactoryInterface* getStateFactory() const {
+        return stateFactory ? stateFactory : (diContainer ? diContainer->getStateFactory() : nullptr);
+    }
 
 public:
     SplashScreenState() = default;
     
     // Constructor with DiContainer for dependency injection
-    explicit SplashScreenState(DiContainerInterface* container) {
-        if (!container) return;
-        
-        splashScreenView = container->getSplashScreenView();
-        ioDriver = container->getIoDriver();
-        stateFactory = container->getStateFactory();
+    explicit SplashScreenState(DiContainerInterface* container) : diContainer(container) {
+        // Dependencies will be resolved lazily through getters
     }
     
     SplashScreenState* setSplashScreenView(SplashScreenViewInterface* view) {
@@ -38,6 +46,11 @@ public:
     
     SplashScreenState* setStateFactory(StateFactoryInterface* factory) {
         this->stateFactory = factory;
+        return this;
+    }
+    
+    SplashScreenState* setDiContainer(DiContainerInterface* diContainer) {
+        this->diContainer = diContainer;
         return this;
     }
     
