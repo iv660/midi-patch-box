@@ -27,10 +27,13 @@ public:
     virtual ProgramSelectorInterface* getProgramSelector() const = 0;
     virtual MidiControllerInterface* getMidiController() const = 0;
     virtual ProgramSelectionViewInterface* getProgramSelectionView() const = 0;
-    virtual StateMachine* getStateMachine() const = 0;
+    virtual StateMachineInterface* getStateMachine() const = 0;
     
     // Dependencies for StateFactory
     virtual ProgramsBankInterface* getProgramsBank() const = 0;
     virtual ConfigMenuViewInterface* getConfigMenuView() const = 0;
+    /**
+     * @deprecated Use getStateMachine()
+     */
     virtual StateMachineInterface* getStateMachineInterface() const = 0;
 };

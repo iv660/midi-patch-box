@@ -37,7 +37,7 @@ MidiPatchBoxApplication * MidiPatchBoxApplication::setProgramSelectionView(Progr
     return this;
 }
 
-MidiPatchBoxApplication * MidiPatchBoxApplication::setStateMachine(StateMachine * stateMachine)
+MidiPatchBoxApplication * MidiPatchBoxApplication::setStateMachine(StateMachineInterface * stateMachine)
 {
     this->stateMachine = stateMachine;
 

@@ -4,6 +4,7 @@
 #include "MidiControllerInterface.h"
 #include "ProgramSelectionViewInterface.h"
 #include "DiContainerInterface.h"
+#include "StateMachineInterface.h"
 
 // Forward declaration to avoid circular dependency
 class StateMachine;
@@ -14,7 +15,7 @@ private:
     ProgramSelectorInterface *programSelector = nullptr;
     MidiControllerInterface *midiController = nullptr;
     ProgramSelectionViewInterface *programSelectionView = nullptr;
-    StateMachine *stateMachine = nullptr;
+    StateMachineInterface *stateMachine = nullptr;
     DiContainerInterface *diContainer = nullptr;
 
     bool hasMidiController();
@@ -23,7 +24,7 @@ private:
     MidiControllerInterface* getMidiController() const {
         return midiController ? midiController : (diContainer ? diContainer->getMidiController() : nullptr);
     }
-    StateMachine* getStateMachine() const {
+    StateMachineInterface* getStateMachine() const {
         return stateMachine ? stateMachine : (diContainer ? diContainer->getStateMachine() : nullptr);
     }
     UserInputInterface* getUserInput() const {
@@ -50,6 +51,6 @@ public:
     MidiPatchBoxApplication* setProgramSelector(ProgramSelectorInterface *programSelector);
     MidiPatchBoxApplication* setMidiController(MidiControllerInterface *midiController);
     MidiPatchBoxApplication* setProgramSelectionView(ProgramSelectionViewInterface *programSelectionView);
-    MidiPatchBoxApplication* setStateMachine(StateMachine *stateMachine);
+    MidiPatchBoxApplication* setStateMachine(StateMachineInterface *stateMachine);
     MidiPatchBoxApplication* setDiContainer(DiContainerInterface *diContainer);
 };

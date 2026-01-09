@@ -9,7 +9,6 @@
 #include "ProgramSelectionViewInterface.h"
 #include "ProgramsBankInterface.h"
 #include "ConfigMenuViewInterface.h"
-#include "StateMachine.h"
 #include "StateMachineInterface.h"
 
 class DiContainer : public DiContainerInterface {
@@ -21,7 +20,7 @@ private:
     ProgramSelectorInterface* programSelector = nullptr;
     MidiControllerInterface* midiController = nullptr;
     ProgramSelectionViewInterface* programSelectionView = nullptr;
-    StateMachine* stateMachine = nullptr;
+    StateMachineInterface* stateMachine = nullptr;
     ProgramsBankInterface* programsBank = nullptr;
     ConfigMenuViewInterface* configMenuView = nullptr;
 
@@ -66,7 +65,7 @@ public:
         return this;
     }
     
-    DiContainer* setStateMachine(StateMachine* machine) {
+    DiContainer* setStateMachine(StateMachineInterface* machine) {
         this->stateMachine = machine;
         return this;
     }
@@ -112,7 +111,7 @@ public:
         return programSelectionView;
     }
     
-    StateMachine* getStateMachine() const override {
+    StateMachineInterface* getStateMachine() const override {
         return stateMachine;
     }
     

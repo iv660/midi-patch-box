@@ -7,6 +7,7 @@
 #include "app/UserInputInterface.h"
 #include "app/StateFactoryInterface.h"
 #include "app/StateMachineInterface.h"
+#include "app/DiContainer.h"
 
 // Mock objects for testing
 class MockUserInput : public UserInputInterface {
@@ -274,7 +275,7 @@ void testConfigMenuStateTransitionsToEditSetlist() {
     state.setConfigMenuView(&mockView);
     state.setUserInput(&mockInput);
     state.setStateFactory(&mockFactory);
-    state.withStateMachine(&mockStateMachine);
+    state.setStateMachine(&mockStateMachine);
     state.enter(); // starts at index 0 (Edit Setlist)
     
     // Act - simulate encoder button press
@@ -284,7 +285,44 @@ void testConfigMenuStateTransitionsToEditSetlist() {
     // Assert - should create EditSetlistState and change to it
     TEST_ASSERT_TRUE(mockFactory.createEditSetlistStateWasCalled());
     TEST_ASSERT_TRUE(mockStateMachine.changeStateWasCalled());
-    TEST_ASSERT_EQUAL(&mockEditSetlistState, mockStateMachine.getLastChangedState());
+    TEST_ASSERT_EQUAL_PTR(&mockEditSetlistState, mockStateMachine.getLastChangedState());
+}
+
+// ConfigMenuState should transition to EditSetlistState when encoder button pressed on Edit Setlist
+void testConfigMenuStateTransitionsBackToMainApplication() {
+    // Arrange
+    DiContainer container;
+    ConfigMenuState state(&container);
+
+    MockConfigMenuView mockView;
+    MockUserInput mockInput;
+    MockStateFactory mockFactory;
+    MockStateMachine mockStateMachine;
+    MockState mockMainApplicationState;
+
+    container.setStateMachine(&mockStateMachine)
+        ->setStateFactory(&mockFactory)
+        ->setUserInput(&mockInput)
+        ->setConfigMenuView(&mockView);
+    
+    mockFactory.setMockMainApplicationState(&mockMainApplicationState);
+
+    state.enter(); // starts at index 0 (Edit Setlist)
+    
+    // Act - simulate encoder button press
+    mockInput.setEncoderClockwise(true);
+    state.update(); // now at index 1
+    mockInput.setEncoderClockwise(false);
+
+    mockInput.setEncoderButtonPressed(true);
+    state.update();
+    mockInput.setEncoderButtonPressed(false);
+    
+    
+    // Assert - should create EditSetlistState and change to it
+    TEST_ASSERT_TRUE(mockFactory.createMainApplicationStateWasCalled());
+    TEST_ASSERT_TRUE(mockStateMachine.changeStateWasCalled());
+    TEST_ASSERT_EQUAL_PTR(&mockMainApplicationState, mockStateMachine.getLastChangedState());
 }
 
 int main(int argc, char **argv) {
@@ -297,6 +335,7 @@ int main(int argc, char **argv) {
     RUN_TEST(testConfigMenuStateNavigatesOnCounterClockwiseRotation);
     RUN_TEST(testConfigMenuStateCyclicNavigation);
     RUN_TEST(testConfigMenuStateTransitionsToEditSetlist);
+    RUN_TEST(testConfigMenuStateTransitionsBackToMainApplication);
     
     return UNITY_END();
 }

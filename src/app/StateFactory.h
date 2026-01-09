@@ -78,11 +78,7 @@ public:
     }
     
     StateInterface* createConfigMenuState() override {
-        return (new ConfigMenuState())
-            ->setUserInput(getUserInput())
-            ->setConfigMenuView(getConfigMenuView())
-            ->setStateFactory(this)
-            ->setStateMachine(getStateMachine());
+        return new ConfigMenuState(diContainer);
     }
     
     StateInterface* createEditSetlistState() override {

@@ -48,45 +48,47 @@ void ConfigMenuState::exit() {
 }
 
 bool ConfigMenuState::hasConfigMenuView() {
-    return configMenuView != nullptr;
+    return getConfigMenuView() != nullptr;
 }
 
 bool ConfigMenuState::hasUserInput() {
-    return userInput != nullptr;
+    return getUserInput() != nullptr;
 }
 
 void ConfigMenuState::initializeView() {
-    if (configMenuView) {
-        configMenuView->showMenu();
-        configMenuView->setSelectedItem(0);
-        configMenuView->displayMenuItem(0, "Edit Setlist");
-        configMenuView->displayMenuItem(1, "Back");
+    if (getConfigMenuView()) {
+        getConfigMenuView()->showMenu();
+        getConfigMenuView()->setSelectedItem(0);
+        getConfigMenuView()->displayMenuItem(0, "Edit Setlist");
+        getConfigMenuView()->displayMenuItem(1, "Back");
     }
 }
 
 void ConfigMenuState::updateUserInput() {
-    userInput->update();
+    if (getUserInput()) {
+        getUserInput()->update();
+    }
 }
 
 bool ConfigMenuState::encoderRotatedClockwise() {
     if (false == hasUserInput()) {
         return false;
     }
-    return userInput->encoderRotatedClockwise();
+    return getUserInput()->encoderRotatedClockwise();
 }
 
 bool ConfigMenuState::encoderRotatedCounterClockwise() {
     if (false == hasUserInput()) {
         return false;
     }
-    return userInput->encoderRotatedCounterClockwise();
+    return getUserInput()->encoderRotatedCounterClockwise();
 }
 
 bool ConfigMenuState::encoderButtonPressed() {
     if (false == hasUserInput()) {
         return false;
     }
-    return userInput->encoderButtonPressed();
+    return getUserInput()->encoderButtonPressed();
 }
 
 void ConfigMenuState::handleEncoderRotation() {
@@ -118,21 +120,21 @@ void ConfigMenuState::selectPreviousMenuItem() {
 }
 
 void ConfigMenuState::updateMenuView() {
-    if (configMenuView) {
-        configMenuView->setSelectedItem(selectedMenuItem);
+    if (getConfigMenuView()) {
+        getConfigMenuView()->setSelectedItem(selectedMenuItem);
     }
 }
 
 void ConfigMenuState::changeToEditSetlistState() {
-    if (stateFactory && stateMachine) {
-        StateInterface* editSetlistState = stateFactory->createEditSetlistState();
-        stateMachine->changeState(editSetlistState);
+    if (getStateFactory() && getStateMachine()) {
+        StateInterface* editSetlistState = getStateFactory()->createEditSetlistState();
+        getStateMachine()->changeState(editSetlistState);
     }
 }
 
 void ConfigMenuState::changeToMainApplicationState() {
-    if (stateFactory && stateMachine) {
-        StateInterface* mainState = stateFactory->createMainApplicationState();
-        stateMachine->changeState(mainState);
+    if (getStateFactory() && getStateMachine()) {
+        StateInterface* mainState = getStateFactory()->createMainApplicationState();
+        getStateMachine()->changeState(mainState);
     }
 }
