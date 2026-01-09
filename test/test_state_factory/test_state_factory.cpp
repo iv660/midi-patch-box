@@ -132,20 +132,10 @@ void tearDown(void) {
     // Clean up code here, to run after each test
 }
 
-void test_state_factory_creates_main_application_state() {
+void testStateFactoryCreatesMainApplicationState() {
     // Arrange
-    StateFactory factory;
-    MockUserInput mockUserInput;
-    MockProgramSelector mockProgramSelector;
-    MockMidiController mockMidiController;
-    MockProgramSelectionView mockProgramSelectionView;
-    MockProgramsBank mockProgramsBank;
-    
-    factory.setUserInput(&mockUserInput)
-        ->setProgramSelector(&mockProgramSelector)
-        ->setMidiController(&mockMidiController)
-        ->setProgramSelectionView(&mockProgramSelectionView)
-        ->setProgramsBank(&mockProgramsBank);
+    MockDiContainer mockContainer;
+    StateFactory factory(&mockContainer);
     
     // Act
     StateInterface* state = factory.createMainApplicationState();
@@ -161,34 +151,10 @@ void test_state_factory_creates_main_application_state() {
     delete state;
 }
 
-void test_state_factory_fluent_interface() {
+void testStateFactoryCanCreateConfigMenuState() {
     // Arrange
-    StateFactory factory;
-    MockUserInput mockUserInput;
-    MockProgramSelector mockProgramSelector;
-    MockMidiController mockMidiController;
-    MockProgramSelectionView mockProgramSelectionView;
-    MockProgramsBank mockProgramsBank;
-    
-    // Act - test fluent interface
-    StateFactory* result = factory.setUserInput(&mockUserInput)
-        ->setProgramSelector(&mockProgramSelector)
-        ->setMidiController(&mockMidiController)
-        ->setProgramSelectionView(&mockProgramSelectionView)
-        ->setProgramsBank(&mockProgramsBank);
-    
-    // Assert
-    TEST_ASSERT_EQUAL_PTR(&factory, result);
-}
-
-void test_state_factory_can_create_config_menu_state() {
-    // Arrange
-    StateFactory factory;
-    MockUserInput mockUserInput;
-    MockConfigMenuView mockConfigMenuView;
-    
-    factory.setUserInput(&mockUserInput)
-        ->setConfigMenuView(&mockConfigMenuView);
+    MockDiContainer mockContainer;
+    StateFactory factory(&mockContainer);
     
     // Act
     StateInterface* state = factory.createConfigMenuState();
@@ -200,7 +166,7 @@ void test_state_factory_can_create_config_menu_state() {
     delete state;
 }
 
-void test_state_factory_with_di_container_creates_main_application_state() {
+void testStateFactoryWithDiContainerCreatesMainApplicationState() {
     // Arrange
     MockDiContainer mockContainer;
     StateFactory factory(&mockContainer);
@@ -229,7 +195,7 @@ void test_state_factory_with_di_container_creates_main_application_state() {
     delete state;
 }
 
-void test_state_factory_with_di_container_creates_config_menu_state() {
+void testStateFactoryWithDiContainerCreatesConfigMenuState() {
     // Arrange
     MockDiContainer mockContainer;
     StateFactory factory(&mockContainer);
@@ -254,11 +220,10 @@ void test_state_factory_with_di_container_creates_config_menu_state() {
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     
-    RUN_TEST(test_state_factory_creates_main_application_state);
-    RUN_TEST(test_state_factory_fluent_interface);
-    RUN_TEST(test_state_factory_can_create_config_menu_state);
-    RUN_TEST(test_state_factory_with_di_container_creates_main_application_state);
-    RUN_TEST(test_state_factory_with_di_container_creates_config_menu_state);
+    RUN_TEST(testStateFactoryCreatesMainApplicationState);
+    RUN_TEST(testStateFactoryCanCreateConfigMenuState);
+    RUN_TEST(testStateFactoryWithDiContainerCreatesMainApplicationState);
+    RUN_TEST(testStateFactoryWithDiContainerCreatesConfigMenuState);
     
     return UNITY_END();
 }
