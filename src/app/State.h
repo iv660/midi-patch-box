@@ -2,13 +2,21 @@
 #include "StateInterface.h"
 
 class StateMachineInterface; // Forward declaration
+class DiContainerInterface; // Forward declaration
 
 // Abstract base class for states
 class State : public StateInterface {
 protected:
     StateMachineInterface* stateMachine = nullptr;
+    DiContainerInterface* diContainer = nullptr;
 
 public:
+    // Default constructor
+    State() = default;
+    
+    // Constructor with DiContainer for dependency injection
+    explicit State(DiContainerInterface* container) : diContainer(container) {}
+    
     virtual void enter() = 0;
     virtual void update() = 0;
     virtual void exit() = 0;

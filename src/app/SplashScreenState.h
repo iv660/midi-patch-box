@@ -10,7 +10,6 @@ private:
     SplashScreenViewInterface* splashScreenView = nullptr;
     IoDriverInterface* ioDriver = nullptr;
     StateFactoryInterface* stateFactory = nullptr;
-    DiContainerInterface* diContainer = nullptr;
     unsigned long startTime = 0;
 
     const unsigned long splashScreenDuration = 2000;
@@ -30,7 +29,7 @@ public:
     SplashScreenState() = default;
     
     // Constructor with DiContainer for dependency injection
-    explicit SplashScreenState(DiContainerInterface* container) : diContainer(container) {
+    explicit SplashScreenState(DiContainerInterface* container) : State(container) {
         // Dependencies will be resolved lazily through getters
     }
     
@@ -49,10 +48,6 @@ public:
         return this;
     }
     
-    SplashScreenState* setDiContainer(DiContainerInterface* diContainer) {
-        this->diContainer = diContainer;
-        return this;
-    }
     
     void enter() override;
     void update() override;
