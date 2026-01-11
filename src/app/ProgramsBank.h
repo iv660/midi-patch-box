@@ -1,14 +1,10 @@
 #pragma once
 
 #include "ProgramsBankInterface.h"
+#include "Program.h"
 
 class ProgramsBank : public ProgramsBankInterface {
 public:
-    struct Program {
-        int number;
-        char name[17];
-    };
-    
     ProgramsBank();
     
     ProgramsBankInterface* addProgram(int programNumber, const char* programName) override;
