@@ -3,45 +3,67 @@
 
 class MockInput : public UserInputInterface {
 private:
-    bool encoderClockwise = false;
-    bool encoderCounterClockwise = false;
-    bool encoderButtonPressed = false;
-    bool encoderButtonLongPressed = false;
+    bool encoderClockwiseState = false;
+    bool encoderCounterClockwiseState = false;
+    bool encoderButtonPressedState = false;
+    bool encoderButtonLongPressedState = false;
+    bool userButtonPressedState = false;
+    bool rightButtonPressedState = false;
 
 public:
     // Interface methods
+    void update() override {
+        // Mock implementation - no actual hardware polling needed
+    }
+    
+    bool userButtonIsPressed() override {
+        return userButtonPressedState;
+    }
+    
+    bool rightButtonIsPressed() override {
+        return rightButtonPressedState;
+    }
+    
     bool encoderRotatedClockwise() override {
-        return encoderClockwise;
+        return encoderClockwiseState;
     }
     
     bool encoderRotatedCounterClockwise() override {
-        return encoderCounterClockwise;
+        return encoderCounterClockwiseState;
     }
     
     bool encoderButtonPressed() override {
-        return encoderButtonPressed;
+        return encoderButtonPressedState;
     }
     
     bool encoderButtonLongPressed() override {
-        return encoderButtonLongPressed;
+        return encoderButtonLongPressedState;
     }
     
     // Test helper methods
     void setEncoderClockwise(bool value) {
-        encoderClockwise = value;
-        encoderCounterClockwise = false; // Reset opposite direction
+        encoderClockwiseState = value;
+        encoderCounterClockwiseState = false; // Reset opposite direction
     }
     
     void setEncoderCounterClockwise(bool value) {
-        encoderCounterClockwise = value;
-        encoderClockwise = false; // Reset opposite direction
+        encoderCounterClockwiseState = value;
+        encoderClockwiseState = false; // Reset opposite direction
     }
     
     void setEncoderButtonPressed(bool value) {
-        encoderButtonPressed = value;
+        encoderButtonPressedState = value;
     }
     
     void setEncoderButtonLongPressed(bool value) {
-        encoderButtonLongPressed = value;
+        encoderButtonLongPressedState = value;
+    }
+    
+    void setUserButtonPressed(bool value) {
+        userButtonPressedState = value;
+    }
+    
+    void setRightButtonPressed(bool value) {
+        rightButtonPressedState = value;
     }
 };

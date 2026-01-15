@@ -1,6 +1,7 @@
 #pragma once
 #include "../../src/app/EditSetlistViewInterface.h"
 #include "../../src/app/Program.h"
+#include <cstring>
 
 class MockEditSetlistView : public EditSetlistViewInterface {
 private:
@@ -14,7 +15,7 @@ private:
 
 public:
     // Interface methods
-    void showSetlist(Program setlist[]) override {
+    void showSetlist(Program* setlist) override {
         showSetlistCalled = true;
         // Copy setlist for testing
         for (int i = 0; i < 10; i++) {

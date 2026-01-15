@@ -39,6 +39,12 @@ public:
         return this;
     }
     
+    void updateProgram(int index, int programNumber) override {
+        if (index >= 0 && index < programCount) {
+            programs[index] = programNumber;
+        }
+    }
+    
     // Test helper methods
     const int* getProgramsList() const { return programs; }
     int getProgramCount() const { return programCount; }

@@ -6,7 +6,7 @@ public:
     virtual ~EditSetlistViewInterface() = default;
     
     // Display the setlist
-    virtual void showSetlist(Program[] setlist) = 0;
+    virtual void showSetlist(Program* setlist) = 0;
     
     // Set the currently selected item index
     virtual void setSelectedItemIndex(int index) = 0;

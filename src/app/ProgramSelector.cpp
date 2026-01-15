@@ -98,3 +98,12 @@ ProgramSelectorInterface * ProgramSelector::setPrograms(std::initializer_list<in
     return this;
 }
 
+void ProgramSelector::updateProgram(int index, int programNumber)
+{
+    if (programsList == nullptr || index < 0 || index >= programsCount) {
+        return;
+    }
+    
+    programsList[index] = programNumber;
+}
+

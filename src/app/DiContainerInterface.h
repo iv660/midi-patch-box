@@ -10,6 +10,7 @@ class MidiControllerInterface;
 class ProgramSelectionViewInterface;
 class ProgramsBankInterface;
 class ConfigMenuViewInterface;
+class EditSetlistViewInterface;
 class StateMachine;
 class StateMachineInterface;
 
@@ -32,6 +33,7 @@ public:
     // Dependencies for StateFactory
     virtual ProgramsBankInterface* getProgramsBank() const = 0;
     virtual ConfigMenuViewInterface* getConfigMenuView() const = 0;
+    virtual EditSetlistViewInterface* getEditSetlistView() const = 0;
     /**
      * @deprecated Use getStateMachine()
      */

@@ -1,12 +1,13 @@
 #include <unity.h>
-#include "EditSetlistState.h"
-#include "EditSetlistViewInterface.h"
-#include "DiContainer.h"
-#include "ProgramsBankInterface.h"
-#include "Program.h"
+#include "../../src/app/EditSetlistState.h"
+#include "../../src/app/EditSetlistViewInterface.h"
+#include "../../src/app/DiContainer.h"
+#include "../../src/app/ProgramsBankInterface.h"
+#include "../../src/app/Program.h"
 #include "../mocks/MockEditSetlistView.h"
 #include "../mocks/MockInput.h"
 #include "../mocks/MockProgramSelector.h"
+#include "../mocks/MockProgramsBank.h"
 
 void setUp(void) {
     // Set up code here, to run before each test
@@ -36,7 +37,11 @@ void testShouldShowExistingSetlist(void) {
 
     // Assert
     TEST_ASSERT_TRUE(mockView.showSetlistWasCalled());
-    TEST_ASSERT_EQUAL(setlistItems, mockView.getDisplayedSetlistItems());
+    const Program* displayedItems = mockView.getDisplayedSetlistItems();
+    TEST_ASSERT_EQUAL(44, displayedItems[0].number);
+    TEST_ASSERT_EQUAL_STRING("Viola", displayedItems[0].name);
+    TEST_ASSERT_EQUAL(45, displayedItems[1].number);
+    TEST_ASSERT_EQUAL_STRING("Cello", displayedItems[1].name);
 }
 
 void testShouldSelectFirstSetlistItem(void) {
@@ -90,6 +95,7 @@ void testShouldEnterEditModeOnEncoderButtonPressed(void) {
     EditSetlistState state(&diContainer);
 
     // Act
+    state.enter();  // Initialize the setlist first
     mockInput.setEncoderButtonPressed(true);
     state.update();
 
@@ -115,15 +121,16 @@ void testShouldIncrementEditedProgramOnEncoderRotatedClockwise(void) {
     EditSetlistState state(&diContainer);
 
     // Act
+    state.enter();  // Initialize the setlist first
     mockInput.setEncoderButtonPressed(true);
-    state.update();
+    state.update();  // Enter edit mode
     mockInput.setEncoderButtonPressed(false);
     mockInput.setEncoderClockwise(true);
-    state.update();
+    state.update();  // Increment program number
 
-    // Assert
-    TEST_ASSERT_EQUAL_INT(1, mockView.getSetlistEditedProgramIndex());
-    TEST_ASSERT_EQUAL_INT(45, mockView.getSetlistEditedProgramNumber());
+    // Assert - program number should increment from 44 to 45
+    TEST_ASSERT_EQUAL_INT(0, mockView.getSetlistEditedProgramIndex());  // Still editing first item
+    TEST_ASSERT_EQUAL_INT(45, mockView.getSetlistEditedProgramNumber());  // Program number incremented
     TEST_ASSERT_EQUAL_STRING("Cello", mockView.getSetlistEditedProgramName());
 }
 
@@ -133,10 +140,12 @@ void testShouldEndEditModeOnEncoderButtonPressed(void) {
     MockEditSetlistView mockView;
     MockInput mockInput;
     MockProgramsBank programsBank;
+    MockProgramSelector mockProgramSelector;
     
     diContainer.setEditSetlistView(&mockView);
     diContainer.setUserInput(&mockInput);
     diContainer.setProgramsBank(&programsBank);
+    diContainer.setProgramSelector(&mockProgramSelector);
     EditSetlistState state(&diContainer);
 
     // Act
@@ -157,24 +166,28 @@ void testShouldUpdateEditedProgramInListView(void) {
     MockEditSetlistView mockView;
     MockInput mockInput;
     MockProgramsBank programsBank;
+    MockProgramSelector mockProgramSelector;
     
     programsBank.addProgram(44, "Viola");
     programsBank.addProgram(45, "Cello");
     diContainer.setEditSetlistView(&mockView);
     diContainer.setUserInput(&mockInput);
     diContainer.setProgramsBank(&programsBank);
+    diContainer.setProgramSelector(&mockProgramSelector);
     EditSetlistState state(&diContainer);
 
     // Act
+    state.enter();  // Initialize the setlist first
     mockInput.setEncoderButtonPressed(true);
-    state.update();
+    state.update();  // Enter edit mode
     mockInput.setEncoderButtonPressed(false);
     mockInput.setEncoderClockwise(true);
-    state.update();
+    state.update();  // Increment program number from 44 to 45
+    mockInput.setEncoderClockwise(false);  // Reset encoder state
     mockInput.setEncoderButtonPressed(true);
-    state.update();
+    state.update();  // Save changes and exit edit mode
 
-    // Assert
+    // Assert - first item should now be program 45 (Cello)
     TEST_ASSERT_EQUAL_INT(45, mockView.getDisplayedSetlistItems()[0].number);
     TEST_ASSERT_EQUAL_STRING("Cello", mockView.getDisplayedSetlistItems()[0].name);
 }
@@ -189,6 +202,10 @@ void testShouldUpdateEditedProgramInProgramSelector(void) {
     
     programsBank.addProgram(44, "Viola");
     programsBank.addProgram(45, "Cello");
+    
+    // Initialize ProgramSelector with initial programs
+    mockProgramSelector.setPrograms({44, 45});
+    
     diContainer.setEditSetlistView(&mockView);
     diContainer.setUserInput(&mockInput);
     diContainer.setProgramSelector(&mockProgramSelector);
@@ -196,16 +213,18 @@ void testShouldUpdateEditedProgramInProgramSelector(void) {
     EditSetlistState state(&diContainer);
 
     // Act
+    state.enter();  // Initialize the setlist first
     mockInput.setEncoderButtonPressed(true);
-    state.update();
+    state.update();  // Enter edit mode
     mockInput.setEncoderButtonPressed(false);
     mockInput.setEncoderClockwise(true);
-    state.update();
+    state.update();  // Increment program number from 44 to 45
+    mockInput.setEncoderClockwise(false);  // Reset encoder state
     mockInput.setEncoderButtonPressed(true);
-    state.update();
+    state.update();  // Save changes and exit edit mode
 
-    // Assert
-    TEST_ASSERT_EQUAL_INT(45, mockProgramSelector.getProgramsList()[0]);
+    // Assert - ProgramSelector should be updated with new program
+    TEST_ASSERT_EQUAL_INT(45, mockProgramSelector.getProgramsList()[0]);  // Should be updated to 45
 }
 
 int main(int argc, char **argv) {
