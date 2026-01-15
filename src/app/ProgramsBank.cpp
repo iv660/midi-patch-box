@@ -21,3 +21,9 @@ const char* ProgramsBank::getProgramName(int programNumber) {
     }
     return "";
 }
+
+const Program* ProgramsBank::getAllPrograms(int& count) const
+{
+    count = programCount;
+    return programs;
+}

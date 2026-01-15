@@ -9,6 +9,7 @@ public:
     
     ProgramsBankInterface* addProgram(int programNumber, const char* programName) override;
     const char* getProgramName(int programNumber) override;
+    const Program* getAllPrograms(int& count) const override;
 
 private:
     static const int MAX_PROGRAMS = 128;

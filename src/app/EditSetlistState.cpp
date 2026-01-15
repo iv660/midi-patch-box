@@ -37,6 +37,7 @@ void EditSetlistState::exit() {
 }
 
 void EditSetlistState::update() {
+    // TODO:: Refactor to conform to Clean Code Principles
     auto userInput = diContainer->getUserInput();
     auto view = diContainer->getEditSetlistView();
     auto programsBank = diContainer->getProgramsBank();
