@@ -93,7 +93,8 @@ void EditSetlistState::handleEditModeInput() {
     }
     
     if (encoderButtonPressed()) {
-        handleEditModeButtonPress();
+        saveEditedProgram();
+        exitEditMode();
         return;
     }
 }
@@ -112,7 +113,7 @@ void EditSetlistState::handleNavigationModeInput() {
     }
     
     if (encoderButtonPressed()) {
-        handleNavigationModeButtonPress();
+        enterEditMode();
         return;
     }
 }
@@ -130,10 +131,6 @@ void EditSetlistState::handleEditModeEncoderRotation() {
     }
 }
 
-void EditSetlistState::handleEditModeButtonPress() {
-    saveEditedProgram();
-    exitEditMode();
-}
 
 void EditSetlistState::incrementEditedProgram() {
     editedProgramNumber = (editedProgramNumber + 1) % 128;
@@ -176,9 +173,6 @@ void EditSetlistState::handleNavigationModeEncoderRotation() {
     }
 }
 
-void EditSetlistState::handleNavigationModeButtonPress() {
-    enterEditMode();
-}
 
 void EditSetlistState::moveSelectionUp() {
     selectedIndex = (selectedIndex + 1) % 16;

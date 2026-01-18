@@ -30,7 +30,6 @@ private:
     
     // Edit mode operations
     void handleEditModeEncoderRotation();
-    void handleEditModeButtonPress();
     void incrementEditedProgram();
     void decrementEditedProgram();
     void updateEditedProgramDisplay();
@@ -39,7 +38,6 @@ private:
     
     // Navigation mode operations
     void handleNavigationModeEncoderRotation();
-    void handleNavigationModeButtonPress();
     void moveSelectionUp();
     void moveSelectionDown();
     void updateSelectionDisplay();
