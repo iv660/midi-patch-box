@@ -3,6 +3,7 @@
 #include "app/StateFactoryInterface.h"
 #include "app/MainApplicationState.h"
 #include "app/ConfigMenuViewInterface.h"
+#include "app/EditSetlistViewInterface.h"
 #include "app/DiContainerInterface.h"
 #include "mocks/MockIoDriver.h"
 #include "mocks/MockButton.h"
@@ -26,6 +27,7 @@ public:
     void selectPreviousProgram() override {}
     int getSelectedProgramNumber() const override { return 0; }
     ProgramSelectorInterface* setPrograms(std::initializer_list<int> programs) override { return this; }
+    void updateProgram(int index, int programNumber) override {}
 };
 
 class MockMidiController : public MidiControllerInterface {
@@ -46,6 +48,11 @@ class MockProgramsBank : public ProgramsBankInterface {
 public:
     ProgramsBankInterface* addProgram(int programNumber, const char* programName) override { return this; }
     const char* getProgramName(int programNumber) override { return "Test"; }
+    const Program* getAllPrograms(int& count) const override {
+        static Program programs[1] = {{1, "Test"}};
+        count = 1;
+        return programs;
+    }
 };
 
 class MockConfigMenuView : public ConfigMenuViewInterface {
@@ -53,6 +60,16 @@ public:
     ConfigMenuViewInterface* showMenu() override { return this; }
     ConfigMenuViewInterface* setSelectedItem(int itemIndex) override { return this; }
     ConfigMenuViewInterface* displayMenuItem(int itemIndex, const char* itemName) override { return this; }
+};
+
+class MockEditSetlistView : public EditSetlistViewInterface {
+public:
+    void showSetlist(Program* setlist) override {}
+    void setSelectedItemIndex(int index) override {}
+    void setEditMode(bool enabled) override {}
+    void setEditedProgramIndex(int index) override {}
+    void setEditedProgramNumber(int programNumber) override {}
+    void setEditedProgramName(const char* programName) override {}
 };
 
 class MockStateMachine : public StateMachineInterface {
@@ -69,6 +86,7 @@ private:
     mutable MockProgramSelectionView mockProgramSelectionView;
     mutable MockProgramsBank mockProgramsBank;
     mutable MockConfigMenuView mockConfigMenuView;
+    mutable MockEditSetlistView mockEditSetlistView;
     mutable MockStateMachine mockStateMachine;
 
 public:
@@ -117,6 +135,9 @@ public:
     ConfigMenuViewInterface* getConfigMenuView() const override {
         getConfigMenuViewCallCount++;
         return &mockConfigMenuView;
+    }
+    EditSetlistViewInterface* getEditSetlistView() const override {
+        return &mockEditSetlistView;
     }
     StateMachineInterface* getStateMachineInterface() const override {
         getStateMachineInterfaceCallCount++;

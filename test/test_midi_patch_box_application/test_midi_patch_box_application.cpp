@@ -74,6 +74,11 @@ public:
     {
         return nullptr;
     }
+
+    void updateProgram(int index, int programNumber) override
+    {
+        // Mock implementation - do nothing
+    }
 };
 
 class MockMidiController : public MidiControllerInterface

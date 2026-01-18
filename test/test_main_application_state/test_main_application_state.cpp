@@ -122,6 +122,11 @@ public:
         return nullptr;
     }
 
+    void updateProgram(int index, int programNumber) override
+    {
+        // Mock implementation - do nothing
+    }
+
     bool nextProgramWasSelected() const
     {
         return nextProgramSelected;
@@ -314,6 +319,16 @@ public:
             return "Viola";
         }
         return "Unknown";
+    }
+
+    const Program* getAllPrograms(int& count) const override
+    {
+        static Program programs[2] = {
+            {2, "Cello"},
+            {3, "Viola"}
+        };
+        count = 2;
+        return programs;
     }
 };
 
