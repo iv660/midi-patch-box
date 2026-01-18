@@ -37,84 +37,200 @@ void EditSetlistState::exit() {
 }
 
 void EditSetlistState::update() {
-    // TODO:: Refactor to conform to Clean Code Principles
-    auto userInput = diContainer->getUserInput();
-    auto view = diContainer->getEditSetlistView();
-    auto programsBank = diContainer->getProgramsBank();
+    if (isInEditMode()) {
+        handleEditModeInput();
+        return;
+    }
     
-    if (isEditMode) {
-        // Handle edit mode input
-        if (userInput->encoderRotatedClockwise()) {
-            editedProgramNumber = (editedProgramNumber + 1) % 128;
-            view->setEditedProgramNumber(editedProgramNumber);
-            const char* name = programsBank->getProgramName(editedProgramNumber);
-            if (name) {
-                view->setEditedProgramName(name);
-            } else {
-                char tempName[17];
-                snprintf(tempName, 17, "Program %d", editedProgramNumber);
-                view->setEditedProgramName(tempName);
-            }
-        } else if (userInput->encoderRotatedCounterClockwise()) {
-            editedProgramNumber = (editedProgramNumber - 1 + 128) % 128;
-            view->setEditedProgramNumber(editedProgramNumber);
-            const char* name = programsBank->getProgramName(editedProgramNumber);
-            if (name) {
-                view->setEditedProgramName(name);
-            } else {
-                char tempName[17];
-                snprintf(tempName, 17, "Program %d", editedProgramNumber);
-                view->setEditedProgramName(tempName);
-            }
-        } else if (userInput->encoderButtonPressed()) {
-            // Save edited program
-            currentSetlist[selectedIndex].number = editedProgramNumber;
-            const char* name = programsBank->getProgramName(editedProgramNumber);
-            if (name) {
-                strncpy(currentSetlist[selectedIndex].name, name, 16);
-                currentSetlist[selectedIndex].name[16] = '\0';
-            } else {
-                snprintf(currentSetlist[selectedIndex].name, 17, "Program %d", editedProgramNumber);
-            }
-            
-            // Update program selector with new program
-            auto programSelector = diContainer->getProgramSelector();
-            programSelector->updateProgram(selectedIndex, editedProgramNumber);
-            
-            // Update view and exit edit mode
-            view->showSetlist(currentSetlist);
-            view->setSelectedItemIndex(selectedIndex);
-            view->setEditMode(false);
-            isEditMode = false;
-        }
-    } else {
-        // Handle navigation mode input
-        if (userInput->encoderRotatedClockwise()) {
-            selectedIndex = (selectedIndex + 1) % 16;
-            view->setSelectedItemIndex(selectedIndex);
-        } else if (userInput->encoderRotatedCounterClockwise()) {
-            selectedIndex = (selectedIndex - 1 + 16) % 16;
-            view->setSelectedItemIndex(selectedIndex);
-        } else if (userInput->encoderButtonPressed()) {
-            // Enter edit mode for selected program
-            editedProgramNumber = currentSetlist[selectedIndex].number;
-            isEditMode = true;
-            view->setEditMode(true);
-            view->setEditedProgramIndex(selectedIndex);
-            view->setEditedProgramNumber(editedProgramNumber);
-            const char* name = programsBank->getProgramName(editedProgramNumber);
-            if (name) {
-                view->setEditedProgramName(name);
-            } else {
-                char tempName[17];
-                snprintf(tempName, 17, "Program %d", editedProgramNumber);
-                view->setEditedProgramName(tempName);
-            }
-        }
+    if (isInNavigationMode()) {
+        handleNavigationModeInput();
+        return;
     }
 }
 
-StateInterface* EditSetlistState::setStateMachine(StateMachineInterface* sm) {
-    stateMachine = sm;
+StateInterface* EditSetlistState::setStateMachine(StateMachineInterface* stateMachine) {
+    this->stateMachine = stateMachine;
     return this;
+}
+
+// Input condition checking methods
+bool EditSetlistState::encoderRotatedClockwise() {
+    auto userInput = diContainer->getUserInput();
+    return userInput->encoderRotatedClockwise();
+}
+
+bool EditSetlistState::encoderRotatedCounterClockwise() {
+    auto userInput = diContainer->getUserInput();
+    return userInput->encoderRotatedCounterClockwise();
+}
+
+bool EditSetlistState::encoderButtonPressed() {
+    auto userInput = diContainer->getUserInput();
+    return userInput->encoderButtonPressed();
+}
+
+// State checking methods
+bool EditSetlistState::isInEditMode() const {
+    return isEditMode;
+}
+
+bool EditSetlistState::isInNavigationMode() const {
+    return !isEditMode;
+}
+
+// Mode handlers
+void EditSetlistState::handleEditModeInput() {
+    if (encoderRotatedClockwise()) {
+        incrementEditedProgram();
+        updateEditedProgramDisplay();
+        return;
+    }
+    
+    if (encoderRotatedCounterClockwise()) {
+        decrementEditedProgram();
+        updateEditedProgramDisplay();
+        return;
+    }
+    
+    if (encoderButtonPressed()) {
+        handleEditModeButtonPress();
+        return;
+    }
+}
+
+void EditSetlistState::handleNavigationModeInput() {
+    if (encoderRotatedClockwise()) {
+        moveSelectionUp();
+        updateSelectionDisplay();
+        return;
+    }
+    
+    if (encoderRotatedCounterClockwise()) {
+        moveSelectionDown();
+        updateSelectionDisplay();
+        return;
+    }
+    
+    if (encoderButtonPressed()) {
+        handleNavigationModeButtonPress();
+        return;
+    }
+}
+
+// Edit mode operations
+void EditSetlistState::handleEditModeEncoderRotation() {
+    if (encoderRotatedClockwise()) {
+        incrementEditedProgram();
+        return;
+    }
+    
+    if (encoderRotatedCounterClockwise()) {
+        decrementEditedProgram();
+        return;
+    }
+}
+
+void EditSetlistState::handleEditModeButtonPress() {
+    saveEditedProgram();
+    exitEditMode();
+}
+
+void EditSetlistState::incrementEditedProgram() {
+    editedProgramNumber = (editedProgramNumber + 1) % 128;
+}
+
+void EditSetlistState::decrementEditedProgram() {
+    editedProgramNumber = (editedProgramNumber - 1 + 128) % 128;
+}
+
+void EditSetlistState::updateEditedProgramDisplay() {
+    auto view = diContainer->getEditSetlistView();
+    view->setEditedProgramNumber(editedProgramNumber);
+    
+    const char* displayName = getProgramDisplayName(editedProgramNumber);
+    view->setEditedProgramName(displayName);
+}
+
+void EditSetlistState::saveEditedProgram() {
+    updateProgramInSetlist(selectedIndex, editedProgramNumber);
+    
+    auto programSelector = diContainer->getProgramSelector();
+    programSelector->updateProgram(selectedIndex, editedProgramNumber);
+}
+
+void EditSetlistState::exitEditMode() {
+    isEditMode = false;
+    updateViewAfterEdit();
+}
+
+// Navigation mode operations
+void EditSetlistState::handleNavigationModeEncoderRotation() {
+    if (encoderRotatedClockwise()) {
+        moveSelectionUp();
+        return;
+    }
+    
+    if (encoderRotatedCounterClockwise()) {
+        moveSelectionDown();
+        return;
+    }
+}
+
+void EditSetlistState::handleNavigationModeButtonPress() {
+    enterEditMode();
+}
+
+void EditSetlistState::moveSelectionUp() {
+    selectedIndex = (selectedIndex + 1) % 16;
+}
+
+void EditSetlistState::moveSelectionDown() {
+    selectedIndex = (selectedIndex - 1 + 16) % 16;
+}
+
+void EditSetlistState::updateSelectionDisplay() {
+    auto view = diContainer->getEditSetlistView();
+    view->setSelectedItemIndex(selectedIndex);
+}
+
+void EditSetlistState::enterEditMode() {
+    editedProgramNumber = currentSetlist[selectedIndex].number;
+    isEditMode = true;
+    
+    auto view = diContainer->getEditSetlistView();
+    view->setEditMode(true);
+    view->setEditedProgramIndex(selectedIndex);
+    view->setEditedProgramNumber(editedProgramNumber);
+    
+    const char* displayName = getProgramDisplayName(editedProgramNumber);
+    view->setEditedProgramName(displayName);
+}
+
+// Utility methods
+const char* EditSetlistState::getProgramDisplayName(int programNumber) {
+    auto programsBank = diContainer->getProgramsBank();
+    const char* name = programsBank->getProgramName(programNumber);
+    
+    if (name) {
+        return name;
+    }
+    
+    static char tempName[17];
+    snprintf(tempName, 17, "Program %d", programNumber);
+    return tempName;
+}
+
+void EditSetlistState::updateProgramInSetlist(int index, int programNumber) {
+    currentSetlist[index].number = programNumber;
+    
+    const char* name = getProgramDisplayName(programNumber);
+    strncpy(currentSetlist[index].name, name, 16);
+    currentSetlist[index].name[16] = '\0';
+}
+
+void EditSetlistState::updateViewAfterEdit() {
+    auto view = diContainer->getEditSetlistView();
+    view->showSetlist(currentSetlist);
+    view->setSelectedItemIndex(selectedIndex);
+    view->setEditMode(false);
 }

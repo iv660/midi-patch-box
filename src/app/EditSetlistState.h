@@ -15,6 +15,41 @@ private:
     bool isEditMode;
     int editedProgramNumber;
 
+    // State checking methods
+    bool isInEditMode() const;
+    bool isInNavigationMode() const;
+    
+    // Input condition checking methods
+    bool encoderRotatedClockwise();
+    bool encoderRotatedCounterClockwise();
+    bool encoderButtonPressed();
+    
+    // Mode handlers
+    void handleEditModeInput();
+    void handleNavigationModeInput();
+    
+    // Edit mode operations
+    void handleEditModeEncoderRotation();
+    void handleEditModeButtonPress();
+    void incrementEditedProgram();
+    void decrementEditedProgram();
+    void updateEditedProgramDisplay();
+    void saveEditedProgram();
+    void exitEditMode();
+    
+    // Navigation mode operations
+    void handleNavigationModeEncoderRotation();
+    void handleNavigationModeButtonPress();
+    void moveSelectionUp();
+    void moveSelectionDown();
+    void updateSelectionDisplay();
+    void enterEditMode();
+    
+    // Utility methods
+    const char* getProgramDisplayName(int programNumber);
+    void updateProgramInSetlist(int index, int programNumber);
+    void updateViewAfterEdit();
+
 public:
     explicit EditSetlistState(DiContainerInterface* container);
     
