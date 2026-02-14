@@ -2,12 +2,36 @@
 #include "../../src/app/EditSetlistState.h"
 #include "../../src/app/EditSetlistViewInterface.h"
 #include "../../src/app/DiContainer.h"
+#include "../../src/app/DiContainerInterface.h"
 #include "../../src/app/ProgramsBankInterface.h"
 #include "../../src/app/Program.h"
 #include "../mocks/MockEditSetlistView.h"
 #include "../mocks/MockInput.h"
 #include "../mocks/MockProgramSelector.h"
 #include "../mocks/MockProgramsBank.h"
+
+// MockDiContainer for tests that need it
+class MockDiContainer : public DiContainerInterface {
+private:
+    mutable MockInput mockUserInput;
+    mutable MockEditSetlistView mockEditSetlistView;
+    mutable MockProgramSelector mockProgramSelector;
+    mutable MockProgramsBank mockProgramsBank;
+
+public:
+    UserInputInterface* getUserInput() const override { return &mockUserInput; }
+    EditSetlistViewInterface* getEditSetlistView() const override { return &mockEditSetlistView; }
+    ProgramSelectorInterface* getProgramSelector() const override { return &mockProgramSelector; }
+    ProgramsBankInterface* getProgramsBank() const override { return &mockProgramsBank; }
+    MidiControllerInterface* getMidiController() const override { return nullptr; }
+    ProgramSelectionViewInterface* getProgramSelectionView() const override { return nullptr; }
+    StateMachineInterface* getStateMachine() const override { return nullptr; }
+    SplashScreenViewInterface* getSplashScreenView() const override { return nullptr; }
+    IoDriverInterface* getIoDriver() const override { return nullptr; }
+    StateFactoryInterface* getStateFactory() const override { return nullptr; }
+    ConfigMenuViewInterface* getConfigMenuView() const override { return nullptr; }
+    StateMachineInterface* getStateMachineInterface() const override { return nullptr; }
+};
 
 void setUp(void) {
     // Set up code here, to run before each test
@@ -266,6 +290,48 @@ void testEditModeShouldNotToggleOnSubsequentUpdate(void) {
                              "Edit mode should not toggle on subsequent update without input change");
 }
 
+void testShouldCallUserInputUpdateAndNotEnterEditModeWhenButtonReset(void) {
+    // Setup - use DiContainer like other tests
+    DiContainer diContainer;
+    MockEditSetlistView mockView;
+    MockInput mockInput;
+    MockProgramsBank programsBank;
+    
+    // Add programs to bank
+    programsBank.addProgram(0, "Clean");
+    programsBank.addProgram(41, "Viola");
+    programsBank.addProgram(112, "Reverse");
+    
+    // Setup DI container
+    diContainer.setEditSetlistView(&mockView);
+    diContainer.setUserInput(&mockInput);
+    diContainer.setProgramsBank(&programsBank);
+    
+    // Create state
+    EditSetlistState state(&diContainer);
+    state.enter();
+    
+    // 1. Set encoder button as pressed
+    mockInput.setEncoderButtonPressed(true);
+    
+    // 2. Call state.update() - should trigger enterEditMode if button is pressed
+    state.update();
+    
+    // 3. Verify that userInput.update() was called
+    TEST_ASSERT_TRUE_MESSAGE(mockInput.wasUpdateCalled(),
+                             "userInput.update() should have been called");
+    
+    // 4. Reset button state (simulate button released after update)
+    mockInput.setEncoderButtonPressed(false);
+    
+    // 5. Call state.update() again - should NOT enter edit mode since button is not pressed
+    state.update();
+    
+    // 6. Verify that edit mode still stays on when button is not pressed
+    TEST_ASSERT_TRUE_MESSAGE(mockView.editModeIsOn(),
+                              "Edit mode should be off when button is not pressed");
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     
@@ -278,6 +344,7 @@ int main(int argc, char **argv) {
     RUN_TEST(testShouldUpdateEditedProgramInListView);
     RUN_TEST(testShouldUpdateEditedProgramInProgramSelector);
     RUN_TEST(testEditModeShouldNotToggleOnSubsequentUpdate);
+    RUN_TEST(testShouldCallUserInputUpdateAndNotEnterEditModeWhenButtonReset);
 
     return UNITY_END();
 }

@@ -9,11 +9,16 @@ private:
     bool encoderButtonLongPressedState = false;
     bool userButtonPressedState = false;
     bool rightButtonPressedState = false;
+    bool updateCalled = false;
 
 public:
     // Interface methods
     void update() override {
-        // Mock implementation - no actual hardware polling needed
+        updateCalled = true;
+    }
+    
+    bool wasUpdateCalled() const {
+        return updateCalled;
     }
     
     bool userButtonIsPressed() override {

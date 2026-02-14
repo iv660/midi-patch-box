@@ -37,6 +37,12 @@ void EditSetlistState::exit() {
 }
 
 void EditSetlistState::update() {
+    // Update user input to reset button states
+    auto userInput = diContainer->getUserInput();
+    if (userInput) {
+        userInput->update();
+    }
+    
     if (isInEditMode()) {
         handleEditModeInput();
         return;

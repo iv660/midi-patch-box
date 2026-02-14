@@ -10,6 +10,7 @@ private:
     int selectedItemIndex = 0;
     bool editMode = false;
     bool lastEditModeValue = false;  // Track last value passed to setEditMode
+    bool setEditModeCalled = false;  // Track if setEditMode was called
     int editedProgramIndex = 0;
     int editedProgramNumber = 0;
     char editedProgramName[17] = "";
@@ -31,6 +32,11 @@ public:
     void setEditMode(bool enabled) override {
         editMode = enabled;
         lastEditModeValue = enabled;
+        setEditModeCalled = true;
+    }
+    
+    bool wasSetEditModeCalled() const {
+        return setEditModeCalled;
     }
     
     void setEditedProgramIndex(int index) override {
