@@ -28,19 +28,21 @@ The architecture follows modern C++ design principles with interface-based abstr
 ## System Architecture
 
 ```mermaid
-graph LR
+graph TD
     subgraph "Application Layer (src/app/)"
         APP[MidiPatchBoxApplication]
         SM[StateMachine]
         SPS[SplashScreenState]
         MAS[MainApplicationState]
+        CMS[ConfigMenuState]
+        ESS[EditSetlistState]
         PS[ProgramSelector]
         PB[ProgramsBank]
         BTN[Button]
         ENC[Encoder]
         UI[UserInput]
         SF[StateFactory]
-        MASF[MainApplicationStateFactory]
+        DC[DiContainer]
         
         subgraph "Interfaces"
             UII[UserInputInterface]
@@ -55,6 +57,9 @@ graph LR
             SFI[StateFactoryInterface]
             EI[EncoderInterface]
             BI[ButtonInterface]
+            CMI[ConfigMenuViewInterface]
+            ESVI[EditSetlistViewInterface]
+            DCI[DiContainerInterface]
         end
     end
     
@@ -64,21 +69,13 @@ graph LR
         DPSV[DisplayProgramSelectionView]
         DSSV[DisplaySplashScreenView]
         DBSSV[DisplayBitmapSplashScreenView]
+        DCMDV[DisplayConfigMenuView]
+        DESV[DisplayEditSetlistView]
     end
     
     subgraph "Test Layer (test/)"
         TESTS[Unit Tests]
         MOCKS[Mock Objects]
-        MOCKIO[MockIoDriver]
-        MOCKBTN[MockButton]
-        MOCKENC[MockEncoder]
-    end
-    
-    subgraph "External Dependencies"
-        ARDUINO[Arduino Framework]
-        TINYUSB[Adafruit TinyUSB]
-        UNITY[Unity Test Framework]
-        ADAFRUIT[Adafruit GFX/SSD1306]
     end
     
     APP --> SM
@@ -92,6 +89,12 @@ graph LR
     SPS --> SSVI
     SPS --> IOI
     SPS --> SFI
+    CMS --> SI
+    CMS --> CMI
+    CMS --> SFI
+    ESS --> SI
+    ESS --> ESVI
+    ESS --> DCI
     MAS --> SI
     MAS --> UII
     MAS --> PSI
@@ -108,44 +111,7 @@ graph LR
     PS --> PSI
     PB --> PBI
     SF --> SFI
-    MASF --> SFI
-    
-    MC -.-> MCI
-    AIO -.-> IOI
-    DPSV -.-> PSVI
-    DSSV -.-> SSVI
-    DBSSV -.-> SSVI
-    
-    TESTS --> MOCKS
-    TESTS --> MOCKIO
-    TESTS --> MOCKBTN
-    TESTS --> MOCKENC
-    TESTS --> APP
-    TESTS --> SM
-    TESTS --> SPS
-    TESTS --> MAS
-    TESTS --> PS
-    TESTS --> PB
-    TESTS --> BTN
-    TESTS --> ENC
-    TESTS --> UI
-    
-    AIO --> ARDUINO
-    MC --> TINYUSB
-    DPSV --> ADAFRUIT
-    DSSV --> ADAFRUIT
-    DBSSV --> ADAFRUIT
-    TESTS --> UNITY
-    
-    classDef appLayer fill:#e1f5fe
-    classDef hardwareLayer fill:#f3e5f5
-    classDef testLayer fill:#e8f5e8
-    classDef external fill:#fff3e0
-    
-    class APP,SM,SPS,MAS,PS,PB,BTN,ENC,UI,SF,MASF,UII,PSI,MCI,IOI,PSVI,SSVI,PBI,SI,SMI,SFI,EI,BI appLayer
-    class MC,AIO,DPSV,DSSV,DBSSV hardwareLayer
-    class TESTS,MOCKS,MOCKIO,MOCKBTN,MOCKENC testLayer
-    class ARDUINO,TINYUSB,UNITY,ADAFRUIT external
+    DC --> DCI
 ```
 
 ## Layers
@@ -165,13 +131,15 @@ The application layer contains the core business logic and is designed to be pla
 - [`StateMachine`](src/app/StateMachine.h) - State management and transitions
 - [`SplashScreenState`](src/app/SplashScreenState.h) - Initial application state with splash screen
 - [`MainApplicationState`](src/app/MainApplicationState.h) - Main operational state handling user input
+- [`ConfigMenuState`](src/app/ConfigMenuState.h) - Configuration menu state for navigation
+- [`EditSetlistState`](src/app/EditSetlistState.h) - Setlist editing state with program selection
 - [`ProgramSelector`](src/app/ProgramSelector.h) - Program list management and selection logic
 - [`ProgramsBank`](src/app/ProgramsBank.h) - Program name management
 - [`UserInput`](src/app/UserInput.h) - User input coordination and button management
-- [`Button`](src/app/Button.h) - Button state management with debouncing
+- [`Button`](src/app/Button.h) - Button state management with debouncing and long press detection
 - [`Encoder`](src/app/Encoder.h) - Rotary encoder input handling
-- [`StateFactory`](src/app/StateFactory.h) - Abstract factory for state creation
-- [`MainApplicationStateFactory`](src/app/MainApplicationStateFactory.h) - Concrete factory for main state
+- [`StateFactory`](src/app/StateFactory.h) - Unified factory for all state creation
+- [`DiContainer`](src/app/DiContainer.h) - Dependency injection container
 - Abstract interfaces for hardware abstraction
 
 ### Hardware Layer (`src/hardware/`)
@@ -190,6 +158,8 @@ The hardware layer provides concrete implementations of the application interfac
 - [`DisplayProgramSelectionView`](src/hardware/DisplayProgramSelectionView.h) - Visual program selection feedback via display
 - [`DisplaySplashScreenView`](src/hardware/DisplaySplashScreenView.h) - Text-based splash screen display
 - [`DisplayBitmapSplashScreenView`](src/hardware/DisplayBitmapSplashScreenView.h) - Bitmap-based splash screen display
+- [`DisplayConfigMenuView`](src/hardware/DisplayConfigMenuView.h) - Configuration menu display implementation
+- [`DisplayEditSetlistView`](src/hardware/DisplayEditSetlistView.h) - Setlist editing view implementation
 
 ### Test Layer (`test/`)
 
@@ -262,7 +232,7 @@ graph LR
 
 ### Button
 
-**Purpose**: Provides debounced button state management with configurable timing thresholds.
+**Purpose**: Provides debounced button state management with configurable timing thresholds and long press detection.
 
 **Interface**: Implements [`ButtonInterface`](src/app/ButtonInterface.h)
 
@@ -270,6 +240,7 @@ graph LR
 
 **Key Features**:
 - 300ms debounce threshold
+- 2-second long press detection
 - State change detection
 - Hardware abstraction through IoDriver
 - Time-based debouncing logic
@@ -289,6 +260,7 @@ graph LR
 - Manages rotary encoder input
 - Hardware abstraction through interface dependencies
 - Configurable with ready-made control element instances
+- Long press detection support (2 seconds)
 
 **Dependencies**: [`ButtonInterface`](src/app/ButtonInterface.h), [`EncoderInterface`](src/app/EncoderInterface.h)
 
@@ -338,10 +310,63 @@ graph LR
 - MIDI program change transmission
 - Display updates for program selection
 - Integration with [`ProgramsBank`](src/app/ProgramsBank.h) for program names
+- Long press detection for menu access (2 seconds)
 
-**Dependencies**: [`UserInputInterface`](src/app/UserInputInterface.h), [`ProgramSelectorInterface`](src/app/ProgramSelectorInterface.h), [`MidiControllerInterface`](src/app/MidiControllerInterface.h), [`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h), [`ProgramsBankInterface`](src/app/ProgramsBankInterface.h)
+**Dependencies**: [`UserInputInterface`](src/app/UserInputInterface.h), [`ProgramSelectorInterface`](src/app/ProgramSelectorInterface.h), [`MidiControllerInterface`](src/app/MidiControllerInterface.h), [`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h), [`ProgramsBankInterface`](src/app/ProgramsBankInterface.h), [`StateFactoryInterface`](src/app/StateFactoryInterface.h), [`StateMachineInterface`](src/app/StateMachineInterface.h)
 
 **Testing**: Comprehensive unit tests with mocked dependencies
+
+### ConfigMenuState
+
+**Purpose**: Configuration menu state providing navigation between main application and setlist editing.
+
+**Interface**: Implements [`StateInterface`](src/app/StateInterface.h)
+
+**Key Features**:
+- Menu navigation (Edit Setlist / Back options)
+- Encoder rotation for menu selection
+- Encoder button press to confirm selection
+- Transition to [`EditSetlistState`](src/app/EditSetlistState.h) or [`MainApplicationState`](src/app/MainApplicationState.h)
+- Display abstraction through [`ConfigMenuViewInterface`](src/app/ConfigMenuViewInterface.h)
+
+**Dependencies**: [`ConfigMenuViewInterface`](src/app/ConfigMenuViewInterface.h), [`StateFactoryInterface`](src/app/StateFactoryInterface.h), [`StateMachineInterface`](src/app/StateMachineInterface.h)
+
+**Testing**: Unit tested with mock dependencies
+
+### EditSetlistState
+
+**Purpose**: Setlist editing state allowing users to modify the program list with encoder-based navigation and editing.
+
+**Interface**: Implements [`StateInterface`](src/app/StateInterface.h)
+
+**Key Features**:
+- Two operation modes: Navigation and Edit
+- Navigation mode: Select programs in setlist with encoder rotation
+- Edit mode: Change program number for selected slot
+- Real-time display of program names from ProgramsBank
+- Automatic update of ProgramSelector when programs change
+- Clean separation of input handling and business logic
+
+**Dependencies**: [`EditSetlistViewInterface`](src/app/EditSetlistViewInterface.h), [`DiContainerInterface`](src/app/DiContainerInterface.h), [`StateMachineInterface`](src/app/StateMachineInterface.h)
+
+**Testing**: Unit tested with mock dependencies
+
+### DiContainer
+
+**Purpose**: Centralized dependency injection container managing all application dependencies.
+
+**Interface**: Implements [`DiContainerInterface`](src/app/DiContainerInterface.h)
+
+**Key Features**:
+- Centralized dependency management
+- Fluent interface for configuration
+- Access to all application services
+- State factory integration
+- Clean separation of dependency configuration
+
+**Dependencies**: All application interfaces
+
+**Testing**: Unit tested through dependency access verification
 
 ### ProgramsBank
 
@@ -427,10 +452,18 @@ graph LR
 
 ### State Machine Pattern
 
-The application uses a finite state machine to manage different operational modes with clear state transitions and lifecycle management.
+The application uses a finite state machine to manage different operational modes with clear state transitions and lifecycle management. The application includes four main states:
+
+1. **SplashScreenState** - Initial splash screen display
+2. **MainApplicationState** - Main operational state for program selection
+3. **ConfigMenuState** - Configuration menu for navigation
+4. **EditSetlistState** - Setlist editing interface
 
 ```cpp
 class StateMachine : public StateMachineInterface {
+private:
+    StateInterface* currentState = nullptr;
+
 public:
     void changeState(StateInterface* newState) override {
         if (currentState) {
@@ -443,29 +476,53 @@ public:
             currentState->enter();
         }
     }
+    
+    void update() override {
+        if (currentState) {
+            currentState->update();
+        }
+    }
 };
 ```
+
+**State Transitions:**
+- SplashScreenState → MainApplicationState (after timeout)
+- MainApplicationState → ConfigMenuState (on long press)
+- ConfigMenuState → EditSetlistState (on "Edit Setlist" selection)
+- ConfigMenuState → MainApplicationState (on "Back" selection)
+- EditSetlistState → ConfigMenuState (implicit)
 
 **Key Benefits**:
 - Clear separation of application modes
 - Automatic state lifecycle management
 - Memory safety with RAII principles
 - Testable state transitions
+- Clean code principles (early returns, isolated conditions)
 
 ### Factory Pattern
 
-State creation is abstracted through factory interfaces, enabling flexible state instantiation and dependency injection.
+State creation is abstracted through a unified factory interface, enabling flexible state instantiation and dependency injection.
 
 ```cpp
-class MainApplicationStateFactory : public StateFactory {
+class StateFactory : public StateFactoryInterface {
+private:
+    DiContainerInterface* diContainer;
+
 public:
+    StateInterface* createSplashScreenState() override {
+        return new SplashScreenState(diContainer);
+    }
+
     StateInterface* createMainApplicationState() override {
-        return (new MainApplicationState())
-            ->setUserInput(userInput)
-            ->setProgramSelector(programSelector)
-            ->setMidiController(midiController)
-            ->setProgramSelectionView(programSelectionView)
-            ->setProgramsBank(programsBank);
+        return new MainApplicationState(diContainer);
+    }
+
+    StateInterface* createConfigMenuState() override {
+        return new ConfigMenuState(diContainer);
+    }
+
+    StateInterface* createEditSetlistState() override {
+        return new EditSetlistState(diContainer);
     }
 };
 ```
@@ -497,12 +554,34 @@ public:
     virtual void update() = 0;
     virtual bool userButtonIsPressed() = 0;
     virtual bool rightButtonIsPressed() = 0;
+    virtual bool encoderRotatedClockwise() = 0;
+    virtual bool encoderRotatedCounterClockwise() = 0;
+    virtual bool encoderButtonPressed() = 0;
+    virtual bool encoderButtonLongPressed() = 0;
 };
 
 class ProgramSelectionViewInterface {
 public:
     virtual ProgramSelectionViewInterface* setSelectedProgramNumber(int programNumber) = 0;
     virtual ~ProgramSelectionViewInterface() = default;
+};
+
+class ConfigMenuViewInterface {
+public:
+    virtual ConfigMenuViewInterface* setItems(const char** items, int count) = 0;
+    virtual ConfigMenuViewInterface* setSelectedIndex(int index) = 0;
+    virtual ~ConfigMenuViewInterface() = default;
+};
+
+class EditSetlistViewInterface {
+public:
+    virtual void showSetlist(Program* setlist) = 0;
+    virtual void setSelectedItemIndex(int index) = 0;
+    virtual void setEditMode(bool enabled) = 0;
+    virtual void setEditedProgramIndex(int index) = 0;
+    virtual void setEditedProgramNumber(int programNumber) = 0;
+    virtual void setEditedProgramName(const char* name) = 0;
+    virtual ~EditSetlistViewInterface() = default;
 };
 ```
 
@@ -545,16 +624,42 @@ graph LR
         
         SM --> SMI[StateMachineInterface]
         SM --> SI[StateInterface]
+        SM --> SFI[StateFactoryInterface]
+        
         SPS[SplashScreenState] --> SI
         SPS --> SSVI[SplashScreenViewInterface]
         SPS --> IOI[IoDriverInterface]
-        SPS --> SFI[StateFactoryInterface]
+        SPS --> SFI
+        
         MAS[MainApplicationState] --> SI
         MAS --> UII
         MAS --> PSI
         MAS --> MCI
         MAS --> PSVI
         MAS --> PBI[ProgramsBankInterface]
+        MAS --> SFI
+        MAS --> SMI
+        
+        CMS[ConfigMenuState] --> SI
+        CMS --> CMI[ConfigMenuViewInterface]
+        CMS --> SFI
+        CMS --> SMI
+        
+        ESS[EditSetlistState] --> SI
+        ESS --> ESVI[EditSetlistViewInterface]
+        ESS --> DCI[DiContainerInterface]
+        ESS --> SMI
+        
+        DC[DiContainer] --> DCI
+        DC --> SFI
+        DC --> UII
+        DC --> PSI
+        DC --> MCI
+        DC --> PSVI
+        DC --> PBI
+        DC --> CMI
+        DC --> ESVI
+        DC --> IOI
         
         UI[UserInput] --> UII
         UI --> IOI
@@ -565,7 +670,6 @@ graph LR
         PS[ProgramSelector] --> PSI
         PB[ProgramsBank] --> PBI
         SF[StateFactory] --> SFI
-        MASF[MainApplicationStateFactory] --> SFI
     end
     
     subgraph "Hardware Dependencies"
@@ -581,6 +685,10 @@ graph LR
         DSSV --> ADAFRUIT
         DBSSV[DisplayBitmapSplashScreenView] --> SSVI
         DBSSV --> ADAFRUIT
+        DCMDV[DisplayConfigMenuView] --> CMI[ConfigMenuViewInterface]
+        DCMDV --> ADAFRUIT
+        DESV[DisplayEditSetlistView] --> ESVI[EditSetlistViewInterface]
+        DESV --> ADAFRUIT
     end
     
     subgraph "Test Dependencies"
@@ -673,7 +781,11 @@ test/
 ├── mocks/
 │   ├── MockIoDriver.h              # GPIO operations mock
 │   ├── MockButton.h                # Button interface mock
-│   └── MockEncoder.h               # Encoder interface mock
+│   ├── MockEncoder.h               # Encoder interface mock
+│   ├── MockProgramsBank.h          # ProgramsBank interface mock
+│   ├── MockProgramSelector.h       # ProgramSelector interface mock
+│   ├── MockEditSetlistView.h       # EditSetlistView interface mock
+│   └── MockInput.h                 # UserInput interface mock
 ├── test_button/
 │   └── test_button.cpp             # Button logic tests
 ├── test_encoder/
@@ -692,6 +804,12 @@ test/
 │   └── test_main_application_state.cpp # Main application state tests
 ├── test_splash_screen_view/
 │   └── test_splash_screen_view.cpp  # Splash screen view tests
+├── test_config_menu_state/
+│   └── test_config_menu_state.cpp   # Config menu state tests
+├── test_edit_setlist_state/
+│   └── test_edit_setlist_state.cpp  # Edit setlist state tests
+├── test_state_factory/
+│   └── test_state_factory.cpp       # State factory tests
 └── test_midi_patch_box_application/
     └── test_midi_patch_box_application.cpp  # Main app tests
 ```
@@ -704,6 +822,91 @@ test/
 **Note**: System and integration testing is performed manually due to hardware dependencies and real-time MIDI communication requirements.
 
 ## Build and Development
+
+### Code Quality Practices
+
+The project follows Clean Code principles to ensure maintainability and readability:
+
+#### Single Responsibility
+Each method performs a single, well-defined task. Complex operations are decomposed into smaller, focused methods with descriptive names.
+
+#### Early Returns
+Conditionals use early returns to avoid nested structures:
+
+```cpp
+void handleEditModeInput() {
+    if (encoderRotatedClockwise()) {
+        incrementEditedProgram();
+        updateEditedProgramDisplay();
+        return;
+    }
+    
+    if (encoderRotatedCounterClockwise()) {
+        decrementEditedProgram();
+        updateEditedProgramDisplay();
+        return;
+    }
+    
+    if (encoderButtonPressed()) {
+        saveEditedProgram();
+        exitEditMode();
+        return;
+    }
+}
+```
+
+#### Isolated Conditions
+All boolean checks are encapsulated in descriptive methods:
+
+```cpp
+bool encoderRotatedClockwise() {
+    auto userInput = diContainer->getUserInput();
+    return userInput->encoderRotatedClockwise();
+}
+
+bool isInEditMode() const {
+    return isEditMode;
+}
+
+bool isInNavigationMode() const {
+    return !isEditMode;
+}
+```
+
+#### Abstraction Levels
+Methods operate at consistent abstraction levels - high-level methods delegate to lower-level operations:
+
+```cpp
+void update() {
+    if (isInEditMode()) {
+        handleEditModeInput();
+        return;
+    }
+    
+    if (isInNavigationMode()) {
+        handleNavigationModeInput();
+        return;
+    }
+}
+```
+
+#### Inline Simple Delegations
+Simple one-liner delegations are inlined to avoid unnecessary indirection:
+
+```cpp
+// Instead of:
+void handleEditModeButtonPress() {
+    saveEditedProgram();
+    exitEditMode();
+}
+
+// Direct usage:
+if (encoderButtonPressed()) {
+    saveEditedProgram();
+    exitEditMode();
+    return;
+}
+```
 
 ### Platform Configuration
 
