@@ -5,6 +5,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
+#include <cstring>
 
 class DisplayEditSetlistView : public EditSetlistViewInterface
 {
@@ -34,6 +35,7 @@ private:
     
     void initializeDisplay();
     void updateDisplay();
+    void drawSetlistMode();
     void drawSetlistItem(int y, int index, bool isSelected, bool isEditing);
     void drawEditMode();
     int getScrollOffset() const;
@@ -56,4 +58,7 @@ private:
     int sdaPin;
     int sclPin;
     uint8_t i2cAddress;
+
+    void copySetlistData(Program* sourceSetlist);
+    void addBackItemAtBeginning();
 };

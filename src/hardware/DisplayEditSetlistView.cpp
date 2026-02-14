@@ -41,6 +41,28 @@ void DisplayEditSetlistView::initializeDisplay()
     }
 }
 
+void DisplayEditSetlistView::copySetlistData(Program* sourceSetlist)
+{
+    setlistSize = 0;
+    for (int i = 0; i < MAX_SETLIST_SIZE && sourceSetlist[i].number >= 0; i++) {
+        setlist[i] = sourceSetlist[i];
+        setlistSize++;
+    }
+}
+
+void DisplayEditSetlistView::addBackItemAtBeginning()
+{
+    if (setlistSize < MAX_SETLIST_SIZE) {
+        for (int i = setlistSize; i > 0; --i) {
+            setlist[i] = setlist[i-1];
+        }
+        setlist[0].number = -1;
+        strncpy(setlist[0].name, "Back", sizeof(setlist[0].name) - 1);
+        setlist[0].name[sizeof(setlist[0].name) - 1] = '\0';
+        setlistSize++;
+    }
+}
+
 void DisplayEditSetlistView::showSetlist(Program* setlist)
 {
     if (setlist == nullptr) {
@@ -48,27 +70,10 @@ void DisplayEditSetlistView::showSetlist(Program* setlist)
         updateDisplay();
         return;
     }
-    
-    // Copy setlist data
-    setlistSize = 0;
-    for (int i = 0; i < MAX_SETLIST_SIZE && setlist[i].number >= 0; i++) {
-        this->setlist[i] = setlist[i];
-        setlistSize++;
-    }
-    
-    // Add "Back" item at the beginning
-    if (setlistSize < MAX_SETLIST_SIZE) {
-        // Shift all items down
-        for (int i = setlistSize; i > 0; i--) {
-            this->setlist[i] = this->setlist[i-1];
-        }
-        // Add Back item
-        this->setlist[0].number = -1;
-        strncpy(this->setlist[0].name, "Back", sizeof(this->setlist[0].name) - 1);
-        this->setlist[0].name[sizeof(this->setlist[0].name) - 1] = '\0';
-        setlistSize++;
-    }
-    
+
+    copySetlistData(setlist);
+    addBackItemAtBeginning();
+
     selectedIndex = 0;
     updateDisplay();
 }
@@ -115,27 +120,31 @@ void DisplayEditSetlistView::updateDisplay()
     if (!isInitialized) {
         return;
     }
-    
+
     display.clearDisplay();
-    
+
     if (editModeEnabled) {
         drawEditMode();
     } else {
-        // Draw setlist
-        display.setCursor(0, 0);
-        display.setTextSize(1);
-        display.println("Edit Setlist:");
-        
-        int scrollOffset = getScrollOffset();
-        
-        for (int i = 0; i < VISIBLE_ITEMS && (i + scrollOffset) < setlistSize; i++) {
-            int itemIndex = i + scrollOffset;
-            int y = 12 + i * 12;  // 12 pixels per line
-            drawSetlistItem(y, itemIndex, itemIndex == selectedIndex, false);
-        }
+        drawSetlistMode();
     }
-    
+
     display.display();
+}
+
+void DisplayEditSetlistView::drawSetlistMode()
+{
+    display.setCursor(0, 0);
+    display.setTextSize(1);
+    display.println("Edit Setlist:");
+
+    int scrollOffset = getScrollOffset();
+
+    for (int i = 0; i < VISIBLE_ITEMS && (i + scrollOffset) < setlistSize; i++) {
+        int itemIndex = i + scrollOffset;
+        int y = 12 + i * 12;  // 12 pixels per line
+        drawSetlistItem(y, itemIndex, itemIndex == selectedIndex, false);
+    }
 }
 
 void DisplayEditSetlistView::drawSetlistItem(int y, int index, bool isSelected, bool isEditing)
