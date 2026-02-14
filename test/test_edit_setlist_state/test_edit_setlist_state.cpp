@@ -227,6 +227,45 @@ void testShouldUpdateEditedProgramInProgramSelector(void) {
     TEST_ASSERT_EQUAL_INT(45, mockProgramSelector.getProgramsList()[0]);  // Should be updated to 45
 }
 
+void testEditModeShouldNotToggleOnSubsequentUpdate(void) {
+    // Arrange
+    DiContainer diContainer;
+    MockEditSetlistView mockView;
+    MockInput mockInput;
+    MockProgramsBank programsBank;
+
+    // Add programs to bank
+    programsBank.addProgram(44, "Viola");
+    programsBank.addProgram(45, "Cello");
+
+    // Setup DI container
+    diContainer.setEditSetlistView(&mockView);
+    diContainer.setUserInput(&mockInput);
+    diContainer.setProgramsBank(&programsBank);
+
+    // Create state
+    EditSetlistState state(&diContainer);
+
+    // Act
+    state.enter();  // Initialize the setlist first
+    mockInput.setEncoderButtonPressed(true);
+    state.update();  // Enter edit mode - should set editMode = true
+
+    // Reset input state - no buttons pressed for second update
+    mockInput.setEncoderButtonPressed(false);
+
+    // Remember the edit mode state after first update
+    bool editModeAfterFirstUpdate = mockView.editModeIsOn();
+
+    // Second update - no input changes
+    state.update();
+
+    // Assert - edit mode state should NOT have changed
+    TEST_ASSERT_EQUAL_MESSAGE(editModeAfterFirstUpdate,
+                             mockView.editModeIsOn(),
+                             "Edit mode should not toggle on subsequent update without input change");
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     
@@ -238,6 +277,7 @@ int main(int argc, char **argv) {
     RUN_TEST(testShouldEndEditModeOnEncoderButtonPressed);
     RUN_TEST(testShouldUpdateEditedProgramInListView);
     RUN_TEST(testShouldUpdateEditedProgramInProgramSelector);
-    
+    RUN_TEST(testEditModeShouldNotToggleOnSubsequentUpdate);
+
     return UNITY_END();
 }

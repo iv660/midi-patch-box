@@ -9,6 +9,7 @@ private:
     Program displayedSetlist[10];
     int selectedItemIndex = 0;
     bool editMode = false;
+    bool lastEditModeValue = false;  // Track last value passed to setEditMode
     int editedProgramIndex = 0;
     int editedProgramNumber = 0;
     char editedProgramName[17] = "";
@@ -22,13 +23,14 @@ public:
             displayedSetlist[i] = setlist[i];
         }
     }
-    
+
     void setSelectedItemIndex(int index) override {
         selectedItemIndex = index;
     }
-    
+
     void setEditMode(bool enabled) override {
         editMode = enabled;
+        lastEditModeValue = enabled;
     }
     
     void setEditedProgramIndex(int index) override {
@@ -49,6 +51,7 @@ public:
     const Program* getDisplayedSetlistItems() const { return displayedSetlist; }
     int getSelectedItemIndex() const { return selectedItemIndex; }
     bool editModeIsOn() const { return editMode; }
+    bool getLastEditModeValue() const { return lastEditModeValue; }
     int getSetlistEditedProgramIndex() const { return editedProgramIndex; }
     int getSetlistEditedProgramNumber() const { return editedProgramNumber; }
     const char* getSetlistEditedProgramName() const { return editedProgramName; }
