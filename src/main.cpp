@@ -16,6 +16,7 @@
 #include "hardware/DisplaySplashScreenView.h"
 #include "hardware/DisplayBitmapSplashScreenView.h"
 #include "hardware/DisplayConfigMenuView.h"
+#include "hardware/DisplayEditSetlistView.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
@@ -38,6 +39,7 @@ DisplayProgramSelectionView displayView;
 DisplaySplashScreenView splashView;
 DisplayBitmapSplashScreenView bitmapSplashView;
 DisplayConfigMenuView configMenuView;
+DisplayEditSetlistView editSetlistView;
 ProgramsBank programsBank;
 
 StateFactory stateFactory;
@@ -85,6 +87,7 @@ void setup()
         ->setProgramSelectionView(&displayView)
         ->setProgramsBank(&programsBank)
         ->setConfigMenuView(&configMenuView)
+        ->setEditSetlistView(&editSetlistView)
         ->setStateMachine(&stateMachine);
 
     // Initialize MidiPatchBoxApplication using DiContainer

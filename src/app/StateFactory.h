@@ -2,6 +2,7 @@
 #include "StateFactoryInterface.h"
 #include "MainApplicationState.h"
 #include "ConfigMenuState.h"
+#include "EditSetlistState.h"
 #include "UserInputInterface.h"
 #include "ProgramSelectorInterface.h"
 #include "MidiControllerInterface.h"
@@ -82,7 +83,6 @@ public:
     }
     
     StateInterface* createEditSetlistState() override {
-        // TODO: Implement EditSetlistState
-        return nullptr;
+        return new EditSetlistState(diContainer);
     }
 };
