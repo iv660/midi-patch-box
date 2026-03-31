@@ -10,6 +10,7 @@
 #include "ProgramsBankInterface.h"
 #include "ConfigMenuViewInterface.h"
 #include "EditSetlistViewInterface.h"
+#include "MenuControllerInterface.h"
 #include "StateMachineInterface.h"
 
 class DiContainer : public DiContainerInterface {
@@ -25,6 +26,7 @@ private:
     ProgramsBankInterface* programsBank = nullptr;
     ConfigMenuViewInterface* configMenuView = nullptr;
     EditSetlistViewInterface* editSetlistView = nullptr;
+    MenuControllerInterface* menuController = nullptr;
 
 public:
     DiContainer() = default;
@@ -88,6 +90,11 @@ public:
         return this;
     }
     
+    DiContainer* setMenuController(MenuControllerInterface* controller) {
+        this->menuController = controller;
+        return this;
+    }
+    
     // Getters for SplashScreenState dependencies
     SplashScreenViewInterface* getSplashScreenView() const override {
         return splashScreenView;
@@ -133,6 +140,10 @@ public:
     
     EditSetlistViewInterface* getEditSetlistView() const override {
         return editSetlistView;
+    }
+    
+    MenuControllerInterface* getMenuController() const override {
+        return menuController;
     }
     
     StateMachineInterface* getStateMachineInterface() const override {

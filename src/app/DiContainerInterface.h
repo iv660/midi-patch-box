@@ -11,6 +11,7 @@ class ProgramSelectionViewInterface;
 class ProgramsBankInterface;
 class ConfigMenuViewInterface;
 class EditSetlistViewInterface;
+class MenuControllerInterface;
 class StateMachine;
 class StateMachineInterface;
 
@@ -34,6 +35,10 @@ public:
     virtual ProgramsBankInterface* getProgramsBank() const = 0;
     virtual ConfigMenuViewInterface* getConfigMenuView() const = 0;
     virtual EditSetlistViewInterface* getEditSetlistView() const = 0;
+    
+    // Dependencies for SetlistMenuState
+    virtual MenuControllerInterface* getMenuController() const = 0;
+    
     /**
      * @deprecated Use getStateMachine()
      */
