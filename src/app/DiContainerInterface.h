@@ -37,7 +37,7 @@ public:
     virtual EditSetlistViewInterface* getEditSetlistView() const = 0;
     
     // Dependencies for SetlistMenuState
-    virtual MenuControllerInterface* getMenuController() const = 0;
+    virtual MenuControllerInterface* getSetlistMenuController() const = 0;
     
     /**
      * @deprecated Use getStateMachine()

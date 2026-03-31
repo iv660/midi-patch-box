@@ -26,7 +26,7 @@ private:
     ProgramsBankInterface* programsBank = nullptr;
     ConfigMenuViewInterface* configMenuView = nullptr;
     EditSetlistViewInterface* editSetlistView = nullptr;
-    MenuControllerInterface* menuController = nullptr;
+    MenuControllerInterface* setlistMenuController = nullptr;
 
 public:
     DiContainer() = default;
@@ -90,8 +90,8 @@ public:
         return this;
     }
     
-    DiContainer* setMenuController(MenuControllerInterface* controller) {
-        this->menuController = controller;
+    DiContainer* setSetlistMenuController(MenuControllerInterface* controller) {
+        this->setlistMenuController = controller;
         return this;
     }
     
@@ -142,8 +142,8 @@ public:
         return editSetlistView;
     }
     
-    MenuControllerInterface* getMenuController() const override {
-        return menuController;
+    MenuControllerInterface* getSetlistMenuController() const override {
+        return setlistMenuController;
     }
     
     StateMachineInterface* getStateMachineInterface() const override {

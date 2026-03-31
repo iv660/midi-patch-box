@@ -5,13 +5,13 @@
 
 class SetlistMenuState : public State {
 private:
-    MenuControllerInterface* menuController = nullptr;
+    MenuControllerInterface* setlistMenuController = nullptr;
 
-    MenuControllerInterface* getMenuController() const {
-        return menuController ? menuController : (diContainer ? diContainer->getMenuController() : nullptr);
+    MenuControllerInterface* getSetlistMenuController() const {
+        return setlistMenuController ? setlistMenuController : (diContainer ? diContainer->getSetlistMenuController() : nullptr);
     }
 
-    bool hasMenuController();
+    bool hasSetlistMenuController();
 
 public:
     SetlistMenuState() = default;

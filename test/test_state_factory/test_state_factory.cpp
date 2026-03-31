@@ -148,7 +148,7 @@ public:
     EditSetlistViewInterface* getEditSetlistView() const override {
         return &mockEditSetlistView;
     }
-    MenuControllerInterface* getMenuController() const override {
+    MenuControllerInterface* getSetlistMenuController() const override {
         getMenuControllerCallCount++;
         return &mockMenuController;
     }

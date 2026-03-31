@@ -37,7 +37,7 @@ void testSetlistMenuStateSetsMenuTitleOnEnter() {
     MockMenuController mockMenuController;
     SetlistMenuState state(&container);
     
-    container.setMenuController(&mockMenuController);
+    container.setSetlistMenuController(&mockMenuController);
     
     char expectedTitle[] = "Setlist";
     

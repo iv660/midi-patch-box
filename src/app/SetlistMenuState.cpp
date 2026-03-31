@@ -1,11 +1,11 @@
 #include "SetlistMenuState.h"
 
 void SetlistMenuState::enter() {
-    if (false == hasMenuController()) {
+    if (false == hasSetlistMenuController()) {
         return;
     }
 
-    getMenuController()->setTitle("Setlist");
+    getSetlistMenuController()->setTitle("Setlist");
 }
 
 void SetlistMenuState::update() {
@@ -16,6 +16,6 @@ void SetlistMenuState::exit() {
     // Cleanup if needed
 }
 
-bool SetlistMenuState::hasMenuController() {
-    return getMenuController() != nullptr;
+bool SetlistMenuState::hasSetlistMenuController() {
+    return getSetlistMenuController() != nullptr;
 }
