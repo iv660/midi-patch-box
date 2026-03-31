@@ -5,6 +5,7 @@
 #include "app/ConfigMenuViewInterface.h"
 #include "app/EditSetlistViewInterface.h"
 #include "app/DiContainerInterface.h"
+#include "app/MenuControllerInterface.h"
 #include "mocks/MockIoDriver.h"
 #include "mocks/MockButton.h"
 #include "mocks/MockEncoder.h"
@@ -72,6 +73,12 @@ public:
     void setEditedProgramName(const char* programName) override {}
 };
 
+class MockMenuController : public MenuControllerInterface {
+public:
+    void setView(MenuLayoutViewInterface* view) override {}
+    void setTitle(char* title) override {}
+};
+
 class MockStateMachine : public StateMachineInterface {
 public:
     void changeState(StateInterface* newState) override {}
@@ -88,6 +95,7 @@ private:
     mutable MockConfigMenuView mockConfigMenuView;
     mutable MockEditSetlistView mockEditSetlistView;
     mutable MockStateMachine mockStateMachine;
+    mutable MockMenuController mockMenuController;
 
 public:
     // Call counters
@@ -99,6 +107,7 @@ public:
     mutable int getProgramsBankCallCount = 0;
     mutable int getConfigMenuViewCallCount = 0;
     mutable int getStateMachineInterfaceCallCount = 0;
+    mutable int getMenuControllerCallCount = 0;
 
     // SplashScreenState dependencies
     SplashScreenViewInterface* getSplashScreenView() const override { return nullptr; }
@@ -138,6 +147,10 @@ public:
     }
     EditSetlistViewInterface* getEditSetlistView() const override {
         return &mockEditSetlistView;
+    }
+    MenuControllerInterface* getMenuController() const override {
+        getMenuControllerCallCount++;
+        return &mockMenuController;
     }
     StateMachineInterface* getStateMachineInterface() const override {
         getStateMachineInterfaceCallCount++;
