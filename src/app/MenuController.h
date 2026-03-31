@@ -1,11 +1,12 @@
 #pragma once
 
 #include "MenuLayoutViewInterface.h"
+#include "MenuControllerInterface.h"
 
-class MenuController {
+class MenuController: public MenuControllerInterface {
 public:
-    void setView(MenuLayoutViewInterface* view);
-    void setTitle(char* title);
+    void setView(MenuLayoutViewInterface* view) override;
+    void setTitle(char* title) override;
 
 private:
     MenuLayoutViewInterface* view;
