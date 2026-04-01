@@ -4,6 +4,6 @@
 
 class MenuControllerInterface {
 public:
-    virtual void setView(MenuLayoutViewInterface* view) = 0;
     virtual void setTitle(char* title) = 0;
+    virtual ~MenuControllerInterface() = default;
 };

@@ -75,7 +75,6 @@ public:
 
 class MockMenuController : public MenuControllerInterface {
 public:
-    void setView(MenuLayoutViewInterface* view) override {}
     void setTitle(char* title) override {}
 };
 
@@ -151,6 +150,9 @@ public:
     MenuControllerInterface* getSetlistMenuController() const override {
         getMenuControllerCallCount++;
         return &mockMenuController;
+    }
+    MenuLayoutViewInterface* getSetlistMenuLayoutView() const override {
+        return nullptr;
     }
     StateMachineInterface* getStateMachineInterface() const override {
         getStateMachineInterfaceCallCount++;

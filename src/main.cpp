@@ -82,9 +82,6 @@ void setup()
         ->setEncoder(&encoder);
 
     // Setup DiContainer with all dependencies
-    // Configure setlist menu controller with its view
-    setlistMenuController.setView(&setlistMenuView);
-    
     diContainer.setSplashScreenView(&bitmapSplashView)
         ->setIoDriver(&ioDriver)
         ->setStateFactory(&stateFactory)
@@ -96,6 +93,7 @@ void setup()
         ->setConfigMenuView(&configMenuView)
         ->setEditSetlistView(&editSetlistView)
         ->setSetlistMenuController(&setlistMenuController)
+        ->setSetlistMenuLayoutView(&setlistMenuView)
         ->setStateMachine(&stateMachine);
 
     // Initialize MidiPatchBoxApplication using DiContainer

@@ -11,6 +11,7 @@
 #include "ConfigMenuViewInterface.h"
 #include "EditSetlistViewInterface.h"
 #include "MenuControllerInterface.h"
+#include "MenuLayoutViewInterface.h"
 #include "StateMachineInterface.h"
 
 class DiContainer : public DiContainerInterface {
@@ -27,6 +28,7 @@ private:
     ConfigMenuViewInterface* configMenuView = nullptr;
     EditSetlistViewInterface* editSetlistView = nullptr;
     MenuControllerInterface* setlistMenuController = nullptr;
+    MenuLayoutViewInterface* setlistMenuLayoutView = nullptr;
 
 public:
     DiContainer() = default;
@@ -95,6 +97,11 @@ public:
         return this;
     }
     
+    DiContainer* setSetlistMenuLayoutView(MenuLayoutViewInterface* view) {
+        this->setlistMenuLayoutView = view;
+        return this;
+    }
+    
     // Getters for SplashScreenState dependencies
     SplashScreenViewInterface* getSplashScreenView() const override {
         return splashScreenView;
@@ -144,6 +151,10 @@ public:
     
     MenuControllerInterface* getSetlistMenuController() const override {
         return setlistMenuController;
+    }
+    
+    MenuLayoutViewInterface* getSetlistMenuLayoutView() const override {
+        return setlistMenuLayoutView;
     }
     
     StateMachineInterface* getStateMachineInterface() const override {

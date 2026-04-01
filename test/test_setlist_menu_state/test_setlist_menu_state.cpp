@@ -12,8 +12,6 @@ private:
     bool setTitleCalled = false;
 
 public:
-    void setView(MenuLayoutViewInterface* view) override {}
-    
     void setTitle(char* title) override {
         strncpy(lastTitle, title, 16);
         lastTitle[15] = '\0';
