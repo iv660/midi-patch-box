@@ -33,7 +33,7 @@ void ConfigMenuState::update() {
 
 void ConfigMenuState::performMenuItemAction() {
     if (selectedMenuItem == MENU_ITEM_EDIT_SETLIST) {
-        changeToEditSetlistState();
+        changeToSetlistMenuState();
         return;
     }
 
@@ -125,10 +125,10 @@ void ConfigMenuState::updateMenuView() {
     }
 }
 
-void ConfigMenuState::changeToEditSetlistState() {
+void ConfigMenuState::changeToSetlistMenuState() {
     if (getStateFactory() && getStateMachine()) {
-        StateInterface* editSetlistState = getStateFactory()->createEditSetlistState();
-        getStateMachine()->changeState(editSetlistState);
+        StateInterface* setlistMenuState = getStateFactory()->createSetlistMenuState();
+        getStateMachine()->changeState(setlistMenuState);
     }
 }
 

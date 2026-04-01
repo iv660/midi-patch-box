@@ -162,7 +162,7 @@ public:
         return mockConfigMenuState;
     }
 
-    StateInterface* createEditSetlistState() override
+    StateInterface* createSetlistMenuState() override
     {
         return nullptr;
     }

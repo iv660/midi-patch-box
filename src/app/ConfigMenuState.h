@@ -43,7 +43,7 @@ private:
     void selectNextMenuItem();
     void selectPreviousMenuItem();
     void updateMenuView();
-    void changeToEditSetlistState();
+    void changeToSetlistMenuState();
     void changeToMainApplicationState();
     void performMenuItemAction();
 

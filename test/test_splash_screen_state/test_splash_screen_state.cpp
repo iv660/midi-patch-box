@@ -43,7 +43,7 @@ public:
         return nullptr; // Return nullptr for testing
     }
     
-    StateInterface* createEditSetlistState() override {
+    StateInterface* createSetlistMenuState() override {
         return nullptr; // Return nullptr for testing
     }
 

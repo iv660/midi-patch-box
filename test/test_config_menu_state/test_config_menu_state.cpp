@@ -89,9 +89,9 @@ public:
 
 class MockStateFactory : public StateFactoryInterface {
 private:
-    bool createEditSetlistStateCalled = false;
+    bool createSetlistMenuStateCalled = false;
     bool createMainApplicationStateCalled = false;
-    StateInterface* mockEditSetlistState = nullptr;
+    StateInterface* mockSetlistMenuState = nullptr;
     StateInterface* mockMainApplicationState = nullptr;
 
 public:
@@ -100,15 +100,15 @@ public:
         return mockMainApplicationState;
     }
     StateInterface* createConfigMenuState() override { return nullptr; }
-    StateInterface* createEditSetlistState() override {
-        createEditSetlistStateCalled = true;
-        return mockEditSetlistState;
+    StateInterface* createSetlistMenuState() override {
+        createSetlistMenuStateCalled = true;
+        return mockSetlistMenuState;
     }
     
     // Test helpers
-    bool createEditSetlistStateWasCalled() const { return createEditSetlistStateCalled; }
+    bool createSetlistMenuStateWasCalled() const { return createSetlistMenuStateCalled; }
     bool createMainApplicationStateWasCalled() const { return createMainApplicationStateCalled; }
-    void setMockEditSetlistState(StateInterface* state) { mockEditSetlistState = state; }
+    void setMockSetlistMenuState(StateInterface* state) { mockSetlistMenuState = state; }
     void setMockMainApplicationState(StateInterface* state) { mockMainApplicationState = state; }
 };
 
@@ -260,32 +260,32 @@ void testConfigMenuStateCyclicNavigation() {
     TEST_ASSERT_EQUAL(1, mockView.getSelectedItem());
 }
 
-// ConfigMenuState should transition to EditSetlistState when encoder button pressed on Edit Setlist
-void testConfigMenuStateTransitionsToEditSetlist() {
+// ConfigMenuState should transition to SetlistMenuState when encoder button pressed on Edit Setlist
+void testConfigMenuStateTransitionsToSetlistMenuState() {
     // Arrange
     ConfigMenuState state;
     MockConfigMenuView mockView;
     MockUserInput mockInput;
     MockStateFactory mockFactory;
     MockStateMachine mockStateMachine;
-    MockState mockEditSetlistState;
+    MockState mockSetlistMenuState;
     
-    mockFactory.setMockEditSetlistState(&mockEditSetlistState);
+    mockFactory.setMockSetlistMenuState(&mockSetlistMenuState);
     
     state.setConfigMenuView(&mockView);
     state.setUserInput(&mockInput);
     state.setStateFactory(&mockFactory);
     state.setStateMachine(&mockStateMachine);
-    state.enter(); // starts at index 0 (Edit Setlist)
+    state.enter(); // starts at index 0 (Setlist)
     
     // Act - simulate encoder button press
     mockInput.setEncoderButtonPressed(true);
     state.update();
     
-    // Assert - should create EditSetlistState and change to it
-    TEST_ASSERT_TRUE(mockFactory.createEditSetlistStateWasCalled());
+    // Assert - should create SetlistMenuState and change to it
+    TEST_ASSERT_TRUE(mockFactory.createSetlistMenuStateWasCalled());
     TEST_ASSERT_TRUE(mockStateMachine.changeStateWasCalled());
-    TEST_ASSERT_EQUAL_PTR(&mockEditSetlistState, mockStateMachine.getLastChangedState());
+    TEST_ASSERT_EQUAL_PTR(&mockSetlistMenuState, mockStateMachine.getLastChangedState());
 }
 
 // ConfigMenuState should transition to EditSetlistState when encoder button pressed on Edit Setlist
@@ -334,7 +334,7 @@ int main(int argc, char **argv) {
     RUN_TEST(testConfigMenuStateNavigatesOnClockwiseRotation);
     RUN_TEST(testConfigMenuStateNavigatesOnCounterClockwiseRotation);
     RUN_TEST(testConfigMenuStateCyclicNavigation);
-    RUN_TEST(testConfigMenuStateTransitionsToEditSetlist);
+    RUN_TEST(testConfigMenuStateTransitionsToSetlistMenuState);
     RUN_TEST(testConfigMenuStateTransitionsBackToMainApplication);
     
     return UNITY_END();
