@@ -5,7 +5,8 @@ void SetlistMenuState::enter() {
         return;
     }
 
-    getSetlistMenuController()->setTitle("Setlist");
+    char title[] = "Setlist";
+    getSetlistMenuController()->setTitle(title);
 }
 
 void SetlistMenuState::update() {
