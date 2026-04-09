@@ -17,7 +17,12 @@ public:
         lastTitle[15] = '\0';
         setTitleCalled = true;
     }
-    
+
+    MenuControllerInterface* addMenuItem(char* caption, std::function<void()> action) override { return this; }
+    MenuControllerInterface* selectNext() override { return this; }
+    MenuControllerInterface* selectPrevious() override { return this; }
+    void executeSelectedAction() override {}
+
     // Test helpers
     bool setTitleWasCalled() const { return setTitleCalled; }
     const char* getLastTitle() const { return lastTitle; }

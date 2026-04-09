@@ -6,3 +6,17 @@
 - To run tests, use `pio test -e native`.
 - For instance initialization, prefer fluent setters over constructor parameters - this allows initialization to stay obvious and be done in any order.
 - Adhere to Clean Code principles whenever reasonable.
+- Do not use "wide" indents. E. i., with fluent interface, don't align methods when breaking the line, use just a single-tab indent (4 spaces) for each indentation level:
+```cpp
+// WRONG!
+controller.addItem()
+         ->execute(); // Don't align method names
+
+// WRONG!
+controller.addItem()
+          ->execute(); // Don't align dots/arrows/etc.
+
+// CORRECT:
+controller.addItem()
+    ->execute(); // Just use single tab
+```

@@ -76,6 +76,10 @@ public:
 class MockMenuController : public MenuControllerInterface {
 public:
     void setTitle(char* title) override {}
+    MenuControllerInterface* addMenuItem(char* caption, std::function<void()> action) override { return this; }
+    MenuControllerInterface* selectNext() override { return this; }
+    MenuControllerInterface* selectPrevious() override { return this; }
+    void executeSelectedAction() override {}
 };
 
 class MockStateMachine : public StateMachineInterface {
