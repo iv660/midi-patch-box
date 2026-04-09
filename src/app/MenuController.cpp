@@ -1,12 +1,13 @@
 #include "MenuController.h"
 #include <cstring>
 
-void MenuController::setTitle(char* title) {
+MenuControllerInterface* MenuController::setTitle(char* title) {
     if (false == hasView()) {
-        return;
+        return this;
     }
 
     getView()->setTitle(title);
+    return this;
 }
 
 MenuControllerInterface* MenuController::addMenuItem(char* caption, std::function<void()> action) {

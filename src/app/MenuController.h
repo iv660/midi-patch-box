@@ -17,7 +17,7 @@ public:
     explicit MenuController(DiContainerInterface* container) : diContainer(container) {
     }
     
-    void setTitle(char* title) override;
+    MenuControllerInterface* setTitle(char* title) override;
     MenuControllerInterface* addMenuItem(char* caption, std::function<void()> action) override;
     MenuControllerInterface* selectNext() override;
     MenuControllerInterface* selectPrevious() override;

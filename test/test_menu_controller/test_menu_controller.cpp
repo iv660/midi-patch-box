@@ -223,6 +223,26 @@ void testSelectNextThenExecuteSelectedActionRunsCallback() {
     TEST_ASSERT_TRUE(callback2HasRun);
 }
 
+void testSetTitleReturnsThisForChaining() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+
+    mockContainer.setMockView(&mockView);
+
+    MenuController menuController(&mockContainer);
+
+    char title[] = "Chained Title";
+    char item[] = "Item";
+    bool actionRan = false;
+    auto action = [&actionRan]() { actionRan = true; };
+
+    menuController.setTitle(title)
+        ->addMenuItem(item, action);
+
+    TEST_ASSERT_EQUAL_STRING(title, mockView.getTitle());
+    TEST_ASSERT_EQUAL(1, mockView.getItemCount());
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(testShouldSetTitle);
@@ -233,5 +253,6 @@ int main() {
     RUN_TEST(testSelectPreviousCyclicMovesFromFirstToSecond);
     RUN_TEST(testSelectNextThenSelectPreviousSelectsSecondItem);
     RUN_TEST(testSelectNextThenExecuteSelectedActionRunsCallback);
+    RUN_TEST(testSetTitleReturnsThisForChaining);
     return UNITY_END();
 }

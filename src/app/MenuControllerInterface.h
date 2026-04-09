@@ -5,7 +5,7 @@
 
 class MenuControllerInterface {
 public:
-    virtual void setTitle(char* title) = 0;
+    virtual MenuControllerInterface* setTitle(char* title) = 0;
     virtual MenuControllerInterface* addMenuItem(char* caption, std::function<void()> action) = 0;
     virtual MenuControllerInterface* selectNext() = 0;
     virtual MenuControllerInterface* selectPrevious() = 0;

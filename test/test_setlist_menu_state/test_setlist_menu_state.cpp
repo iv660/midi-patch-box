@@ -12,10 +12,11 @@ private:
     bool setTitleCalled = false;
 
 public:
-    void setTitle(char* title) override {
+    MenuControllerInterface* setTitle(char* title) override {
         strncpy(lastTitle, title, 16);
         lastTitle[15] = '\0';
         setTitleCalled = true;
+        return this;
     }
 
     MenuControllerInterface* addMenuItem(char* caption, std::function<void()> action) override { return this; }
