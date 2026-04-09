@@ -2,14 +2,35 @@
 #include "State.h"
 #include "MenuControllerInterface.h"
 #include "DiContainerInterface.h"
+#include "UserInputInterface.h"
+#include "StateFactoryInterface.h"
+#include "StateMachineInterface.h"
 
 class SetlistMenuState : public State {
 private:
+    const int MENU_ITEM_BACK = 0;
+    const int TOTAL_MENU_ITEMS = 1;
+
     MenuControllerInterface* getSetlistMenuController() const {
         return diContainer ? diContainer->getSetlistMenuController() : nullptr;
     }
+    UserInputInterface* getUserInput() const {
+        return diContainer ? diContainer->getUserInput() : nullptr;
+    }
+    StateFactoryInterface* getStateFactory() const {
+        return diContainer ? diContainer->getStateFactory() : nullptr;
+    }
+    StateMachineInterface* getStateMachine() const {
+        return diContainer ? diContainer->getStateMachine() : nullptr;
+    }
 
     bool hasSetlistMenuController();
+    bool hasUserInput();
+    void updateUserInput();
+    bool encoderRotatedCounterClockwise();
+    bool encoderButtonPressed();
+    void performMenuItemAction();
+    void changeToMainApplicationState();
 
 public:
     SetlistMenuState() = default;
