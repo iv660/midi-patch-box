@@ -23,24 +23,24 @@ public:
         maxItems = value;
     }
 
-    MenuLayoutViewInterface* setTitle(char* newTitle) override {
+    MenuLayoutViewInterface* displayTitle(char* newTitle) override {
         strncpy(title, newTitle, 16);
         title[15] = '\0';
         return this;
     }
 
-    MenuLayoutViewInterface* addItem(char* caption, bool highlighted) override {
-        if (itemCount < 10) {
-            strncpy(itemCaptions[itemCount], caption, 16);
-            itemCaptions[itemCount][15] = '\0';
-            itemHighlighted[itemCount] = highlighted;
-            itemCount++;
+    MenuLayoutViewInterface* displayItem(int index, char* caption, bool highlighted) override {
+        if (index >= 0 && index < 10) {
+            strncpy(itemCaptions[index], caption, 16);
+            itemCaptions[index][15] = '\0';
+            itemHighlighted[index] = highlighted;
+            if (index + 1 > itemCount) {
+                itemCount = index + 1;
+            }
         }
         return this;
     }
 
-    MenuLayoutViewInterface* draw() override { return this; }
-    MenuLayoutViewInterface* resetItems() override { itemCount = 0; return this; }
     unsigned int getMaxItems() const override { return maxItems; }
 
     // Test helper methods

@@ -2,11 +2,11 @@
 #include <cstring>
 
 MenuControllerInterface* MenuController::setTitle(char* title) {
-    if (false == hasView()) {
+    if (!hasView()) {
         return this;
     }
 
-    getView()->setTitle(title);
+    getView()->displayTitle(title);
     return this;
 }
 
@@ -89,8 +89,6 @@ void MenuController::updateView() {
         return;
     }
 
-    getView()->resetItems();
-
     unsigned int viewportSize = getViewportSize();
     
     for (unsigned int viewportIndex = 0; viewportIndex < viewportSize; viewportIndex++) {
@@ -99,6 +97,6 @@ void MenuController::updateView() {
         
         bool isHighlighted = (menuIndex == selectedIndex);
         MenuItem menuItem = getMenuItem(menuIndex);
-        getView()->addItem(menuItem.caption, isHighlighted);
+        getView()->displayItem(viewportIndex, menuItem.caption, isHighlighted);
     }
 }
