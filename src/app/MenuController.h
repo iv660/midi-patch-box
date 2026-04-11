@@ -21,6 +21,7 @@ public:
     MenuControllerInterface* addMenuItem(char* caption, std::function<void()> action) override;
     MenuControllerInterface* selectNext() override;
     MenuControllerInterface* selectPrevious() override;
+    MenuControllerInterface* resetMenuItems() override;
     void executeSelectedAction() override;
 
 private:

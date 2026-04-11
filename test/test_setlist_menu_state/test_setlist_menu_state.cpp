@@ -14,6 +14,7 @@ class MockMenuController : public MenuControllerInterface {
 private:
     char lastTitle[16];
     bool setTitleCalled = false;
+    bool resetMenuItemsCalled = false;
     std::function<void()> selectedAction;
 
 public:
@@ -30,6 +31,10 @@ public:
     }
     MenuControllerInterface* selectNext() override { return this; }
     MenuControllerInterface* selectPrevious() override { return this; }
+    MenuControllerInterface* resetMenuItems() override {
+        resetMenuItemsCalled = true;
+        return this;
+    }
     void executeSelectedAction() override {
         if (selectedAction) {
             selectedAction();
@@ -38,6 +43,7 @@ public:
 
     // Test helpers
     bool setTitleWasCalled() const { return setTitleCalled; }
+    bool resetMenuItemsWasCalled() const { return resetMenuItemsCalled; }
     const char* getLastTitle() const { return lastTitle; }
 };
 
@@ -55,7 +61,7 @@ void testSetlistMenuStateSetsMenuTitleOnEnter() {
     
     container.setSetlistMenuController(&mockMenuController);
     
-    char expectedTitle[] = "Setlist";
+    char expectedTitle[] = "Edit setlist";
     
     // Act
     state.enter();
@@ -65,6 +71,29 @@ void testSetlistMenuStateSetsMenuTitleOnEnter() {
                              "Expected setTitle to be called on enter");
     TEST_ASSERT_EQUAL_STRING_MESSAGE(expectedTitle, mockMenuController.getLastTitle(),
                                      "Expected to set correct menu title");
+}
+
+void testSetlistMenuStateClearsMenuItemsOnEnter() {
+    DiContainer container;
+    SetlistMenuState state(&container);
+
+    MockMenuController mockMenuController;
+    MockInput mockUserInput;
+    MockStateFactory mockStateFactory;
+    MockStateMachine mockStateMachine;
+    MockState mockMainApplicationState;
+
+    mockStateFactory.setMockMainApplicationState(&mockMainApplicationState);
+
+    container.setSetlistMenuController(&mockMenuController)
+        ->setUserInput(&mockUserInput)
+        ->setStateFactory(&mockStateFactory)
+        ->setStateMachine(&mockStateMachine);
+
+    state.enter();
+
+    TEST_ASSERT_TRUE_MESSAGE(mockMenuController.resetMenuItemsWasCalled(),
+        "Expected resetMenuItems to be called on enter");
 }
 
 void testSetlistMenuStateBackItemTransitionsToMainApplication() {
@@ -108,6 +137,7 @@ void testSetlistMenuStateBackItemTransitionsToMainApplication() {
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(testSetlistMenuStateSetsMenuTitleOnEnter);
+    RUN_TEST(testSetlistMenuStateClearsMenuItemsOnEnter);
     RUN_TEST(testSetlistMenuStateBackItemTransitionsToMainApplication);
     return UNITY_END();
 }

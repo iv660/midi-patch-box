@@ -18,6 +18,7 @@ public:
 
     MenuLayoutViewInterface* displayTitle(char* title) override;
     MenuLayoutViewInterface* displayItem(int index, char* caption, bool highlighted) override;
+    MenuLayoutViewInterface* clearItems() override;
     unsigned int getMaxItems() const override;
 
 private:

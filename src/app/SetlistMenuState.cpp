@@ -5,12 +5,9 @@ void SetlistMenuState::enter() {
         return;
     }
 
-    char title[] = "Setlist";
-    getSetlistMenuController()->setTitle(title);
-    char backLabel[] = "Back";
-    getSetlistMenuController()->addMenuItem(backLabel, [this]() {
-        changeToMainApplicationState();
-    });
+    resetMenuItems();
+    initializeMenuTitle();
+    addBackMenuItem();
 }
 
 void SetlistMenuState::update() {
@@ -72,4 +69,20 @@ void SetlistMenuState::changeToMainApplicationState() {
         StateInterface* mainState = getStateFactory()->createMainApplicationState();
         getStateMachine()->changeState(mainState);
     }
+}
+
+void SetlistMenuState::resetMenuItems() {
+    getSetlistMenuController()->resetMenuItems();
+}
+
+void SetlistMenuState::initializeMenuTitle() {
+    char title[] = "Edit setlist";
+    getSetlistMenuController()->setTitle(title);
+}
+
+void SetlistMenuState::addBackMenuItem() {
+    char backLabel[] = "Back";
+    getSetlistMenuController()->addMenuItem(backLabel, [this]() {
+        changeToMainApplicationState();
+    });
 }

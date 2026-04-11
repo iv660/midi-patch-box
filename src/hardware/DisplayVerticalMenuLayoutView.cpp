@@ -76,3 +76,11 @@ MenuLayoutViewInterface* DisplayVerticalMenuLayoutView::displayItem(int index, c
 unsigned int DisplayVerticalMenuLayoutView::getMaxItems() const {
     return MAX_ITEMS;
 }
+
+MenuLayoutViewInterface* DisplayVerticalMenuLayoutView::clearItems() {
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        clearLine(FIRST_ITEM_LINE + i);
+    }
+    redrawScreen();
+    return this;
+}

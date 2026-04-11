@@ -31,6 +31,9 @@ private:
     bool encoderButtonPressed();
     void performMenuItemAction();
     void changeToMainApplicationState();
+    void resetMenuItems();
+    void initializeMenuTitle();
+    void addBackMenuItem();
 
 public:
     SetlistMenuState() = default;

@@ -43,6 +43,15 @@ public:
 
     unsigned int getMaxItems() const override { return maxItems; }
 
+    MenuLayoutViewInterface* clearItems() override {
+        itemCount = 0;
+        for (int i = 0; i < 10; i++) {
+            itemCaptions[i][0] = '\0';
+            itemHighlighted[i] = false;
+        }
+        return this;
+    }
+
     // Test helper methods
     const char* getTitle() const { return title; }
     const char* getItemCaption(int index) const {

@@ -260,6 +260,51 @@ void testSelectNextWrapAround() {
     TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(1));
 }
 
+void testResetMenuItemsClearsAllItems() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
+
+    mockContainer.setMockView(&mockView);
+
+    MenuController menuController(&mockContainer);
+
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->selectNext()
+        ->resetMenuItems();
+
+    TEST_ASSERT_EQUAL(0, mockView.getItemCount());
+}
+
+void testResetMenuItemsResetsSelection() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
+
+    mockContainer.setMockView(&mockView);
+
+    MenuController menuController(&mockContainer);
+
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    char caption3[] = "Item 3";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->addMenuItem(caption3, nullptr)
+        ->selectNext()
+        ->selectNext()
+        ->resetMenuItems();
+
+    char caption4[] = "Item 4";
+    menuController.addMenuItem(caption4, nullptr);
+
+    TEST_ASSERT_EQUAL(1, mockView.getItemCount());
+    TEST_ASSERT_TRUE(mockView.isItemHighlighted(0));
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(testNavigationOnEmptyMenu);
@@ -272,5 +317,7 @@ int main() {
     RUN_TEST(testSelectPreviousScrollsViewportUp);
     RUN_TEST(testSelectPreviousWrapAround);
     RUN_TEST(testSelectNextWrapAround);
+    RUN_TEST(testResetMenuItemsClearsAllItems);
+    RUN_TEST(testResetMenuItemsResetsSelection);
     return UNITY_END();
 }

@@ -76,6 +76,16 @@ MenuControllerInterface* MenuController::selectPrevious() {
     return this;
 }
 
+MenuControllerInterface* MenuController::resetMenuItems() {
+    if (hasView()) {
+        getView()->clearItems();
+    }
+    itemCount = 0;
+    selectedIndex = 0;
+    scrollOffset = 0;
+    return this;
+}
+
 void MenuController::executeSelectedAction() {
     if (selectedIndex >= 0 && selectedIndex < itemCount) {
         if (menuItems[selectedIndex].action) {
