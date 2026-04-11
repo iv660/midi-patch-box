@@ -29,23 +29,49 @@ MenuControllerInterface* MenuController::addMenuItem(char* caption, std::functio
 }
 
 MenuControllerInterface* MenuController::selectNext() {
-    if (itemCount == 0) {
+    if (!hasItems()) {
         return this;
     }
-    
-    selectedIndex = (selectedIndex + 1) % itemCount;
-    
+
+    if (lastItemIsSelected()) {
+        moveViewportToTop();
+        moveSelectionToTop();
+        updateView();
+        return this;
+    }
+
+    if (selectionIsAtBottomOfViewport()) {
+        moveViewportDown();
+        moveSelectionDown();
+        updateView();
+        return this;
+    }
+
+    moveSelectionDown();
     updateView();
     return this;
 }
 
 MenuControllerInterface* MenuController::selectPrevious() {
-    if (itemCount == 0) {
+    if (!hasItems()) {
         return this;
     }
-    
-    selectedIndex = (selectedIndex - 1 + itemCount) % itemCount;
-    
+
+    if (selectedIndex == 0) {
+        moveViewportToBottom();
+        selectedIndex = itemCount - 1;
+        updateView();
+        return this;
+    }
+
+    if (selectionIsAtTopOfViewport()) {
+        moveViewportUp();
+        moveSelectionUp();
+        updateView();
+        return this;
+    }
+
+    moveSelectionUp();
     updateView();
     return this;
 }
@@ -62,11 +88,17 @@ void MenuController::updateView() {
     if (!hasView()) {
         return;
     }
-    
+
     getView()->resetItems();
+
+    unsigned int viewportSize = getViewportSize();
     
-    for (int i = 0; i < itemCount; i++) {
-        bool highlighted = (i == selectedIndex);
-        getView()->addItem(menuItems[i].caption, highlighted);
+    for (unsigned int viewportIndex = 0; viewportIndex < viewportSize; viewportIndex++) {
+        int menuIndex = scrollOffset + viewportIndex;
+        if (menuIndex >= itemCount) break;
+        
+        bool isHighlighted = (menuIndex == selectedIndex);
+        MenuItem menuItem = getMenuItem(menuIndex);
+        getView()->addItem(menuItem.caption, isHighlighted);
     }
 }

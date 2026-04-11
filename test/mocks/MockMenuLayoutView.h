@@ -8,14 +8,19 @@ private:
     char itemCaptions[10][16];
     bool itemHighlighted[10];
     int itemCount;
+    unsigned int maxItems;
 
 public:
-    MockMenuLayoutView() : itemCount(0) {
+    MockMenuLayoutView() : itemCount(0), maxItems(10) {
         title[0] = '\0';
         for (int i = 0; i < 10; i++) {
             itemCaptions[i][0] = '\0';
             itemHighlighted[i] = false;
         }
+    }
+
+    void setMaxItems(unsigned int value) {
+        maxItems = value;
     }
 
     MenuLayoutViewInterface* setTitle(char* newTitle) override {
@@ -36,7 +41,7 @@ public:
 
     MenuLayoutViewInterface* draw() override { return this; }
     MenuLayoutViewInterface* resetItems() override { itemCount = 0; return this; }
-    unsigned int getMaxItems() const { return 10; }
+    unsigned int getMaxItems() const override { return maxItems; }
 
     // Test helper methods
     const char* getTitle() const { return title; }

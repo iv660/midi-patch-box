@@ -1,5 +1,4 @@
 #include <unity.h>
-#include <cstring>
 #include "app/MenuController.h"
 #include "app/DiContainer.h"
 #include "../../test/mocks/MockMenuLayoutView.h"
@@ -40,219 +39,238 @@ void setUp(void) {
 void tearDown(void) {
 }
 
-void testShouldSetTitle() {
+// Navigation on empty menu
+void testNavigationOnEmptyMenu() {
     MockDiContainer mockContainer;
     MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
     
     mockContainer.setMockView(&mockView);
     
     MenuController menuController(&mockContainer);
     
-    char expectedTitle[] = "Test Menu";
+    menuController.selectNext();
+    menuController.selectPrevious();
     
-    menuController.setTitle(expectedTitle);
-    
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(expectedTitle, mockView.getTitle(), 
-                                     "Expected to set menu title for view");
+    TEST_ASSERT_EQUAL(0, mockView.getItemCount());
 }
 
-void testAddMenuItemDisplaysSingleItem() {
+// Add first menu item
+void testAddFirstMenuItem() {
     MockDiContainer mockContainer;
     MockMenuLayoutView mockView;
-    MenuController menuController(&mockContainer);
+    mockView.setMaxItems(2);
     
     mockContainer.setMockView(&mockView);
     
-    char itemTitle[] = "Some title";
-    bool callback1HasRun = false;
-    auto itemAction = [&callback1HasRun]() { callback1HasRun = true; };
+    MenuController menuController(&mockContainer);
     
-    menuController.addMenuItem(itemTitle, itemAction);
+    char caption1[] = "Item 1";
+    menuController.addMenuItem(caption1, nullptr);
     
     TEST_ASSERT_EQUAL(1, mockView.getItemCount());
-    TEST_ASSERT_EQUAL_STRING(itemTitle, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption1, mockView.getItemCaption(0));
     TEST_ASSERT_TRUE(mockView.isItemHighlighted(0));
 }
 
-void testAddMenuItemDisplaysTwoItemsFirstSelected() {
+// Add second menu item
+void testAddSecondMenuItem() {
     MockDiContainer mockContainer;
     MockMenuLayoutView mockView;
-    MenuController menuController(&mockContainer);
+    mockView.setMaxItems(2);
     
     mockContainer.setMockView(&mockView);
     
-    char item1Title[] = "First item";
-    char item2Title[] = "Second item";
-    bool callback1HasRun = false;
-    bool callback2HasRun = false;
-    auto item1Action = [&callback1HasRun]() { callback1HasRun = true; };
-    auto item2Action = [&callback2HasRun]() { callback2HasRun = true; };
+    MenuController menuController(&mockContainer);
     
-    menuController.addMenuItem(item1Title, item1Action)
-        ->addMenuItem(item2Title, item2Action);
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr);
     
     TEST_ASSERT_EQUAL(2, mockView.getItemCount());
-    TEST_ASSERT_EQUAL_STRING(item1Title, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption1, mockView.getItemCaption(0));
     TEST_ASSERT_TRUE(mockView.isItemHighlighted(0));
-    TEST_ASSERT_EQUAL_STRING(item2Title, mockView.getItemCaption(1));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(1));
     TEST_ASSERT_FALSE(mockView.isItemHighlighted(1));
 }
 
-void testSelectNextMovesSelectionFromFirstToSecond() {
+// Add item beyond viewport
+void testAddItemBeyondViewport() {
     MockDiContainer mockContainer;
     MockMenuLayoutView mockView;
-    MenuController menuController(&mockContainer);
+    mockView.setMaxItems(2);
     
     mockContainer.setMockView(&mockView);
     
-    char item1Title[] = "First item";
-    char item2Title[] = "Second item";
-    bool callback1HasRun = false;
-    bool callback2HasRun = false;
-    auto item1Action = [&callback1HasRun]() { callback1HasRun = true; };
-    auto item2Action = [&callback2HasRun]() { callback2HasRun = true; };
+    MenuController menuController(&mockContainer);
     
-    menuController.addMenuItem(item1Title, item1Action)
-        ->addMenuItem(item2Title, item2Action)
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    char caption3[] = "Item 3";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->addMenuItem(caption3, nullptr);
+    
+    TEST_ASSERT_EQUAL(2, mockView.getItemCount());
+    TEST_ASSERT_EQUAL_STRING(caption1, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(1));
+}
+
+// selectNext() - move highlight within viewport
+void testSelectNextMovesHighlightWithinViewport() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
+    
+    mockContainer.setMockView(&mockView);
+    
+    MenuController menuController(&mockContainer);
+    
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
         ->selectNext();
     
     TEST_ASSERT_FALSE(mockView.isItemHighlighted(0));
     TEST_ASSERT_TRUE(mockView.isItemHighlighted(1));
+    TEST_ASSERT_EQUAL_STRING(caption1, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(1));
 }
 
-void testSelectNextCyclicReturnsToFirstAfterThreeCalls() {
+// selectNext() - scroll viewport down
+void testSelectNextScrollsViewportDown() {
     MockDiContainer mockContainer;
     MockMenuLayoutView mockView;
-    MenuController menuController(&mockContainer);
+    mockView.setMaxItems(2);
     
     mockContainer.setMockView(&mockView);
     
-    char item1Title[] = "First item";
-    char item2Title[] = "Second item";
-    char item3Title[] = "Third item";
-    bool callback1HasRun = false;
-    bool callback2HasRun = false;
-    bool callback3HasRun = false;
-    auto item1Action = [&callback1HasRun]() { callback1HasRun = true; };
-    auto item2Action = [&callback2HasRun]() { callback2HasRun = true; };
-    auto item3Action = [&callback3HasRun]() { callback3HasRun = true; };
+    MenuController menuController(&mockContainer);
     
-    menuController.addMenuItem(item1Title, item1Action)
-        ->addMenuItem(item2Title, item2Action)
-        ->addMenuItem(item3Title, item3Action)
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    char caption3[] = "Item 3";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->addMenuItem(caption3, nullptr)
+        ->selectNext()
+        ->selectNext();
+    
+    TEST_ASSERT_TRUE(mockView.isItemHighlighted(1));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption3, mockView.getItemCaption(1));
+}
+
+// selectPrevious() - move highlight within viewport
+void testSelectPreviousMovesHighlightWithinViewport() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
+    
+    mockContainer.setMockView(&mockView);
+    
+    MenuController menuController(&mockContainer);
+    
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->selectNext()
+        ->selectPrevious();
+    
+    TEST_ASSERT_TRUE(mockView.isItemHighlighted(0));
+    TEST_ASSERT_FALSE(mockView.isItemHighlighted(1));
+    TEST_ASSERT_EQUAL_STRING(caption1, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(1));
+}
+
+// selectPrevious() - scroll viewport up
+void testSelectPreviousScrollsViewportUp() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
+    
+    mockContainer.setMockView(&mockView);
+    
+    MenuController menuController(&mockContainer);
+    
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    char caption3[] = "Item 3";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->addMenuItem(caption3, nullptr)
+        ->selectNext()
+        ->selectNext()
+        ->selectPrevious()
+        ->selectPrevious();
+    
+    TEST_ASSERT_TRUE(mockView.isItemHighlighted(0));
+    TEST_ASSERT_EQUAL_STRING(caption1, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(1));
+}
+
+// selectPrevious() - wrap around
+void testSelectPreviousWrapAround() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
+    
+    mockContainer.setMockView(&mockView);
+    
+    MenuController menuController(&mockContainer);
+    
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    char caption3[] = "Item 3";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->addMenuItem(caption3, nullptr)
+        ->selectPrevious();
+    
+    TEST_ASSERT_TRUE(mockView.isItemHighlighted(1));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption3, mockView.getItemCaption(1));
+}
+
+// selectNext() - wrap around
+void testSelectNextWrapAround() {
+    MockDiContainer mockContainer;
+    MockMenuLayoutView mockView;
+    mockView.setMaxItems(2);
+    
+    mockContainer.setMockView(&mockView);
+    
+    MenuController menuController(&mockContainer);
+    
+    char caption1[] = "Item 1";
+    char caption2[] = "Item 2";
+    char caption3[] = "Item 3";
+    menuController.addMenuItem(caption1, nullptr)
+        ->addMenuItem(caption2, nullptr)
+        ->addMenuItem(caption3, nullptr)
         ->selectNext()
         ->selectNext()
         ->selectNext();
     
     TEST_ASSERT_TRUE(mockView.isItemHighlighted(0));
-    TEST_ASSERT_FALSE(mockView.isItemHighlighted(1));
-    TEST_ASSERT_FALSE(mockView.isItemHighlighted(2));
-}
-
-void testSelectPreviousCyclicMovesFromFirstToSecond() {
-    MockDiContainer mockContainer;
-    MockMenuLayoutView mockView;
-    MenuController menuController(&mockContainer);
-    
-    mockContainer.setMockView(&mockView);
-    
-    char item1Title[] = "First item";
-    char item2Title[] = "Second item";
-    bool callback1HasRun = false;
-    bool callback2HasRun = false;
-    auto item1Action = [&callback1HasRun]() { callback1HasRun = true; };
-    auto item2Action = [&callback2HasRun]() { callback2HasRun = true; };
-    
-    menuController.addMenuItem(item1Title, item1Action)
-        ->addMenuItem(item2Title, item2Action)
-        ->selectPrevious();
-    
-    TEST_ASSERT_FALSE(mockView.isItemHighlighted(0));
-    TEST_ASSERT_TRUE(mockView.isItemHighlighted(1));
-}
-
-void testSelectNextThenSelectPreviousSelectsSecondItem() {
-    MockDiContainer mockContainer;
-    MockMenuLayoutView mockView;
-    MenuController menuController(&mockContainer);
-    
-    mockContainer.setMockView(&mockView);
-    
-    char item1Title[] = "First item";
-    char item2Title[] = "Second item";
-    char item3Title[] = "Third item";
-    bool callback1HasRun = false;
-    bool callback2HasRun = false;
-    bool callback3HasRun = false;
-    auto item1Action = [&callback1HasRun]() { callback1HasRun = true; };
-    auto item2Action = [&callback2HasRun]() { callback2HasRun = true; };
-    auto item3Action = [&callback3HasRun]() { callback3HasRun = true; };
-    
-    menuController.addMenuItem(item1Title, item1Action)
-        ->addMenuItem(item2Title, item2Action)
-        ->addMenuItem(item3Title, item3Action)
-        ->selectNext()
-        ->selectNext()
-        ->selectPrevious();
-    
-    TEST_ASSERT_FALSE(mockView.isItemHighlighted(0));
-    TEST_ASSERT_TRUE(mockView.isItemHighlighted(1));
-    TEST_ASSERT_FALSE(mockView.isItemHighlighted(2));
-}
-
-void testSelectNextThenExecuteSelectedActionRunsCallback() {
-    MockDiContainer mockContainer;
-    MockMenuLayoutView mockView;
-    MenuController menuController(&mockContainer);
-    
-    mockContainer.setMockView(&mockView);
-    
-    char item1Title[] = "First item";
-    char item2Title[] = "Second item";
-    bool callback1HasRun = false;
-    bool callback2HasRun = false;
-    auto item1Action = [&callback1HasRun]() { callback1HasRun = true; };
-    auto item2Action = [&callback2HasRun]() { callback2HasRun = true; };
-    
-    menuController.addMenuItem(item1Title, item1Action)
-        ->addMenuItem(item2Title, item2Action)
-        ->selectNext()
-        ->executeSelectedAction();
-    
-    TEST_ASSERT_FALSE(callback1HasRun);
-    TEST_ASSERT_TRUE(callback2HasRun);
-}
-
-void testSetTitleReturnsThisForChaining() {
-    MockDiContainer mockContainer;
-    MockMenuLayoutView mockView;
-
-    mockContainer.setMockView(&mockView);
-
-    MenuController menuController(&mockContainer);
-
-    char title[] = "Chained Title";
-    char item[] = "Item";
-    bool actionRan = false;
-    auto action = [&actionRan]() { actionRan = true; };
-
-    menuController.setTitle(title)
-        ->addMenuItem(item, action);
-
-    TEST_ASSERT_EQUAL_STRING(title, mockView.getTitle());
-    TEST_ASSERT_EQUAL(1, mockView.getItemCount());
+    TEST_ASSERT_EQUAL_STRING(caption1, mockView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING(caption2, mockView.getItemCaption(1));
 }
 
 int main() {
     UNITY_BEGIN();
-    RUN_TEST(testShouldSetTitle);
-    RUN_TEST(testAddMenuItemDisplaysSingleItem);
-    RUN_TEST(testAddMenuItemDisplaysTwoItemsFirstSelected);
-    RUN_TEST(testSelectNextMovesSelectionFromFirstToSecond);
-    RUN_TEST(testSelectNextCyclicReturnsToFirstAfterThreeCalls);
-    RUN_TEST(testSelectPreviousCyclicMovesFromFirstToSecond);
-    RUN_TEST(testSelectNextThenSelectPreviousSelectsSecondItem);
-    RUN_TEST(testSelectNextThenExecuteSelectedActionRunsCallback);
-    RUN_TEST(testSetTitleReturnsThisForChaining);
+    RUN_TEST(testNavigationOnEmptyMenu);
+    RUN_TEST(testAddFirstMenuItem);
+    RUN_TEST(testAddSecondMenuItem);
+    RUN_TEST(testAddItemBeyondViewport);
+    RUN_TEST(testSelectNextMovesHighlightWithinViewport);
+    RUN_TEST(testSelectNextScrollsViewportDown);
+    RUN_TEST(testSelectPreviousMovesHighlightWithinViewport);
+    RUN_TEST(testSelectPreviousScrollsViewportUp);
+    RUN_TEST(testSelectPreviousWrapAround);
+    RUN_TEST(testSelectNextWrapAround);
     return UNITY_END();
 }
