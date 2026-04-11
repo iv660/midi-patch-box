@@ -8,7 +8,7 @@ Button::Button(int buttonPin)
       longPressDetectionEnabled(false),
       pressStartTime(0),
       debounceThreshold(20),
-      longPressThreshold(2000),
+      longPressThreshold(1000),
       buttonPin(buttonPin) {
 }
 
@@ -31,6 +31,13 @@ void Button::update() {
     if (buttonWasJustPressed()) {
         // Button was just pressed - record start time
         recordStartTime();
+        recordLastState();
+        return;
+    }
+
+    if (currentState == LOW && pressDurationMeetsLongPressThreshold() && !longPressed) {
+        // Button is still held and long press timer just expired
+        recordLongPressDetection();
         recordLastState();
         return;
     }

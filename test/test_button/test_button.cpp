@@ -89,8 +89,8 @@ void testShouldNotDetectLongPressWhenNotEnabled() {
     ioDriver.setPinState(2, LOW);
     button.update();
     
-    // Hold for 2100ms (> 2000ms)
-    ioDriver.delay(2100);
+    // Hold for 1100ms (> 1000ms)
+    ioDriver.delay(1100);
     
     // Release button
     ioDriver.setPinState(2, HIGH);
@@ -113,14 +113,21 @@ void testShouldDetectLongPressWhenEnabled() {
     ioDriver.setPinState(2, LOW);
     button.update();
     
-    // Hold for 2000ms (exactly at threshold)
-    ioDriver.delay(2000);
+    // Hold for 1000ms (exactly at threshold)
+    ioDriver.delay(1000);
+    
+    // Call update to trigger long press detection while button is still held
+    button.update();
+    
+    // Long press should be detected while button is still held
+    TEST_ASSERT_TRUE(button.isLongPressed());
+    TEST_ASSERT_FALSE(button.isPressed());
     
     // Release button
     ioDriver.setPinState(2, HIGH);
     button.update();
     
-    // Should detect long press, NOT short press
+    // Long press should still be detected after release
     TEST_ASSERT_TRUE(button.isLongPressed());
     TEST_ASSERT_FALSE(button.isPressed());
     
@@ -141,8 +148,8 @@ void testShouldDetectShortPressJustUnderThreshold() {
     ioDriver.setPinState(2, LOW);
     button.update();
     
-    // Hold for 1999ms (just under 2000ms threshold)
-    ioDriver.delay(1999);
+    // Hold for 999ms (just under 1000ms threshold)
+    ioDriver.delay(999);
     
     // Release button
     ioDriver.setPinState(2, HIGH);
@@ -164,7 +171,7 @@ void testMethodCallOrderShouldNotMatter() {
     // Press and hold for long press
     ioDriver.setPinState(2, LOW);
     button.update();
-    ioDriver.delay(2000);
+    ioDriver.delay(1000);
     ioDriver.setPinState(2, HIGH);
     button.update();
     
@@ -178,7 +185,7 @@ void testMethodCallOrderShouldNotMatter() {
     // Same scenario again
     ioDriver.setPinState(2, LOW);
     button.update();
-    ioDriver.delay(2000);
+    ioDriver.delay(1000);
     ioDriver.setPinState(2, HIGH);
     button.update();
     
