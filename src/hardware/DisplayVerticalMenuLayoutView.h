@@ -16,14 +16,26 @@ public:
     DisplayVerticalMenuLayoutView(DisplayVerticalMenuLayoutView&&) = delete;
     DisplayVerticalMenuLayoutView& operator=(DisplayVerticalMenuLayoutView&&) = delete;
 
-    MenuLayoutViewInterface* setTitle(char* title) override;
+    MenuLayoutViewInterface* displayTitle(char* title) override;
+    MenuLayoutViewInterface* displayItem(int index, char* caption, bool highlighted) override;
+    unsigned int getMaxItems() const override;
 
 private:
     static constexpr int SCREEN_WIDTH = 128;
     static constexpr int SCREEN_HEIGHT = 64;
     static constexpr int OLED_RESET = -1;
+    static constexpr int TITLE_LINE = 0;
+    static constexpr int FIRST_ITEM_LINE = 1;
+    static constexpr int TEXT_SIZE = 1;
+    static constexpr int LINE_HEIGHT = 12;
+    static constexpr int MAX_ITEMS = 4;
     
     void initializeDisplay();
+    void redrawScreen();
+    int getLineY(int line) const;
+    void clearLine(int line);
+    void drawTextOnLine(int line, const char* text, bool highlighted);
+    void drawHighlightOnLine(int line);
     
     Adafruit_SSD1306 display;
     bool isInitialized;

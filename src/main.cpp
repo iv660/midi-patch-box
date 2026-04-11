@@ -59,6 +59,9 @@ void setup()
     // Initialize StateFactory using DiContainer
     stateFactory = StateFactory(&diContainer);
     
+    // Initialize MenuController with DI container
+    setlistMenuController = MenuController(&diContainer);
+    
     // Initialize programs bank with program names
     programsBank.addProgram(0, "Clean")
         ->addProgram(41, "Viola")

@@ -7,7 +7,8 @@ void SetlistMenuState::enter() {
 
     char title[] = "Setlist";
     getSetlistMenuController()->setTitle(title);
-    getSetlistMenuController()->addMenuItem("Back", [this]() {
+    char backLabel[] = "Back";
+    getSetlistMenuController()->addMenuItem(backLabel, [this]() {
         changeToMainApplicationState();
     });
 }
