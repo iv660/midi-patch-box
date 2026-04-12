@@ -8,9 +8,6 @@
 
 class SetlistMenuState : public State {
 private:
-    const int MENU_ITEM_BACK = 0;
-    const int TOTAL_MENU_ITEMS = 1;
-
     MenuControllerInterface* getSetlistMenuController() const {
         return diContainer ? diContainer->getSetlistMenuController() : nullptr;
     }
