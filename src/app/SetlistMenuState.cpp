@@ -41,9 +41,11 @@ bool SetlistMenuState::hasUserInput() {
 }
 
 void SetlistMenuState::updateUserInput() {
-    if (getUserInput()) {
-        getUserInput()->update();
+    if (false == hasUserInput()) {
+        return;
     }
+
+    getUserInput()->update();
 }
 
 bool SetlistMenuState::encoderRotatedCounterClockwise() {
@@ -65,10 +67,17 @@ void SetlistMenuState::performMenuItemAction() {
 }
 
 void SetlistMenuState::changeToMainApplicationState() {
-    if (getStateFactory() && getStateMachine()) {
-        StateInterface* mainState = getStateFactory()->createMainApplicationState();
-        getStateMachine()->changeState(mainState);
+    if (!getStateFactory()) {
+        return;
     }
+
+    if (!getStateMachine()) {
+        return;
+    }
+
+    StateInterface* mainState = 
+        getStateFactory()->createMainApplicationState();
+    getStateMachine()->changeState(mainState);
 }
 
 void SetlistMenuState::resetMenuItems() {
