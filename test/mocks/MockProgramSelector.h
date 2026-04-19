@@ -38,6 +38,21 @@ public:
         selectedIndex = 0;
         return this;
     }
+
+    ProgramSelectorInterface* setPrograms(const int* programList, int count) override {
+        programCount = 0;
+        if (programList == nullptr || count <= 0) {
+            selectedIndex = 0;
+            return this;
+        }
+
+        for (int index = 0; index < count && programCount < 128; index++) {
+            programs[programCount++] = programList[index];
+        }
+
+        selectedIndex = 0;
+        return this;
+    }
     
     void updateProgram(int index, int programNumber) override {
         if (index >= 0 && index < programCount) {

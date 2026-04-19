@@ -3,6 +3,7 @@
 #include "MainApplicationState.h"
 #include "ConfigMenuState.h"
 #include "SetlistMenuState.h"
+#include "Context.h"
 #include "UserInputInterface.h"
 #include "ProgramSelectorInterface.h"
 #include "MidiControllerInterface.h"
@@ -15,6 +16,7 @@
 class StateFactory : public StateFactoryInterface {
 private:
     DiContainerInterface* diContainer = nullptr;
+    const Context* context = nullptr;
     
     // Private getters for lazy dependency resolution
     UserInputInterface* getUserInput() const {
@@ -61,9 +63,18 @@ public:
     explicit StateFactory(DiContainerInterface* container) : diContainer(container) {
         // Dependencies will be resolved lazily through getters
     }
+
+    explicit StateFactory(DiContainerInterface* container, const Context* context)
+        : diContainer(container), context(context) {
+    }
     
     StateFactory* setDiContainer(DiContainerInterface* diContainer) {
         this->diContainer = diContainer;
+        return this;
+    }
+
+    StateFactory* setContext(const Context* context) {
+        this->context = context;
         return this;
     }
 
@@ -83,6 +94,6 @@ public:
     }
     
     StateInterface* createSetlistMenuState() override {
-        return new SetlistMenuState(diContainer);
+        return new SetlistMenuState(diContainer, context);
     }
 };

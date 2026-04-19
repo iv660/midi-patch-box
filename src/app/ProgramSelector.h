@@ -18,6 +18,7 @@ public:
     void selectPreviousProgram() override;
     int getSelectedProgramNumber() const override;
     ProgramSelectorInterface* setPrograms(std::initializer_list<int> programs) override;
+    ProgramSelectorInterface* setPrograms(const int* programs, int count) override;
     void updateProgram(int index, int programNumber) override;
 
 private:

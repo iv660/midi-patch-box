@@ -1,4 +1,5 @@
 #include "SetlistMenuState.h"
+#include <cstdio>
 
 void SetlistMenuState::enter() {
     if (false == hasSetlistMenuController()) {
@@ -7,6 +8,7 @@ void SetlistMenuState::enter() {
 
     resetMenuItems();
     initializeMenuTitle();
+    addProgramMenuItems();
     addBackMenuItem();
 }
 
@@ -94,4 +96,29 @@ void SetlistMenuState::addBackMenuItem() {
     getSetlistMenuController()->addMenuItem(backLabel, [this]() {
         changeToMainApplicationState();
     });
+}
+
+void SetlistMenuState::addProgramMenuItems() {
+    if (context == nullptr || context->programs == nullptr) {
+        return;
+    }
+
+    for (int index = 0; index < context->programsCount; index++) {
+        int programNumber = context->programs[index];
+        const char* caption = makeProgramCaption(programNumber);
+        getSetlistMenuController()->addMenuItem(const_cast<char*>(caption), nullptr);
+    }
+}
+
+const char* SetlistMenuState::makeProgramCaption(int programNumber)
+{
+    static char caption[16];
+
+    ProgramsBankInterface* programsBank = getProgramsBank();
+    const char* programName = programsBank ? programsBank->getProgramName(programNumber) : "";
+
+    snprintf(caption, sizeof(caption), "%d %s", programNumber, programName);
+    caption[15] = '\0';
+    
+    return caption;
 }

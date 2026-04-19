@@ -98,6 +98,26 @@ ProgramSelectorInterface * ProgramSelector::setPrograms(std::initializer_list<in
     return this;
 }
 
+ProgramSelectorInterface* ProgramSelector::setPrograms(const int* programs, int count)
+{
+    delete[] programsList;
+    programsCount = count;
+
+    if (programsCount == 0 || programs == nullptr) {
+        programsList = nullptr;
+        selectFirstProgram();
+        return this;
+    }
+
+    programsList = new int[programsCount];
+    for (int index = 0; index < programsCount; index++) {
+        programsList[index] = programs[index];
+    }
+
+    selectFirstProgram();
+    return this;
+}
+
 void ProgramSelector::updateProgram(int index, int programNumber)
 {
     if (programsList == nullptr || index < 0 || index >= programsCount) {

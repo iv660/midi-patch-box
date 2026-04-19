@@ -122,6 +122,11 @@ public:
         return nullptr;
     }
 
+    ProgramSelectorInterface* setPrograms(const int* programs, int count) override
+    {
+        return nullptr;
+    }
+
     void updateProgram(int index, int programNumber) override
     {
         // Mock implementation - do nothing
