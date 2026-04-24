@@ -32,6 +32,7 @@ private:
     bool hasSetlistMenuController();
     bool hasUserInput();
     void updateUserInput();
+    bool encoderRotatedClockwise();
     bool encoderRotatedCounterClockwise();
     bool encoderButtonPressed();
     void performMenuItemAction();

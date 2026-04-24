@@ -15,6 +15,8 @@ private:
     char lastTitle[16];
     bool setTitleCalled = false;
     bool resetMenuItemsCalled = false;
+    bool selectPreviousCalled = false;
+    bool selectNextCalled = false;
     std::function<void()> selectedAction;
 
 public:
@@ -29,8 +31,14 @@ public:
         selectedAction = action;
         return this;
     }
-    MenuControllerInterface* selectNext() override { return this; }
-    MenuControllerInterface* selectPrevious() override { return this; }
+    MenuControllerInterface* selectNext() override {
+        selectNextCalled = true;
+        return this;
+    }
+    MenuControllerInterface* selectPrevious() override {
+        selectPreviousCalled = true;
+        return this;
+    }
     MenuControllerInterface* resetMenuItems() override {
         resetMenuItemsCalled = true;
         return this;
@@ -44,6 +52,8 @@ public:
     // Test helpers
     bool setTitleWasCalled() const { return setTitleCalled; }
     bool resetMenuItemsWasCalled() const { return resetMenuItemsCalled; }
+    bool selectPreviousWasCalled() const { return selectPreviousCalled; }
+    bool selectNextWasCalled() const { return selectNextCalled; }
     const char* getLastTitle() const { return lastTitle; }
 };
 
@@ -134,10 +144,58 @@ void testSetlistMenuStateBackItemTransitionsToMainApplication() {
         "Expected state machine to transition to MainApplicationState");
 }
 
+void testRotatingEncoderCounterClockwiseNavigatesUpTheList() {
+	// Arrange
+	DiContainer container;
+	SetlistMenuState state(&container);
+
+	MockMenuController mockMenuController;
+	MockInput mockUserInput;
+
+	container.setSetlistMenuController(&mockMenuController)
+		->setUserInput(&mockUserInput);
+
+	state.enter();
+
+	// Act
+	mockUserInput.setEncoderCounterClockwise(true);
+	state.update();
+	mockUserInput.setEncoderCounterClockwise(false);
+
+	// Assert
+	TEST_ASSERT_TRUE_MESSAGE(mockMenuController.selectPreviousWasCalled(),
+		"Expected selectPrevious to be called when rotating encoder counter-clockwise");
+}
+
+void testRotatingEncoderClockwiseNavigatesDownTheList() {
+	// Arrange
+	DiContainer container;
+	SetlistMenuState state(&container);
+
+	MockMenuController mockMenuController;
+	MockInput mockUserInput;
+
+	container.setSetlistMenuController(&mockMenuController)
+		->setUserInput(&mockUserInput);
+
+	state.enter();
+
+	// Act
+	mockUserInput.setEncoderClockwise(true);
+	state.update();
+	mockUserInput.setEncoderClockwise(false);
+
+	// Assert
+	TEST_ASSERT_TRUE_MESSAGE(mockMenuController.selectNextWasCalled(),
+		"Expected selectNext to be called when rotating encoder clockwise");
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(testSetlistMenuStateSetsMenuTitleOnEnter);
     RUN_TEST(testSetlistMenuStateClearsMenuItemsOnEnter);
     RUN_TEST(testSetlistMenuStateBackItemTransitionsToMainApplication);
+	RUN_TEST(testRotatingEncoderCounterClockwiseNavigatesUpTheList);
+	RUN_TEST(testRotatingEncoderClockwiseNavigatesDownTheList);
     return UNITY_END();
 }

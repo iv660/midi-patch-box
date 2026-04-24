@@ -19,6 +19,11 @@ void SetlistMenuState::update() {
 
     updateUserInput();
 
+    if (encoderRotatedClockwise()) {
+        getSetlistMenuController()->selectNext();
+        return;
+    }
+
     if (encoderRotatedCounterClockwise()) {
         getSetlistMenuController()->selectPrevious();
         return;
@@ -48,6 +53,13 @@ void SetlistMenuState::updateUserInput() {
     }
 
     getUserInput()->update();
+}
+
+bool SetlistMenuState::encoderRotatedClockwise() {
+    if (false == hasUserInput()) {
+        return false;
+    }
+    return getUserInput()->encoderRotatedClockwise();
 }
 
 bool SetlistMenuState::encoderRotatedCounterClockwise() {
