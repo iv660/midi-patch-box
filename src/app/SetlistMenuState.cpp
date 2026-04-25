@@ -118,7 +118,11 @@ void SetlistMenuState::addProgramMenuItems() {
     for (int index = 0; index < context->programsCount; index++) {
         int programNumber = context->programs[index];
         const char* caption = makeProgramCaption(programNumber);
-        getSetlistMenuController()->addMenuItem(const_cast<char*>(caption), nullptr);
+        getSetlistMenuController()->addMenuItem(const_cast<char*>(caption), [this, programNumber]() {
+            const char* newCaption = makeProgramCaption(programNumber);
+            diContainer->getSetlistMenuLayoutView()
+                ->displayItem(0, const_cast<char*>(newCaption), true);
+        });
     }
 }
 
