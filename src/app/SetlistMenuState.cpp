@@ -1,4 +1,5 @@
 #include "SetlistMenuState.h"
+#include "SetlistMenuViewDecorator.h"
 #include <cstdio>
 
 void SetlistMenuState::enter() {
@@ -119,11 +120,13 @@ void SetlistMenuState::addProgramMenuItems() {
         int programNumber = context->programs[index];
         const char* caption = makeProgramCaption(programNumber);
         getSetlistMenuController()->addMenuItem(const_cast<char*>(caption), [this, programNumber]() {
-            const char* newCaption = makeProgramCaption(programNumber);
+            // const char* newCaption = makeProgramCaption(programNumber);
+            const char* newCaption = "= EDIT =";
             if (!getMenuView()) {
                 return;
             }
-            getMenuView()->displayItem(0, const_cast<char*>(newCaption), true);
+            SetlistMenuViewDecorator* view = static_cast<SetlistMenuViewDecorator*>(getMenuView());
+            view->replaceLastHighlightedItem(const_cast<char*>(newCaption));
         });
     }
 }
