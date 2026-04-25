@@ -7,10 +7,15 @@
 #include "StateFactoryInterface.h"
 #include "StateMachineInterface.h"
 #include "ProgramsBankInterface.h"
+#include "MenuLayoutViewInterface.h"
 
 class SetlistMenuState : public State {
 private:
     const Context* context = nullptr;
+
+    MenuLayoutViewInterface* getMenuView() const {
+        return diContainer ? diContainer->getSetlistMenuLayoutView() : nullptr;
+    }
 
     MenuControllerInterface* getSetlistMenuController() const {
         return diContainer ? diContainer->getSetlistMenuController() : nullptr;
