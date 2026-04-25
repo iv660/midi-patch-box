@@ -20,6 +20,7 @@
 #include "hardware/DisplayVerticalMenuLayoutView.h"
 #include "app/MenuController.h"
 #include "app/Context.h"
+#include "app/SetlistMenuViewDecorator.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
@@ -44,6 +45,7 @@ DisplayBitmapSplashScreenView bitmapSplashView;
 DisplayConfigMenuView configMenuView;
 DisplayEditSetlistView editSetlistView;
 DisplayVerticalMenuLayoutView setlistMenuView;
+SetlistMenuViewDecorator setlistMenuViewDecorator;
 MenuController setlistMenuController;
 ProgramsBank programsBank;
 
@@ -90,6 +92,8 @@ void setup()
         ->setEncoderButton(&encoderButton)
         ->setEncoder(&encoder);
 
+    setlistMenuViewDecorator = SetlistMenuViewDecorator(&setlistMenuView);
+
     // Setup DiContainer with all dependencies
     diContainer.setSplashScreenView(&bitmapSplashView)
         ->setIoDriver(&ioDriver)
@@ -102,7 +106,7 @@ void setup()
         ->setConfigMenuView(&configMenuView)
         ->setEditSetlistView(&editSetlistView)
         ->setSetlistMenuController(&setlistMenuController)
-        ->setSetlistMenuLayoutView(&setlistMenuView)
+        ->setSetlistMenuLayoutView(&setlistMenuViewDecorator)
         ->setStateMachine(&stateMachine);
 
     // Initialize MidiPatchBoxApplication using DiContainer
