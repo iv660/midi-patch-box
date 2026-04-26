@@ -20,6 +20,14 @@ void SetlistMenuState::update() {
 
     updateUserInput();
 
+    // if (isEditMode) {
+    //     handleEditModeActions();
+    // } else {
+        handleNavigationModeActions();
+    // }
+}
+
+void SetlistMenuState::handleNavigationModeActions() {
     if (encoderRotatedClockwise()) {
         getSetlistMenuController()->selectNext();
         return;
@@ -119,16 +127,33 @@ void SetlistMenuState::addProgramMenuItems() {
     for (int index = 0; index < context->programsCount; index++) {
         int programNumber = context->programs[index];
         const char* caption = makeProgramCaption(programNumber);
-        getSetlistMenuController()->addMenuItem(const_cast<char*>(caption), [this, programNumber]() {
-            // const char* newCaption = makeProgramCaption(programNumber);
-            const char* newCaption = "= EDIT =";
-            if (!getMenuView()) {
-                return;
-            }
-            SetlistMenuViewDecorator* view = static_cast<SetlistMenuViewDecorator*>(getMenuView());
-            view->replaceLastHighlightedItem(const_cast<char*>(newCaption));
+        getSetlistMenuController()->addMenuItem(const_cast<char*>(caption), [this, index]() {
+            switchToEditMode(index);
         });
     }
+}
+
+void SetlistMenuState::switchToEditMode(int programIndex) {
+    if (!getMenuView()) {
+        return;
+    }
+
+    if (!context) {
+        return;
+    }
+
+    if (!context->programs) {
+        return;
+    }
+
+    int programNumber = context->programs[programIndex];
+    (void)programNumber;
+
+    // const char* newCaption = makeProgramCaption(programNumber);
+    const char* newCaption = "= EDIT =";
+
+    SetlistMenuViewDecorator* view = static_cast<SetlistMenuViewDecorator*>(getMenuView());
+    view->replaceLastHighlightedItem(const_cast<char*>(newCaption));
 }
 
 const char* SetlistMenuState::makeProgramCaption(int programNumber)

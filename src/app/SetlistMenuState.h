@@ -37,6 +37,7 @@ private:
     bool hasSetlistMenuController();
     bool hasUserInput();
     void updateUserInput();
+    void handleNavigationModeActions();
     bool encoderRotatedClockwise();
     bool encoderRotatedCounterClockwise();
     bool encoderButtonPressed();
@@ -47,6 +48,7 @@ private:
     void addProgramMenuItems();
     const char* makeProgramCaption(int programNumber);
     void addBackMenuItem();
+    void switchToEditMode(int programIndex);
 
 public:
     SetlistMenuState() = default;
