@@ -13,7 +13,7 @@ class SetlistMenuState : public State {
 private:
     const Context* context = nullptr;
 
-    int currentEditProgramIndex = 0;
+    int currentEditProgramNumber = 0;
     bool editModeEnabled = false;
 
     MenuLayoutViewInterface* getMenuView() const {
@@ -45,7 +45,6 @@ private:
     void handleEditModeActions();
     void selectNextProgramOption();
     void selectPreviousProgramOption();
-    void switchToProgramOption(int newProgramIndex);
     void redrawCurrentProgramOption();
     bool encoderRotatedClockwise();
     bool encoderRotatedCounterClockwise();

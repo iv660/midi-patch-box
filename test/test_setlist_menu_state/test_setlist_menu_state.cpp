@@ -342,6 +342,43 @@ void testRotatingEncoderClockwiseInEditModeShouldShowNextProgramCaption() {
         "Expecting to display next program when encoder gets rotated once");
 }
 
+void testRotatingEncoderClockwiseInEditShouldIterateThroughProgramsZeroToOneTwentySeven() {
+    int programs[] = {5, 23, 18};
+    Context context;
+    context.programs = programs;
+    context.programsCount = 3;
+
+    MockInput mockUserInput;
+
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    char secondProgramMenuItemCaption[] = "6 ";
+
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    mockUserInput.setEncoderClockwise(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderClockwise(false);
+
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(secondProgramMenuItemCaption, innerView.getLastHighlightedItemCaption(),
+        "Expecting to display next sequential program number when encoder gets rotated once");
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(testSetlistMenuStateSetsMenuTitleOnEnter);
@@ -351,5 +388,6 @@ int main(int argc, char **argv) {
 	RUN_TEST(testRotatingEncoderClockwiseNavigatesDownTheList);
     RUN_TEST(testEnteringEditModeShouldShowCurrentProgramCaption);
     RUN_TEST(testRotatingEncoderClockwiseInEditModeShouldShowNextProgramCaption);
+    RUN_TEST(testRotatingEncoderClockwiseInEditShouldIterateThroughProgramsZeroToOneTwentySeven);
     return UNITY_END();
 }

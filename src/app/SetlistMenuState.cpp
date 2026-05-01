@@ -50,33 +50,20 @@ void SetlistMenuState::handleEditModeActions() {
 }
 
 void SetlistMenuState::selectNextProgramOption() {
-    if (!context || !context->programs) {
-        return;
+    currentEditProgramNumber++;
+    if (currentEditProgramNumber > 127) {
+        currentEditProgramNumber = 0;
     }
 
-    int nextIndex = currentEditProgramIndex + 1;
-    if (nextIndex >= context->programsCount) {
-        nextIndex = 0;
-    }
-
-    switchToProgramOption(nextIndex);
+    redrawCurrentProgramOption();
 }
 
 void SetlistMenuState::selectPreviousProgramOption() {
-    if (!context || !context->programs) {
-        return;
+    currentEditProgramNumber--;
+    if (currentEditProgramNumber < 0) {
+        currentEditProgramNumber = 127;
     }
 
-    int prevIndex = currentEditProgramIndex - 1;
-    if (prevIndex < 0) {
-        prevIndex = context->programsCount - 1;
-    }
-
-    switchToProgramOption(prevIndex);
-}
-
-void SetlistMenuState::switchToProgramOption(int newProgramIndex) {
-    currentEditProgramIndex = newProgramIndex;
     redrawCurrentProgramOption();
 }
 
@@ -85,12 +72,7 @@ void SetlistMenuState::redrawCurrentProgramOption() {
         return;
     }
 
-    if (!context || !context->programs) {
-        return;
-    }
-
-    int programNumber = context->programs[currentEditProgramIndex];
-    const char* caption = makeProgramCaption(programNumber);
+    const char* caption = makeProgramCaption(currentEditProgramNumber);
 
     SetlistMenuViewDecorator* view = static_cast<SetlistMenuViewDecorator*>(getMenuView());
     view->replaceLastHighlightedItem(const_cast<char*>(caption));
@@ -208,7 +190,7 @@ void SetlistMenuState::switchToEditMode(int programIndex) {
     }
 
     editModeEnabled = true;
-    currentEditProgramIndex = programIndex;
+    currentEditProgramNumber = context->programs[programIndex];
     redrawCurrentProgramOption();
 }
 
