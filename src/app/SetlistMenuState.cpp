@@ -20,11 +20,80 @@ void SetlistMenuState::update() {
 
     updateUserInput();
 
-    // if (isEditMode) {
-    //     handleEditModeActions();
-    // } else {
+    if (isInEditMode()) {
+        handleEditModeActions();
+    } else {
         handleNavigationModeActions();
-    // }
+    }
+}
+
+bool SetlistMenuState::isInEditMode() const {
+    return editModeEnabled;
+}
+
+void SetlistMenuState::handleEditModeActions() {
+    if (encoderRotatedClockwise()) {
+        selectNextProgramOption();
+        return;
+    }
+
+    if (encoderRotatedCounterClockwise()) {
+        selectPreviousProgramOption();
+        return;
+    }
+
+    if (encoderButtonPressed()) {
+        editModeEnabled = false;
+        changeToMainApplicationState();
+        return;
+    }
+}
+
+void SetlistMenuState::selectNextProgramOption() {
+    if (!context || !context->programs) {
+        return;
+    }
+
+    int nextIndex = currentEditProgramIndex + 1;
+    if (nextIndex >= context->programsCount) {
+        nextIndex = 0;
+    }
+
+    switchToProgramOption(nextIndex);
+}
+
+void SetlistMenuState::selectPreviousProgramOption() {
+    if (!context || !context->programs) {
+        return;
+    }
+
+    int prevIndex = currentEditProgramIndex - 1;
+    if (prevIndex < 0) {
+        prevIndex = context->programsCount - 1;
+    }
+
+    switchToProgramOption(prevIndex);
+}
+
+void SetlistMenuState::switchToProgramOption(int newProgramIndex) {
+    currentEditProgramIndex = newProgramIndex;
+    redrawCurrentProgramOption();
+}
+
+void SetlistMenuState::redrawCurrentProgramOption() {
+    if (!getMenuView()) {
+        return;
+    }
+
+    if (!context || !context->programs) {
+        return;
+    }
+
+    int programNumber = context->programs[currentEditProgramIndex];
+    const char* caption = makeProgramCaption(programNumber);
+
+    SetlistMenuViewDecorator* view = static_cast<SetlistMenuViewDecorator*>(getMenuView());
+    view->replaceLastHighlightedItem(const_cast<char*>(caption));
 }
 
 void SetlistMenuState::handleNavigationModeActions() {
@@ -134,26 +203,13 @@ void SetlistMenuState::addProgramMenuItems() {
 }
 
 void SetlistMenuState::switchToEditMode(int programIndex) {
-    if (!getMenuView()) {
+    if (!context || !context->programs) {
         return;
     }
 
-    if (!context) {
-        return;
-    }
-
-    if (!context->programs) {
-        return;
-    }
-
-    int programNumber = context->programs[programIndex];
-    (void)programNumber;
-
-    // const char* newCaption = makeProgramCaption(programNumber);
-    const char* newCaption = "= EDIT =";
-
-    SetlistMenuViewDecorator* view = static_cast<SetlistMenuViewDecorator*>(getMenuView());
-    view->replaceLastHighlightedItem(const_cast<char*>(newCaption));
+    editModeEnabled = true;
+    currentEditProgramIndex = programIndex;
+    redrawCurrentProgramOption();
 }
 
 const char* SetlistMenuState::makeProgramCaption(int programNumber)

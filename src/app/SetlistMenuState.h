@@ -13,6 +13,9 @@ class SetlistMenuState : public State {
 private:
     const Context* context = nullptr;
 
+    int currentEditProgramIndex = 0;
+    bool editModeEnabled = false;
+
     MenuLayoutViewInterface* getMenuView() const {
         return diContainer ? diContainer->getSetlistMenuLayoutView() : nullptr;
     }
@@ -37,7 +40,13 @@ private:
     bool hasSetlistMenuController();
     bool hasUserInput();
     void updateUserInput();
+    bool isInEditMode() const;
     void handleNavigationModeActions();
+    void handleEditModeActions();
+    void selectNextProgramOption();
+    void selectPreviousProgramOption();
+    void switchToProgramOption(int newProgramIndex);
+    void redrawCurrentProgramOption();
     bool encoderRotatedClockwise();
     bool encoderRotatedCounterClockwise();
     bool encoderButtonPressed();

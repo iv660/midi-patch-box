@@ -1,9 +1,11 @@
 #include <unity.h>
 #include <cstring>
 #include "app/SetlistMenuState.h"
+#include "app/MenuController.h"
 #include "app/MenuControllerInterface.h"
 #include "app/DiContainer.h"
 #include "app/MenuLayoutViewInterface.h"
+#include "app/SetlistMenuViewDecorator.h"
 #include "mocks/MockInput.h"
 #include "mocks/MockStateFactory.h"
 #include "mocks/MockStateMachine.h"
@@ -55,6 +57,86 @@ public:
     bool selectPreviousWasCalled() const { return selectPreviousCalled; }
     bool selectNextWasCalled() const { return selectNextCalled; }
     const char* getLastTitle() const { return lastTitle; }
+};
+
+class MockMenuLayoutViewWithLastHighlightedItem : public MenuLayoutViewInterface {
+private:
+    char lastHighlightedCaption[16] = {0};
+
+public:
+    MenuLayoutViewInterface* displayTitle(char* title) override {
+        (void)title;
+        return this;
+    }
+
+    MenuLayoutViewInterface* displayItem(int index, char* caption, bool highlighted) override {
+        (void)index;
+
+        if (highlighted) {
+            strncpy(lastHighlightedCaption, caption ? caption : (char*)"", sizeof(lastHighlightedCaption));
+            lastHighlightedCaption[sizeof(lastHighlightedCaption) - 1] = '\0';
+        }
+
+        return this;
+    }
+
+    MenuLayoutViewInterface* clearItems() override {
+        lastHighlightedCaption[0] = '\0';
+        return this;
+    }
+
+    unsigned int getMaxItems() const override {
+        return 3;
+    }
+
+    const char* getLastHighlightedItemCaption() const {
+        return lastHighlightedCaption;
+    }
+};
+
+class MockDiContainerForEditModeScenario : public DiContainerInterface {
+private:
+    MenuLayoutViewInterface* menuView = nullptr;
+
+public:
+    void setSetlistMenuLayoutView(MenuLayoutViewInterface* view) { menuView = view; }
+
+    MenuLayoutViewInterface* getSetlistMenuLayoutView() const override { return menuView; }
+    MenuControllerInterface* getSetlistMenuController() const override { return nullptr; }
+    UserInputInterface* getUserInput() const override { return nullptr; }
+
+    SplashScreenViewInterface* getSplashScreenView() const override { return nullptr; }
+    IoDriverInterface* getIoDriver() const override { return nullptr; }
+    StateFactoryInterface* getStateFactory() const override { return nullptr; }
+    ProgramSelectorInterface* getProgramSelector() const override { return nullptr; }
+    MidiControllerInterface* getMidiController() const override { return nullptr; }
+    ProgramSelectionViewInterface* getProgramSelectionView() const override { return nullptr; }
+    StateMachineInterface* getStateMachine() const override { return nullptr; }
+    ProgramsBankInterface* getProgramsBank() const override { return nullptr; }
+    ConfigMenuViewInterface* getConfigMenuView() const override { return nullptr; }
+    EditSetlistViewInterface* getEditSetlistView() const override { return nullptr; }
+    StateMachineInterface* getStateMachineInterface() const override { return nullptr; }
+};
+
+class MockMenuControllerWithSingleAction : public MenuControllerInterface {
+private:
+    std::function<void()> action;
+
+public:
+    MenuControllerInterface* setTitle(char* title) override { (void)title; return this; }
+    MenuControllerInterface* addMenuItem(char* caption, std::function<void()> newAction) override {
+        (void)caption;
+        action = newAction;
+        return this;
+    }
+    MenuControllerInterface* selectNext() override { return this; }
+    MenuControllerInterface* selectPrevious() override { return this; }
+    MenuControllerInterface* resetMenuItems() override { return this; }
+    void executeSelectedAction() override {
+        if (action) {
+            action();
+        }
+    }
 };
 
 void setUp(void) {
@@ -190,6 +272,76 @@ void testRotatingEncoderClockwiseNavigatesDownTheList() {
 		"Expected selectNext to be called when rotating encoder clockwise");
 }
 
+void testEnteringEditModeShouldShowCurrentProgramCaption() {
+    int programs[] = {1, 2};
+    Context context;
+    context.programs = programs;
+    context.programsCount = 2;
+
+    MockInput mockUserInput;
+
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    char firstProgramMenuItemCaption[] = "1 ";
+
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(firstProgramMenuItemCaption, innerView.getLastHighlightedItemCaption(),
+        "Expecting to display current program in edit mode");
+}
+
+void testRotatingEncoderClockwiseInEditModeShouldShowNextProgramCaption() {
+    int programs[] = {1, 2};
+    Context context;
+    context.programs = programs;
+    context.programsCount = 2;
+
+    MockInput mockUserInput;
+
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    char secondProgramMenuItemCaption[] = "2 ";
+
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    mockUserInput.setEncoderClockwise(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderClockwise(false);
+
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(secondProgramMenuItemCaption, innerView.getLastHighlightedItemCaption(),
+        "Expecting to display next program when encoder gets rotated once");
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(testSetlistMenuStateSetsMenuTitleOnEnter);
@@ -197,5 +349,7 @@ int main(int argc, char **argv) {
     RUN_TEST(testSetlistMenuStateBackItemTransitionsToMainApplication);
 	RUN_TEST(testRotatingEncoderCounterClockwiseNavigatesUpTheList);
 	RUN_TEST(testRotatingEncoderClockwiseNavigatesDownTheList);
+    RUN_TEST(testEnteringEditModeShouldShowCurrentProgramCaption);
+    RUN_TEST(testRotatingEncoderClockwiseInEditModeShouldShowNextProgramCaption);
     return UNITY_END();
 }
