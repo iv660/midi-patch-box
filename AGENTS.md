@@ -318,19 +318,15 @@ checks do not make the Blueprint unusable.
 
 ## Commands
 
-<!-- blueprint:onboarding-required -->
-For a standard Next.js project. Change or remove if you're using something else.
+For a PlatformIO C++ project for Raspberry Pi Pico.
 
-- Dev server: `npm run dev` (http://localhost:3000)
-- Build: `npm run build`
-- Production server: `npm run start`
-- Lint: `npm run lint`
+- Build for Raspberry Pi Pico: `pio run -e pico`
+- Upload to device: `pio run -e pico -t upload`
+- Run unit tests: `pio test -e native`
+- Clean build: `pio run -t clean`
+- Monitor serial: `pio device monitor`
+- Run specific test: `pio test -e native -f test_name`
 
-Testing is opt-in. If this project does not already have a unit test runner, run
-`/tests` or `$tests` to add one and update this section with the real test
-commands.
+Testing is configured with Unity test framework. Run `pio test -e native` to execute all tests.
 
-Browser testing is also opt-in. Run `/tests browser` or `$tests browser` to add
-or normalize a browser harness and document its exact command as `Browser
-tests`. Check and Continuous Mode can then reuse it without installing tooling
-mid-feature.
+This is an embedded C++ project with no web UI. Verification focuses on unit tests and hardware simulation tests.
