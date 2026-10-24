@@ -121,12 +121,77 @@ message: |
 **When critic returns "Needs Revision" status:**
 
 1. **Create Revision Request:**
-   - Create `revision-request-XXX.md` file with:
-     - Summary of critical issues
-     - Specific revision tasks
-     - Expected deliverables
-     - Timeline and quality criteria
+   - Create `revision-request-XXX.md` file using standardized template:
+```markdown
+# Revision Request #[number]
+
+**Task:** [Task name]  
+**Request Date:** [Date]  
+**From:** Coordinator (based on critic feedback)  
+**To:** [Role - Architect/Developer/etc.]  
+**Priority:** [High/Medium/Low]  
+**Revision Cycle:** [number] of [maximum] maximum
+
+## Summary
+
+[Brief summary of why revision is needed]
+
+## Critical Issues (Must Address)
+
+### P1: [Critical Issue Title]
+**Problem:** [Detailed problem description]
+**Critic Recommendation:** [Specific recommendation from critic]
+**Required Changes:**
+1. [Change 1]
+2. [Change 2]
+3. [Change 3]
+
+### P2: [Major Issue Title]  
+**Problem:** [Detailed problem description]
+**Critic Recommendation:** [Specific recommendation from critic]
+**Required Changes:**
+1. [Change 1]
+2. [Change 2]
+
+## Specific Revision Tasks
+
+### Task 1: [Task description]
+- [ ] Subtask 1.1
+- [ ] Subtask 1.2
+
+### Task 2: [Task description]  
+- [ ] Subtask 2.1
+- [ ] Subtask 2.2
+
+## Expected Deliverables
+
+1. [Deliverable 1 - e.g., Updated specification]
+2. [Deliverable 2 - e.g., Documentation of decisions]
+3. [Deliverable 3 - e.g., Ready for re-review]
+
+## Quality Criteria for Revision
+
+The revised work should:
+- [ ] Resolve all P1 critical issues
+- [ ] Address P2 major concerns with clear solutions
+- [ ] Maintain architectural compliance with project standards
+- [ ] Preserve all original functional requirements
+- [ ] Remain implementable within reasonable complexity
+
+## Timeline
+
+**Requested Completion:** [Timeline]  
+**Re-review:** Immediate after revision completion  
+**Maximum Cycles:** [number] (this is cycle [current])
+
+---
+
+**Coordinator Note:** [Additional context or instructions]
+```
    - Number revisions sequentially (001, 002, etc.)
+   - Include specific, actionable tasks
+   - Set clear quality criteria
+   - Define maximum iteration limits (recommended: 3 cycles)
 
 2. **Return to Architect:**
 ```yaml
@@ -385,12 +450,18 @@ message: |
 # - Continue until "Approved" status
 ```
 
-7. **Current status:**
-   - Specification v1.0 created by architect
-   - Critic review completed with "Needs Revision" status
-   - Revision request #001 created with specific tasks
-   - Iteration cycle 1 in progress
-   - Maximum iterations: 3 cycles configured
+7. **Iteration cycle completed:**
+   - Specification v1.0 → v2.0 after revision
+   - All critical issues resolved: P1 (Adapter pattern), P2 (DI container), P3 (EditSetlistState)
+   - Critic re-review: APPROVED
+   - Cycle efficiency: Single iteration sufficient
+   - Artifacts: revision-request-001.md, architect-decisions-001.md
+
+8. **Current status:**
+   - Architectural specification phase COMPLETE
+   - Specification v2.0 approved by critic
+   - Ready for user approval gate
+   - Next: Phase 2 (Parallel Preparation)
 
 ## Quality Gates
 
@@ -400,6 +471,75 @@ The coordinator enforces quality gates:
 - Step-by-step review during implementation
 - Final acceptance test verification
 - User final approval
+
+## Best Practices from Practical Testing
+
+### Iteration Cycle Optimization
+
+**Effective patterns identified:**
+1. **Issue prioritization:** Use P1/P2/P3 classification for clear focus
+2. **Specific requirements:** Provide concrete tasks in revision requests
+3. **Documentation tracking:** Maintain `architect-decisions-XXX.md` for transparency
+4. **Cycle limits:** Maximum 3 iterations prevents endless revisions
+
+**Template standardization:**
+- Revision requests follow consistent format
+- Critic feedback uses structured P1/P2/P3 classification
+- Architectural decisions documented separately
+- Task context updated after each phase
+
+### Communication Guidelines
+
+**For architect assignments:**
+- Include specific quality criteria
+- Reference existing artifacts (specifications, feedback)
+- Set clear expectations for deliverables
+- Define success criteria upfront
+
+**For critic reviews:**
+- Structure feedback with priority levels
+- Provide concrete recommendations
+- Assess architectural compliance
+- Give clear approval status
+
+### Context Management
+
+**File organization:**
+- `current-task-context.md` - Overall status and decisions
+- `architect-output.md` - Architect work products
+- `critic-feedback.md` - Review findings and status
+- `revision-request-XXX.md` - Specific revision requirements
+- `architect-decisions-XXX.md` - Decision rationale
+
+**Status tracking:**
+- Update context after each agent completes work
+- Maintain iteration count and cycle limits
+- Document key decisions in decision log
+- Track progress through workflow phases
+
+## Practical Example: Completed Iteration Cycle
+
+### Task: Build Plan Item #2 "Unify menu organization principles"
+
+**Cycle 1 Results:**
+- ✅ **Issues identified:** 3 critical (P1, P2, P3)
+- ✅ **Revision requested:** Clear requirements in `revision-request-001.md`
+- ✅ **Specification revised:** v1.0 → v2.0 with Adapter pattern
+- ✅ **Critic re-review:** Approved all fixes
+- ✅ **Cycle efficiency:** All issues resolved in single iteration
+
+**Key artifacts produced:**
+1. `current-feature.md` v2.0 - Approved specification
+2. `critic-feedback.md` - Initial and final review
+3. `revision-request-001.md` - Structured revision requirements
+4. `architect-decisions-001.md` - Decision rationale documentation
+5. Updated `current-task-context.md` - Complete status tracking
+
+**Lessons applied to skill:**
+- Standardized revision request template
+- Clear iteration management process
+- Effective agent communication patterns
+- Comprehensive context documentation
 
 ---
 
