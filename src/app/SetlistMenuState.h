@@ -1,0 +1,71 @@
+#pragma once
+#include "State.h"
+#include "MenuControllerInterface.h"
+#include "DiContainerInterface.h"
+#include "Context.h"
+#include "UserInputInterface.h"
+#include "StateFactoryInterface.h"
+#include "StateMachineInterface.h"
+#include "ProgramsBankInterface.h"
+#include "MenuLayoutViewInterface.h"
+
+class SetlistMenuState : public State {
+private:
+    const Context* context = nullptr;
+
+    int currentEditProgramNumber = 0;
+    bool editModeEnabled = false;
+
+    MenuLayoutViewInterface* getMenuView() const {
+        return diContainer ? diContainer->getSetlistMenuLayoutView() : nullptr;
+    }
+
+    MenuControllerInterface* getSetlistMenuController() const {
+        return diContainer ? diContainer->getSetlistMenuController() : nullptr;
+    }
+    UserInputInterface* getUserInput() const {
+        return diContainer ? diContainer->getUserInput() : nullptr;
+    }
+    StateFactoryInterface* getStateFactory() const {
+        return diContainer ? diContainer->getStateFactory() : nullptr;
+    }
+    StateMachineInterface* getStateMachine() const {
+        return diContainer ? diContainer->getStateMachine() : nullptr;
+    }
+
+    ProgramsBankInterface* getProgramsBank() const {
+        return diContainer ? diContainer->getProgramsBank() : nullptr;
+    }
+
+    bool hasSetlistMenuController();
+    bool hasUserInput();
+    void updateUserInput();
+    bool isInEditMode() const;
+    void handleNavigationModeActions();
+    void handleEditModeActions();
+    void selectNextProgramOption();
+    void selectPreviousProgramOption();
+    void redrawCurrentProgramOption();
+    bool encoderRotatedClockwise();
+    bool encoderRotatedCounterClockwise();
+    bool encoderButtonPressed();
+    void performMenuItemAction();
+    void changeToMainApplicationState();
+    void resetMenuItems();
+    void initializeMenuTitle();
+    void addProgramMenuItems();
+    const char* makeProgramCaption(int programNumber);
+    void addBackMenuItem();
+    void switchToEditMode(int programIndex);
+
+public:
+    SetlistMenuState() = default;
+    
+    explicit SetlistMenuState(DiContainerInterface* container, const Context* context = nullptr)
+        : State(container), context(context) {
+    }
+
+    void enter() override;
+    void update() override;
+    void exit() override;
+};

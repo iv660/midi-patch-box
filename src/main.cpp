@@ -1,42 +1,123 @@
 #include <Arduino.h>
 #include <Adafruit_TinyUSB.h>
+#include "app/MidiPatchBoxApplication.h"
+#include "app/ProgramSelector.h"
+#include "app/UserInput.h"
+#include "app/Button.h"
+#include "app/Encoder.h"
+#include "app/StateMachine.h"
+#include "app/SplashScreenState.h"
+#include "app/StateFactory.h"
+#include "app/ProgramsBank.h"
+#include "app/DiContainer.h"
+#include "hardware/MidiController.h"
+#include "hardware/ArduinoIoDriver.h"
+#include "hardware/DisplayProgramSelectionView.h"
+#include "hardware/DisplaySplashScreenView.h"
+#include "hardware/DisplayBitmapSplashScreenView.h"
+#include "hardware/DisplayConfigMenuView.h"
+#include "hardware/DisplayEditSetlistView.h"
+#include "hardware/DisplayVerticalMenuLayoutView.h"
+#include "app/MenuController.h"
+#include "app/Context.h"
+#include "app/SetlistMenuViewDecorator.h"
 
-Adafruit_USBD_MIDI usbMIDI;
 
-// Встроенная кнопка
-const uint8_t BUTTON_PIN = 24;
-bool lastButtonState = HIGH;
-bool programToggle = false; // false = программа 2, true = программа 42
+const uint8_t MIDI_CHANNEL = 0;
 
-void sendProgramChange(uint8_t program, uint8_t channel) {
-  uint8_t packet[4];
-  packet[0] = (0 << 4) | 0xC;            // CN=0, CIN=0xC (Program Change)
-  packet[1] = 0xC0 | (channel & 0x0F);   // статус байт
-  packet[2] = program & 0x7F;            // номер программы
-  packet[3] = 0;                         // пустой байт
-  usbMIDI.writePacket(packet);
-}
+MidiPatchBoxApplication app;
+StateMachine stateMachine;
 
-void setup() {
-  // Задать имя производителя и продукта ДО начала USB
-  USBDevice.setManufacturerDescriptor("iv660");
-  USBDevice.setProductDescriptor("MIDI Patch Box");
-  USBDevice.setSerialDescriptor("0001"); // можно задать любой серийник
+ProgramSelector programSelector;
+MidiController midiController(MIDI_CHANNEL);
+ArduinoIoDriver ioDriver;
 
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
-  usbMIDI.begin();
+// Create button and encoder instances
+Button userButton(24);
+Button rightButton(17);
+Button encoderButton(29);
+Encoder encoder;
+UserInput userInput;
+
+DisplayProgramSelectionView displayView;
+DisplaySplashScreenView splashView;
+DisplayBitmapSplashScreenView bitmapSplashView;
+DisplayConfigMenuView configMenuView;
+DisplayEditSetlistView editSetlistView;
+DisplayVerticalMenuLayoutView setlistMenuView;
+SetlistMenuViewDecorator setlistMenuViewDecorator;
+MenuController setlistMenuController;
+ProgramsBank programsBank;
+
+StateFactory stateFactory;
+DiContainer diContainer;
+Context context;
+int programs[] = {0, 41, 112};
+
+void setup()
+{
+    // Set manufacturer and product descriptors BEFORE USB initialization
+    USBDevice.setManufacturerDescriptor("iv660");
+    USBDevice.setProductDescriptor("MIDI Patch Box");
+    USBDevice.setSerialDescriptor("0001"); // any serial number
+
+    context.programs = programs;
+    context.programsCount = 3;
+
+    // Initialize StateFactory with DiContainer and Context
+    stateFactory = StateFactory(&diContainer, &context);
+    
+    // Initialize MenuController with DI container
+    setlistMenuController = MenuController(&diContainer);
+    
+    // Initialize programs bank with program names
+    programsBank.addProgram(0, "Clean")
+        ->addProgram(41, "Viola")
+        ->addProgram(112, "Reverse");
+    
+    programSelector.setPrograms(programs, 3);
+    
+    // Configure hardware components
+    userButton.setIoDriver(&ioDriver);
+    rightButton.setIoDriver(&ioDriver);
+    encoderButton.setIoDriver(&ioDriver)
+        ->enableLongPressDetection();
+    encoder.setPinA(27)
+        ->setPinB(28)
+        ->setIoDriver(&ioDriver);
+    
+    // Configure UserInput with dependency injection
+    userInput.setUserButton(&userButton)
+        ->setRightButton(&rightButton)
+        ->setEncoderButton(&encoderButton)
+        ->setEncoder(&encoder);
+
+    setlistMenuViewDecorator = SetlistMenuViewDecorator(&setlistMenuView);
+
+    // Setup DiContainer with all dependencies
+    diContainer.setSplashScreenView(&bitmapSplashView)
+        ->setIoDriver(&ioDriver)
+        ->setStateFactory(&stateFactory)
+        ->setUserInput(&userInput)
+        ->setProgramSelector(&programSelector)
+        ->setMidiController(&midiController)
+        ->setProgramSelectionView(&displayView)
+        ->setProgramsBank(&programsBank)
+        ->setConfigMenuView(&configMenuView)
+        ->setEditSetlistView(&editSetlistView)
+        ->setSetlistMenuController(&setlistMenuController)
+        ->setSetlistMenuLayoutView(&setlistMenuViewDecorator)
+        ->setStateMachine(&stateMachine);
+
+    // Initialize MidiPatchBoxApplication using DiContainer
+    app = MidiPatchBoxApplication(&diContainer);
+    app.begin();
+    
+    // Initialize State Machine with SplashScreenState using DiContainer
+    SplashScreenState* splashScreenState = new SplashScreenState(&diContainer);
+    stateMachine.changeState(splashScreenState);
 }
 
 void loop() {
-  bool currentState = digitalRead(BUTTON_PIN);
-
-  // Обработка нажатия
-  if (lastButtonState == HIGH && currentState == LOW) {
-    uint8_t channel = 0; // MIDI канал 1 (нумерация с 0)
-    uint8_t program = programToggle ? 41 : 1; // 42-я или 2-я программа
-    sendProgramChange(program, channel);
-    programToggle = !programToggle;
-  }
-
-  lastButtonState = currentState;
+    app.tick();
 }
