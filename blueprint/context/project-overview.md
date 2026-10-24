@@ -1,6 +1,6 @@
 # Project Overview
 
-<!-- blueprint:source-hash 43ab529a303f0180c14cc6cace40afe525cb3d0f7aaec3fd76aa56a280d2ed0c -->
+<!-- blueprint:source-hash c6becfe2aa49950880fb06da2dec75946027cb04cd9df2142347b20606ca34c4 -->
 
 > **Generated file. Don't hand-edit.** Run `/overview` once you've filled in
 > [../project-plan.md](../project-plan.md) and

@@ -25,6 +25,34 @@ The architecture follows modern C++ design principles with interface-based abstr
 5. **State Machine Pattern**: Application flow managed through discrete states with clear transitions
 6. **Factory Pattern**: State creation abstracted through factory interfaces for flexible instantiation
 
+## Data Model
+
+The MIDI Patch Box manages several core data structures for program and setlist management:
+
+### ProgramBank
+- **`programNumber`**: Integer (0-127) - MIDI program number
+- **`programName`**: String[16] - UTF-8 program name (up to 15 characters + null terminator)
+- **`bankIndex`**: Integer - Sequential position in bank for display ordering
+- **Capacity**: Up to 128 programs per bank
+
+### Setlist
+- **`setlistName`**: String[16] - Name of setlist for display
+- **`programReferences`**: ProgramBank[] - Ordered list of program references from bank
+- **`programOrder`**: Integer[] - Display and navigation order in setlist
+- **Purpose**: Performance sets for live shows with curated program selection
+
+### SystemState
+- **`activeBank`**: ProgramBank - Currently selected bank
+- **`activeSetlist`**: Setlist - Currently selected setlist (or null if in bank mode)
+- **`selectedProgram`**: ProgramBank - Currently selected program for MIDI output
+- **`operatingMode`**: Enum{Performance, Configuration} - Current user interface mode
+
+### Storage Architecture
+- **Target**: Built-in RP2040 flash memory (2MB)
+- **Strategy**: Wear-leveling consideration for frequent writes
+- **Scope**: Banks, setlists, and application state persistence
+- **MVP Status**: Planned feature (see Build Plan)
+
 ## System Architecture
 
 ```mermaid
@@ -132,15 +160,19 @@ The application layer contains the core business logic and is designed to be pla
 - [`SplashScreenState`](src/app/SplashScreenState.h) - Initial application state with splash screen
 - [`MainApplicationState`](src/app/MainApplicationState.h) - Main operational state handling user input
 - [`ConfigMenuState`](src/app/ConfigMenuState.h) - Configuration menu state for navigation
+- [`SetlistMenuState`](src/app/SetlistMenuState.h) - Setlist management and navigation state
 - [`EditSetlistState`](src/app/EditSetlistState.h) - Setlist editing state with program selection
 - [`ProgramSelector`](src/app/ProgramSelector.h) - Program list management and selection logic
-- [`ProgramsBank`](src/app/ProgramsBank.h) - Program name management
+- [`ProgramsBank`](src/app/ProgramsBank.h) - Program name storage and management
 - [`UserInput`](src/app/UserInput.h) - User input coordination and button management
 - [`Button`](src/app/Button.h) - Button state management with debouncing and long press detection
 - [`Encoder`](src/app/Encoder.h) - Rotary encoder input handling
+- [`MenuController`](src/app/MenuController.h) - Menu navigation and item management
 - [`StateFactory`](src/app/StateFactory.h) - Unified factory for all state creation
 - [`DiContainer`](src/app/DiContainer.h) - Dependency injection container
-- Abstract interfaces for hardware abstraction
+- [`Context`](src/app/Context.h) - Shared data structure for application context
+- [`SetlistMenuViewDecorator`](src/app/SetlistMenuViewDecorator.h) - View decorator for setlist menu display
+- Abstract interfaces for hardware abstraction and component communication
 
 ### Hardware Layer (`src/hardware/`)
 
@@ -160,6 +192,7 @@ The hardware layer provides concrete implementations of the application interfac
 - [`DisplayBitmapSplashScreenView`](src/hardware/DisplayBitmapSplashScreenView.h) - Bitmap-based splash screen display
 - [`DisplayConfigMenuView`](src/hardware/DisplayConfigMenuView.h) - Configuration menu display implementation
 - [`DisplayEditSetlistView`](src/hardware/DisplayEditSetlistView.h) - Setlist editing view implementation
+- [`DisplayVerticalMenuLayoutView`](src/hardware/DisplayVerticalMenuLayoutView.h) - Vertical menu layout display for setlists and configuration
 
 ### Test Layer (`test/`)
 

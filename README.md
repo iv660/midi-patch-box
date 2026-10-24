@@ -6,11 +6,14 @@ A programmable MIDI controller based on the RP2040 microcontroller, designed for
 
 - **RP2040-based**: Built on the powerful Raspberry Pi Pico microcontroller
 - **USB MIDI Interface**: Native USB MIDI communication using TinyUSB
-- **Program Selection**: Navigate through predefined MIDI programs using buttons and rotary encoder
-- **Programmable Song List**: Configure custom lists of compositions with program numbers and names
-- **Real-time Display**: Shows currently selected program on the controller screen
+- **State Pattern Architecture**: Clean state-based UI flow with DI container dependency injection
+- **Program Selection**: Navigate through MIDI programs using buttons and rotary encoder
+- **Setlist Management**: Create and edit custom setlists with program selection and ordering
+- **Menu System**: Intuitive configuration menus for setlist editing and system configuration
+- **Program Editing**: Edit program names and numbers directly on the device
+- **Real-time Display**: Shows currently selected program and menu navigation on OLED screen
 - **Modular Architecture**: Clean separation of concerns with interface-based design
-- **Unit Testing**: Comprehensive test suite for reliable operation
+- **Test-Driven Development**: Comprehensive unit test suite with Unity framework
 
 ## Hardware Requirements
 
@@ -29,23 +32,56 @@ A programmable MIDI controller based on the RP2040 microcontroller, designed for
 
 ## Software Architecture
 
-The project follows a modular, interface-based architecture:
+The project follows a modern embedded software architecture with clear separation of concerns, dependency injection, and comprehensive testability.
+
+### Architectural Patterns
+
+- **State Pattern**: The application uses a state machine (`StateMachine`) to manage different operating modes (Splash, Main, Configuration, Setlist Editing)
+- **Dependency Injection**: A DI container (`DiContainer`) manages component dependencies for easy testing and configuration
+- **Interface-Based Design**: All cross-layer communication happens through abstract interfaces
+- **Test-Driven Development**: Logic is developed test-first with Unity framework on native platform
 
 ### Core Components
 
-- **[`MidiPatchBoxApplication`](src/app/MidiPatchBoxApplication.h)**: Main application controller coordinating all components
-- **[`ProgramSelector`](src/app/ProgramSelector.h)**: Manages program list and selection logic
-- **[`UserInput`](src/hardware/UserInput.h)**: Handles button and rotary encoder input for user interaction
-- **[`MidiController`](src/hardware/MidiController.h)**: Manages USB MIDI communication
+#### Application Layer (src/app/)
+- **[`MidiPatchBoxApplication`](src/app/MidiPatchBoxApplication.h)**: Main application controller
+- **[`StateMachine`](src/app/StateMachine.h)**: Manages state transitions and lifecycle
+- **[`DiContainer`](src/app/DiContainer.h)**: Dependency injection container
+- **[`ProgramsBank`](src/app/ProgramsBank.h)**: Stores and manages MIDI programs with names
+- **[`ProgramSelector`](src/app/ProgramSelector.h)**: Program selection logic
+- **[`MenuController`](src/app/MenuController.h)**: Menu navigation and item management
+
+#### State Management
+- **[`MainApplicationState`](src/app/MainApplicationState.h)**: Performance mode for program selection
+- **[`ConfigMenuState`](src/app/ConfigMenuState.h)**: Configuration menu navigation
+- **[`SetlistMenuState`](src/app/SetlistMenuState.h)**: Setlist management interface
+- **[`EditSetlistState`](src/app/EditSetlistState.h)**: Setlist item editing
+- **[`SplashScreenState`](src/app/SplashScreenState.h)**: Startup splash screen
+
+#### Hardware Abstraction (src/hardware/)
+- **[`UserInput`](src/hardware/UserInput.h)**: Button and encoder input handling
+- **[`MidiController`](src/hardware/MidiController.h)**: USB MIDI communication
+- **[`ArduinoIoDriver`](src/hardware/ArduinoIoDriver.h)**: GPIO operations for RP2040
+- **Display Views**: Various display renderers for different states
 
 ### Interface Layer
 
-- **[`ProgramSelectorInterface`](src/app/ProgramSelectorInterface.h)**: Abstract interface for program selection
-- **[`UserInputInterface`](src/app/UserInputInterface.h)**: Abstract interface for user input handling
-- **[`MidiControllerInterface`](src/app/MidiControllerInterface.h)**: Abstract interface for MIDI communication
-- **[`ProgramSelectionViewInterface`](src/app/ProgramSelectionViewInterface.h)**: Abstract interface for program display
+The project defines clear interfaces for testability and hardware independence:
 
-This design enables easy testing, component swapping, and future extensions.
+- **State Interfaces**: `StateInterface`, `StateMachineInterface`, `StateFactoryInterface`
+- **Input Interfaces**: `UserInputInterface`, `ButtonInterface`, `EncoderInterface`
+- **Display Interfaces**: `ProgramSelectionViewInterface`, `SplashScreenViewInterface`, `ConfigMenuViewInterface`, `EditSetlistViewInterface`, `MenuLayoutViewInterface`
+- **Data Interfaces**: `ProgramsBankInterface`, `ProgramSelectorInterface`
+- **Hardware Interfaces**: `MidiControllerInterface`, `IoDriverInterface`
+- **DI Interface**: `DiContainerInterface`
+
+### Data Model
+
+- **ProgramBank**: Stores MIDI program numbers (0-127) with names
+- **Setlist**: Ordered collection of program references for performance sets
+- **SystemState**: Tracks active bank, setlist, selected program, and operating mode
+
+This architecture enables reliable operation, easy testing through mock objects, and future extensions while maintaining clean separation between application logic and hardware dependencies.
 
 ## Dependencies
 
@@ -87,8 +123,16 @@ pio run -t clean
 Programs are configured in [`main.cpp`](src/main.cpp):
 
 ```cpp
-// Example: Set up three MIDI programs
-programSelector.setPrograms({0, 41, 112});
+// Define program numbers
+int programs[] = {0, 41, 112};
+
+// Set up programs in ProgramSelector
+programSelector.setPrograms(programs, 3);
+
+// Add program names to ProgramsBank
+programsBank.addProgram(0, "Clean")
+    ->addProgram(41, "Viola")
+    ->addProgram(112, "Reverse");
 ```
 
 ### MIDI Channel
@@ -153,12 +197,68 @@ DisplayProgramSelectionView displayView(18, 19, 0x3D);
 - **Auto-centering**: Text automatically centers for optimal readability
 - **Real-time Updates**: Display updates immediately when program changes
 
+## Hardware Interface
+
+### Button and Encoder Connections
+
+| Component | GPIO Pin | Function |
+|-----------|----------|----------|
+| User Button | GP24 | Left navigation / previous program |
+| Right Button | GP17 | Right navigation / next program |
+| Encoder Button | GP29 | Selection / configuration mode (long press) |
+| Encoder A | GP27 | Rotation detection (clockwise) |
+| Encoder B | GP28 | Rotation detection (counter-clockwise) |
+| I2C SDA | GP20 | Display data line |
+| I2C SCL | GP21 | Display clock line |
+
+### Custom Pin Configuration
+
+To use different pins, modify the initialization in [`main.cpp`](src/main.cpp):
+
+```cpp
+// Button pins
+Button userButton(CUSTOM_USER_PIN);
+Button rightButton(CUSTOM_RIGHT_PIN);
+Button encoderButton(CUSTOM_ENCODER_BTN_PIN);
+
+// Encoder pins  
+encoder.setPinA(CUSTOM_ENCODER_A_PIN)
+    ->setPinB(CUSTOM_ENCODER_B_PIN);
+
+// Display pins (constructor parameters)
+DisplayProgramSelectionView displayView(CUSTOM_SDA_PIN, CUSTOM_SCL_PIN, I2C_ADDRESS);
+```
+
 ## Usage
 
-1. **Power On**: Connect the device via USB
-2. **Program Navigation**: Use buttons or rotary encoder to cycle through available programs
-3. **Program Selection**: The current program is automatically sent via MIDI
-4. **Display**: View the selected program number on the screen
+### Performance Mode (Default)
+1. **Power On**: Connect the device via USB - displays splash screen then enters Performance mode
+2. **Program Navigation**: 
+   - Rotate encoder to browse programs (display shows program number and name)
+   - Press encoder button to send current program via MIDI
+   - Use right/left buttons for quick program switching
+3. **MIDI Output**: Selected program sends Program Change message (0xC0 + channel)
+
+### Configuration Mode
+1. **Enter Configuration**: Press and hold encoder button for 3 seconds
+2. **Menu Navigation**:
+   - Rotate encoder to highlight menu items
+   - Press encoder button to select item
+   - Available menus: Setlist Management, Program Editing, System Settings
+3. **Setlist Management**:
+   - Create and edit performance setlists
+   - Add/remove programs from setlists
+   - Reorder setlist items
+4. **Program Editing**:
+   - Edit program names (0-15 characters)
+   - Assign MIDI program numbers (0-127)
+   - Save changes to ProgramsBank
+
+### Navigation Summary
+- **Encoder rotation**: Navigate menus/programs
+- **Encoder button**: Select/confirm (short press) or enter configuration (long press)
+- **Right/Left buttons**: Quick program switching in Performance mode
+- **Display**: Shows current mode, selection, and navigation cues
 
 ### MIDI Communication
 
@@ -173,30 +273,55 @@ The device sends MIDI Program Change messages when a new program is selected:
 
 ```
 ├── src/
-│   ├── main.cpp                 # Application entry point
+│   ├── main.cpp                 # Application entry point and component wiring
 │   ├── app/                     # Application logic layer
-│   │   ├── MidiPatchBoxApplication.*
-│   │   ├── ProgramSelector.*
-│   │   └── *Interface.h         # Abstract interfaces
+│   │   ├── MidiPatchBoxApplication.*   # Main application controller
+│   │   ├── StateMachine.*              # State pattern implementation
+│   │   ├── DiContainer.*               # Dependency injection container
+│   │   ├── ProgramsBank.*              # MIDI program storage
+│   │   ├── ProgramSelector.*           # Program selection logic
+│   │   ├── MenuController.*            # Menu navigation
+│   │   ├── *State.*                    # State implementations (Main, Config, Setlist, Edit, Splash)
+│   │   ├── *Interface.h                # Abstract interfaces
+│   │   └── experimental/               # Experimental features
 │   └── hardware/                # Hardware abstraction layer
-│       ├── UserInput.*
-│       ├── MidiController.*
-│       └── DisplayProgramSelectionView.*
-├── test/                        # Unit tests
+│       ├── UserInput.*          # Button and encoder input
+│       ├── MidiController.*     # USB MIDI communication
+│       ├── ArduinoIoDriver.*    # GPIO operations
+│       ├── Display*View.*       # OLED display renderers for each state
+│       └── *Interface.h         # Hardware interface implementations
+├── test/                        # Unit tests with mock objects
+│   ├── mocks/                   # Mock implementations for testing
+│   ├── test_*/                  # Test suites for each component
+│   └── README                   # Test documentation
 ├── lib/                         # External libraries
-└── include/                     # Global headers
+├── include/                     # Global headers
+└── plans/                       # Development plans and architecture documents
 ```
 
 ### Testing
 
-The project includes comprehensive unit tests:
+The project follows Test-Driven Development (TDD) methodology with comprehensive unit tests:
+
+- **Native Testing Environment**: Fast feedback loop with `pio test -e native` on development machine
+- **Mock Objects**: Hardware interfaces mocked in `test/mocks/` for isolated testing
+- **State Pattern Testing**: Each state has dedicated test suite for behavior verification
+- **Interface Compliance**: Tests verify interface contracts and component interactions
 
 ```bash
-# Run all tests
+# Run all tests (fast TDD feedback)
 pio test -e native
 
-# Run specific test
+# Run specific test suite
 pio test -e native -f test_program_selector
+pio test -e native -f test_setlist_menu_state
+pio test -e native -f test_main_application_state
+
+# Build for hardware deployment
+pio run -e pico
+
+# Upload to Raspberry Pi Pico
+pio run -e pico -t upload
 ```
 
 ### Adding New Features
