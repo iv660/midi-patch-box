@@ -29,8 +29,9 @@
 - [x] Feature branch created: `feature/unify-menu-organization-principles`
 - [x] Critic review completed
 - [x] Architect revision requested
-- [ ] Specification revised
-- [ ] Critic re-review
+- [x] Architect revising specification (in progress)
+- [x] Specification revised (v2.0)
+- [x] Critic re-review - APPROVED
 - [ ] User approval obtained
 
 ### Phase 2: Parallel Preparation
@@ -72,6 +73,12 @@
   3. EditSetlistState ambiguity (P3)
 - Revision request #001 created for architect
 - Iteration cycle 1 started
+- Architect completed revision addressing all critical issues:
+  1. ✅ P1: Replaced inheritance with Adapter pattern (ConfigMenuViewAdapter)
+  2. ✅ P2: Defined DI Container strategy with interface changes
+  3. ✅ P3: Made explicit decision to exclude EditSetlistState
+- Specification updated to v2.0
+- Architectural decisions documented in architect-decisions-001.md
 
 ## Notes
 
