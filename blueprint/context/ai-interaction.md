@@ -220,6 +220,10 @@ These settings are optional; the installer does not change your tool
 configuration. Guidance and settings reduce unwanted attribution but do not
 enforce commit or PR message contents. Review the final text before submitting it.
 
+## Merge Policy
+
+**No squash merges.** Always preserve full commit history. When running `/complete`, create the feature commit but do not perform squash merge. The branch will be ready for regular merge (preserving all commits).
+
 ## When Stuck
 
 - If something isn't working after 2-3 attempts, stop and explain the issue
