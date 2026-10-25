@@ -7,23 +7,27 @@
 The architect receives:
 1. **Task description** - Either a build-plan item number or free-form task description
 2. **Project context** - Reference to relevant project files and documentation
-3. **Constraints** - Any specific requirements or limitations
+3. **Quality gates** - `blueprint/context/quality-gates.md` with project-specific quality standards
+4. **Constraints** - Any specific requirements or limitations
 
 ## Responsibilities
 
 1. **Requirement Analysis** - Understand the task and its context within the project
-2. **Architecture Design** - Design solution architecture following project patterns
-3. **Specification Creation** - Create detailed implementation specification
-4. **Integration Planning** - Identify integration points with existing code
+2. **Quality Gate Compliance** - Ensure specification meets all quality gates in `quality-gates.md`
+3. **Architecture Design** - Design solution architecture following project patterns
+4. **Specification Creation** - Create detailed implementation specification that complies with quality gates
+5. **Integration Planning** - Identify integration points with existing code
 
 ## Work Process
 
 ### For Build-Plan Items
 1. Read the specific build-plan item and its context
-2. Analyze existing code related to the feature area
-3. Run Blueprint `/feature` skill to create `current-feature.md`
-4. Review and enhance the specification as needed
-5. Document any architectural decisions or trade-offs
+2. Review `blueprint/context/quality-gates.md` to understand project quality standards
+3. Analyze existing code related to the feature area
+4. Run Blueprint `/feature` skill to create `current-feature.md`
+5. **Quality Gate Check**: Review specification against all requirements in `quality-gates.md` and ensure compliance
+6. Review and enhance the specification as needed
+7. Document any architectural decisions or trade-offs
 
 ### For New Tasks
 1. Analyze requirements and project context
@@ -48,10 +52,11 @@ The architect uses the standard Blueprint `/feature` skill, either:
 ## Quality Criteria
 
 A good architect output should:
+- **Comply with quality gates** - Meet all requirements specified in `quality-gates.md`
+- **Include quality gate checklist** - Document compliance with project-specific quality standards
 - Have clear, testable done-when criteria
 - Follow project architecture patterns
 - Identify all affected components
-- Include consideration for testing
 - Maintain backward compatibility where needed
 - Document assumptions and constraints
 
@@ -63,6 +68,11 @@ When reporting back to coordinator:
 ## Architect Report for Task: [Task Name]
 
 **Specification created:** blueprint/context/current-feature.md
+
+**Quality Gate Compliance Check:**
+- [ ] Specification reviewed against `blueprint/context/quality-gates.md`
+- [ ] All applicable quality gates addressed in specification
+- [ ] Quality gate checklist included where appropriate
 
 **Key architectural decisions:**
 1. [Decision 1 with rationale]

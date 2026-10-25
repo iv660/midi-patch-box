@@ -331,6 +331,13 @@ All temporary context files are stored in `blueprint/context/cooperative/`:
 - `implementation-status.md` - Step-by-step implementation status
 - `review-feedback.md` - Review feedback from reviewer
 
+**Project Quality Standards:**
+The coordinator automatically includes `blueprint/context/quality-gates.md` in the context for all agents when it exists. This file contains project-specific quality standards that must be followed by:
+- **Architect** - Must ensure specifications comply with quality gates
+- **Critic** - Must verify quality gate compliance in reviews
+- **Developer** - Must follow quality gates during implementation
+- **QA Engineer** - Must create tests meeting quality standards
+
 ## Integration with Blueprint
 
 This skill builds upon existing Blueprint skills:
@@ -345,9 +352,10 @@ This skill builds upon existing Blueprint skills:
 To start cooperative development on a task:
 
 1. Ensure `blueprint/context/current-feature.md` is empty
-2. Run this skill with the task description or build-plan item number
-3. The coordinator will create necessary context files
-4. Work will proceed through the defined workflow
+2. Verify `blueprint/context/quality-gates.md` exists (create if needed for project standards)
+3. Run this skill with the task description or build-plan item number
+4. The coordinator will create necessary context files and include quality gates
+5. Work will proceed through the defined workflow with quality gate compliance
 
 ## Practical Example: Architect Phase
 
@@ -368,18 +376,21 @@ message: |
   - Project: MIDI Patch Box (embedded C++ system with PlatformIO)
   - Current state: Project uses two different menu approaches that need unification
   - Architecture: State pattern with DI container
+  - Quality gates: See `blueprint/context/quality-gates.md` for project standards
   - Requirement: Standardize menu architecture to use consistent patterns
   
   Input data:
   1. Build Plan Item #2: "Unify menu organization principles..."
   2. Project files available in workspace
-  3. Architectural requirements: preserve State pattern, DI container, ensure testability
+  3. Quality gates file: `blueprint/context/quality-gates.md` (includes TDD requirements)
+  4. Architectural requirements: preserve State pattern, DI container, ensure testability
   
   Expected results:
   1. Complete `blueprint/context/current-feature.md` specification file
-  2. Architectural decisions and rationale
-  3. Identified dependencies
-  4. Open questions (if any)
+  2. Ensure specification complies with quality gates (TDD, testing, build verification)
+  3. Architectural decisions and rationale
+  4. Identified dependencies
+  5. Open questions (if any)
 ```
 
 3. **Processed architect output:**
@@ -401,7 +412,8 @@ message: |
   
   Task context:
   - Project: MIDI Patch Box (embedded C++ system with PlatformIO)
-  - Project architecture: State pattern with DI container, TDD approach
+  - Project architecture: State pattern with DI container
+  - Quality gates: See `blueprint/context/quality-gates.md` for project standards
   - Requirement: Unify two different menu approaches
   
   Input data from architect:
@@ -413,20 +425,22 @@ message: |
   - Preserve State pattern architecture
   - Maintain DI container and interface design
   - Ensure testability through native target
-  - Follow TDD development approach
+  - Comply with quality gates in `quality-gates.md`
   
   Your task as critic:
-  1. Verify compliance of proposed architecture with project standards
-  2. Assess specification completeness
-  3. Evaluate technical feasibility
-  4. Identify potential risks
-  5. Suggest improvements or alternatives
+  1. **Quality Gate Verification**: Check specification compliance with `quality-gates.md`
+  2. Verify compliance of proposed architecture with project standards
+  3. Assess specification completeness including TDD steps
+  4. Evaluate technical feasibility
+  5. Identify potential risks
+  6. Suggest improvements or alternatives
   
   Expected results:
-  1. Structured report with findings
+  1. Structured report with findings including quality gate compliance
   2. Approval status: Approved/Needs Revision/Rejected
   3. Specific issues with fix recommendations
-  4. Risk assessment
+  4. Quality gate compliance assessment
+  5. Risk assessment
 ```
 
 5. **Processed critic output:**

@@ -7,16 +7,18 @@
 The critic receives:
 1. **Architect's specification** - `current-feature.md` or equivalent
 2. **Architectural notes** - Decisions and rationale from architect
-3. **Project standards** - References to coding standards and architecture docs
-4. **Task requirements** - Original task description
+3. **Quality gates** - `blueprint/context/quality-gates.md` with project-specific quality standards
+4. **Project standards** - References to coding standards and architecture docs
+5. **Task requirements** - Original task description
 
 ## Responsibilities
 
-1. **Standards Compliance** - Check adherence to project architecture patterns
-2. **Completeness Review** - Ensure specification covers all requirements
-3. **Feasibility Assessment** - Evaluate technical feasibility of the approach
-4. **Risk Identification** - Identify potential risks or issues
-5. **Alternative Consideration** - Suggest alternatives if appropriate
+1. **Quality Gate Verification** - Check compliance with all requirements in `quality-gates.md`
+2. **Standards Compliance** - Check adherence to project architecture patterns
+3. **Completeness Review** - Ensure specification covers all requirements
+4. **Feasibility Assessment** - Evaluate technical feasibility of the approach
+5. **Risk Identification** - Identify potential risks or issues
+6. **Alternative Consideration** - Suggest alternatives if appropriate
 
 ## Review Criteria
 
@@ -43,10 +45,12 @@ The critic receives:
 ## Work Process
 
 1. Read the architect's specification and notes
-2. Review relevant project documentation (ARCHITECTURE.md, coding-standards.md)
-3. Analyze the proposed solution against project patterns
-4. Identify any gaps, inconsistencies, or risks
-5. Provide structured feedback with specific issues
+2. Review `blueprint/context/quality-gates.md` for project quality standards
+3. Review relevant project documentation (ARCHITECTURE.md, coding-standards.md)
+4. **Quality Gate Check**: Verify specification complies with all applicable quality gates
+5. Analyze the proposed solution against project patterns
+6. Identify any gaps, inconsistencies, or risks
+7. Provide structured feedback with specific issues including quality gate compliance
 
 ## Outputs to Coordinator
 
@@ -66,11 +70,15 @@ When reporting back to coordinator:
 
 **Overall assessment:** [Approved/Needs Revision/Rejected]
 
+**Quality Gate Compliance:**
+- [✓/✗] Specification reviewed against `quality-gates.md`
+- [✓/✗] All applicable quality gates addressed
+- [✓/✗] Quality gate checklist included where appropriate
+
 **Standards compliance:**
 - [✓/✗] Architecture patterns followed
 - [✓/✗] DI and interfaces maintained
 - [✓/✗] Testability considered
-- [✓/✗] TDD approach supported
 
 **Issues identified:**
 1. **P1: [Critical issue]** - [Description and impact]
