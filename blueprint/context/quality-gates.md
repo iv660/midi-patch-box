@@ -12,7 +12,8 @@ These gates are checked by:
 ## Development Methodology Gates
 
 ### TDD (Test-Driven Development)
-- [ ] **Red Phase First**: Each implementation step must start with failing tests
+- [ ] **Red Phase Verification**: Each implementation step must start with failing tests that are verified to fail before implementation
+- [ ] **Test Failure Confirmation**: Red phase completion requires running tests and confirming they fail as expected
 - [ ] **Test Commands Defined**: PlatformIO test commands specified for each component
 - [ ] **Test Coverage**: Test scenarios cover all functionality and edge cases
 - [ ] **All Tests Pass**: All existing tests must pass after each implementation step
@@ -106,10 +107,12 @@ Copy this template into specifications and plans to track quality gate complianc
 4. Require quality gate updates in revision requests
 
 ### For Developers
-1. Follow TDD approach with red phase first
-2. Verify quality gates at each implementation step
-3. Run all tests and builds before marking step complete
-4. Document quality verification in implementation reports
+1. **Red Phase Verification**: Create failing test first, then run test command to confirm it fails
+2. **TDD Cycle**: Red (test fails) → Green (implement to pass test) → Refactor (improve while tests pass)
+3. Verify quality gates at each implementation step
+4. Run all tests and builds before marking step complete
+5. Document test failure confirmation in red phase reports
+6. Document quality verification in implementation reports
 
 ### For Coordinators
 1. Include `quality-gates.md` in context for all agents
