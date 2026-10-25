@@ -9,24 +9,22 @@ description: Orchestrate multiple specialized agents to work together on Bluepri
 
 ## Overview
 
-The cooperative development skill orchestrates a team of AI agents to implement Blueprint features through a coordinated workflow:
+The cooperative development skill orchestrates a team of AI agents to implement Blueprint features through a simplified MVP workflow:
 
 - **Coordinator** - Main orchestrator that manages the process and delegates work
 - **Architect** - Analyzes requirements and creates specifications
-- **Critic** - Reviews architectural decisions and specifications
-- **QA Engineer** - Creates acceptance tests based on specifications
-- **Developer** - Implements code according to specifications
-- **Reviewer** - Performs technical review of implementation steps
+- **Critic** - Reviews architectural decisions and specifications  
+- **Developer** - Implements code step-by-step according to specifications
+- **Reviewer** - Performs technical review of each implementation step
 
 ## Workflow
 
 1. **Task Reception** - Coordinator receives task from user
-2. **Architectural Phase** - Architect creates specifications, Critic reviews
+2. **Architectural Specification** - Architect creates specifications, Critic reviews
 3. **User Approval** - Specifications reviewed by user
-4. **Parallel Preparation** - QA Engineer creates tests while Developer implements
-5. **Implementation Loop** - Developer works step-by-step with Reviewer feedback
-6. **Final Verification** - QA Engineer runs acceptance tests, Coordinator runs final checks
-7. **User Acceptance** - Final user review and approval
+4. **Iterative Implementation** - Developer implements step-by-step with Reviewer feedback for each step
+5. **Final Verification** - Coordinator runs final Blueprint checks
+6. **User Acceptance** - Final user review and approval
 
 ## Coordinator Responsibilities
 
@@ -316,7 +314,6 @@ Please review the specification and provide:
 Each role has a dedicated role description file in this directory:
 - `architect-role.md` - Architecture and specification creation
 - `critic-role.md` - Architectural and specification review
-- `qa-engineer-role.md` - Acceptance test creation
 - `developer-role.md` - Code implementation
 - `reviewer-role.md` - Technical code review
 
@@ -327,7 +324,6 @@ All temporary context files are stored in `blueprint/context/cooperative/`:
 - `current-task-context.md` - Current task description and overall status
 - `architect-output.md` - Specifications from architect
 - `critic-feedback.md` - Feedback from critic
-- `qa-tests.md` - Acceptance tests from QA engineer
 - `implementation-status.md` - Step-by-step implementation status
 - `review-feedback.md` - Review feedback from reviewer
 
@@ -475,15 +471,15 @@ message: |
    - Architectural specification phase COMPLETE
    - Specification v2.0 approved by critic
    - Ready for user approval gate
-   - Next: Phase 2 (Parallel Preparation)
+   - Next: Iterative Implementation with Developer and Reviewer
 
 ## Quality Gates
 
 The coordinator enforces quality gates:
 - Architectural review by critic before implementation
 - User approval of specifications
-- Step-by-step review during implementation
-- Final acceptance test verification
+- Step-by-step review during implementation by Reviewer
+- Final Blueprint verification
 - User final approval
 
 ## Best Practices from Practical Testing
