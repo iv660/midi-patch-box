@@ -305,9 +305,88 @@ Please review the specification and provide:
    - Prepare for next development phase
 
 #### Step 1.8: Next Phase Transition
-1. After user approval: Proceed to Phase 2 (Parallel Preparation)
+1. After user approval: Proceed to Phase 2 (Iterative Implementation)
 2. If changes requested: Return to architect with user feedback
 3. If rejected: Document and reevaluate task approach
+
+### Phase 2: Iterative Implementation (Developer + Reviewer)
+
+#### Step 2.1: Developer Assignment for Current Step
+1. Identify current step from `current-feature.md` specification
+2. Prepare developer context with specific step requirements
+3. Include: TDD requirements, quality gate compliance, verification commands
+4. Launch developer subagent with step-specific instructions
+
+#### Step 2.2: Developer Implementation & Commit
+1. Developer implements step using TDD approach
+2. Creates/modifies implementation files and tests
+3. Runs verification commands to confirm red phase (if applicable)
+4. Creates implementation report documenting work
+5. Commits changes to feature branch with descriptive message
+
+#### Step 2.3: Create Review Request
+1. Create review request using template: `reference/review-request-template.md`
+2. Save as `blueprint/context/cooperative/review-request-###.md` (### = sequential number)
+3. Include in review request:
+   - Specification requirements for the step
+   - Files to review (analysis, implementation, tests)
+   - Verification commands for reviewer
+   - Success criteria and quality gate compliance checks
+4. Update `current-task-context.md` with review request creation
+
+#### Step 2.4: Launch Reviewer Subagent
+1. Prepare reviewer context referencing the review request file
+2. Launch reviewer subagent with instructions to:
+   - Read `review-request-###.md` for full context
+   - Perform comprehensive code review
+   - Use template: `reference/reviewer-report-template.md`
+   - Save report as `reviewer-report-###-actual.md`
+   - Return approval status (Approved/Needs Revision/Rejected)
+3. Set review deadline (typically 24 hours)
+
+#### Step 2.5: Process Review Results
+1. Reviewer creates structured report using standardized template
+2. Report includes: overall assessment, issue classification (P1/P2/P3), risk assessment, verification performed
+3. Coordinator reads report and determines next steps:
+   - **If Approved:** Mark step complete, update task context, proceed to next step
+   - **If Needs Revision:** Create revision request for developer, return to Step 2.2
+   - **If Rejected:** Assess reasons, may require architectural re-evaluation
+
+#### Step 2.6: Update Task Context
+1. Update `current-task-context.md` using template: `reference/task-context-template.md`
+2. Record step completion status and reviewer assessment
+3. Add decision log entry for the step cycle
+4. Update agent assignments status
+
+#### Step 2.7: Repeat for Remaining Steps
+1. Continue Steps 2.1-2.6 for each step in specification
+2. Maintain sequential step progression
+3. Track overall progress in task context
+4. Handle any iteration cycles for revisions
+
+#### Step 2.8: Final Step Completion
+1. After last step implementation and review:
+   - Run final verification commands from specification
+   - Ensure all quality gates satisfied
+   - Verify no regression in existing functionality
+   - Prepare for Phase 3: Final Verification
+
+## Key Improvements from Practical Testing:
+
+### Template Standardization
+- **Review Requests:** Use `reference/review-request-template.md` for consistent structure
+- **Reviewer Reports:** Use `reference/reviewer-report-template.md` with `-actual` suffix
+- **Task Context:** Use `reference/task-context-template.md` for status tracking
+
+### Context Management
+- **Self-contained Context:** Each review request contains all information reviewer needs
+- **File References:** Include exact paths, commit hashes, specification sections
+- **Verification Evidence:** Document actual test outputs and build results
+
+### Process Efficiency
+- **Parallel Ready:** Review requests enable parallel subagent execution
+- **Clear Handoffs:** Structured templates ensure clean transitions between roles
+- **Audit Trail:** All decisions and assessments documented in context files
 
 ## Sub-Agent Roles
 
@@ -319,13 +398,31 @@ Each role has a dedicated role description file in this directory:
 
 ## Context Management
 
-All temporary context files are stored in `blueprint/context/cooperative/`:
+All context files are stored in `blueprint/context/cooperative/` using standardized templates from `reference/` directory:
 
-- `current-task-context.md` - Current task description and overall status
+### Core Context Files:
+- `current-task-context.md` - Current task description and overall status (use `reference/task-context-template.md`)
 - `architect-output.md` - Specifications from architect
 - `critic-feedback.md` - Feedback from critic
-- `implementation-status.md` - Step-by-step implementation status
-- `review-feedback.md` - Review feedback from reviewer
+- `revision-request-###.md` - Revision requirements for iterations
+- `architect-decisions-###.md` - Architectural decision documentation
+
+### Review Cycle Files:
+- `review-request-###.md` - Review requests for implementation steps (use `reference/review-request-template.md`)
+- `reviewer-report-###-actual.md` - Actual reviewer output (use `reference/reviewer-report-template.md`)
+- `reviewer-report-###.md` - Template/example reviewer reports
+
+### Template-Based Management:
+1. **Consistency:** All files follow standardized templates for predictable structure
+2. **Project-Agnostic:** Templates use `[bracketed]` placeholders for project-specific details
+3. **Reference Directory:** Contains all templates: `reference/review-request-template.md`, `reference/reviewer-report-template.md`, `reference/task-context-template.md`
+4. **Naming Convention:** Sequential numbering (###) for related files
+
+### Best Practices from Testing:
+- **Self-contained Context:** Each review request contains all information reviewer needs
+- **Evidence Inclusion:** Include actual test outputs, commit hashes, verification results
+- **Structured Reporting:** Use P1/P2/P3 issue classification with specific locations
+- **Quality Gate Integration:** Explicit compliance checks with project quality gates
 
 **Project Quality Standards:**
 The coordinator automatically includes `blueprint/context/quality-gates.md` in the context for all agents when it exists. This file contains project-specific quality standards that must be followed by:
@@ -336,22 +433,64 @@ The coordinator automatically includes `blueprint/context/quality-gates.md` in t
 
 ## Integration with Blueprint
 
-This skill builds upon existing Blueprint skills:
-- Uses `/feature` through architect role
-- Uses `/implement` through developer role  
-- Uses `/check` for final verification
-- Uses `/audit` through reviewer role
-- Maintains compatibility with existing workflow
+This skill builds upon existing Blueprint skills with enhanced coordination:
+
+### Skill Integration:
+- **Architect Role:** Uses `/feature` process for specification creation
+- **Developer Role:** Uses `/implement` approach for step-by-step implementation  
+- **Reviewer Role:** Uses `/audit` methodology for code review with structured reporting
+- **Quality Gates:** Integrates `quality-gates.md` requirements throughout workflow
+- **Verification:** Uses `/check` for final verification cycles
+
+### Template-Based Workflow:
+1. **Standardized Templates:** All coordination uses templates from `reference/` directory
+2. **Context Files:** Follow Blueprint context directory structure in `blueprint/context/cooperative/`
+3. **Quality Compliance:** Explicit quality gate checks integrated into all review processes
+4. **Audit Trail:** All decisions documented in context files for traceability
+
+### Key Enhancements from Practical Testing:
+- **Self-contained Context:** Review requests contain complete information for subagent execution
+- **Structured Reporting:** Standardized templates ensure consistent output quality
+- **Evidence-Based:** Includes actual verification results, test outputs, commit references
+- **Iteration Management:** Clear revision cycles with issue prioritization (P1/P2/P3)
+
+### Compatibility:
+- Maintains full compatibility with existing Blueprint workflow
+- Can run alongside standard `/feature` → `/implement` → `/check` cycles
+- Preserves all Blueprint quality gates and verification steps
+- Uses same context directory structure for easy integration
 
 ## Starting a Task
 
 To start cooperative development on a task:
 
-1. Ensure `blueprint/context/current-feature.md` is empty
-2. Verify `blueprint/context/quality-gates.md` exists (create if needed for project standards)
-3. Run this skill with the task description or build-plan item number
-4. The coordinator will create necessary context files and include quality gates
-5. Work will proceed through the defined workflow with quality gate compliance
+1. **Prepare Environment:**
+   - Ensure `blueprint/context/current-feature.md` is empty
+   - Verify `blueprint/context/quality-gates.md` exists (create if needed for project standards)
+   - Check that `blueprint/context/cooperative/` directory exists or will be created
+
+2. **Initialize Task:**
+   - Run this skill with the task description or build-plan item number
+   - Coordinator creates `current-task-context.md` using `reference/task-context-template.md`
+   - Quality gates automatically integrated into all review processes
+
+3. **Workflow Execution:**
+   - Work proceeds through Phase 1 (Architectural Specification) with critic review
+   - After user approval, enters Phase 2 (Iterative Implementation)
+   - Each implementation step follows: Developer → Review Request → Reviewer cycle
+   - All coordination uses standardized templates from `reference/` directory
+
+4. **Template Usage:**
+   - **Review Requests:** `reference/review-request-template.md` → `review-request-###.md`
+   - **Reviewer Reports:** `reference/reviewer-report-template.md` → `reviewer-report-###-actual.md`
+   - **Task Context:** `reference/task-context-template.md` → `current-task-context.md`
+   - Sequential numbering (###) maintains file relationships
+
+5. **Quality Assurance:**
+   - All work includes quality gate compliance verification
+   - Structured reporting with issue prioritization (P1/P2/P3)
+   - Evidence-based verification with actual test outputs
+   - Audit trail in context files for complete traceability
 
 ## Practical Example: Architect Phase
 
@@ -515,17 +654,49 @@ The coordinator enforces quality gates:
 ### Context Management
 
 **File organization:**
-- `current-task-context.md` - Overall status and decisions
+- `current-task-context.md` - Overall status and decisions (use `reference/task-context-template.md`)
 - `architect-output.md` - Architect work products
-- `critic-feedback.md` - Review findings and status
-- `revision-request-XXX.md` - Specific revision requirements
-- `architect-decisions-XXX.md` - Decision rationale
+- `critic-feedback.md` - Feedback from critic
+- `revision-request-###.md` - Revision requirements for iterations
+- `architect-decisions-###.md` - Architectural decision documentation
+- `review-request-###.md` - Review requests for implementation steps (use `reference/review-request-template.md`)
+- `reviewer-report-###-actual.md` - Actual reviewer output (use `reference/reviewer-report-template.md`)
+
+**Template-based workflow:**
+1. **Standardized Structure:** All coordination files follow templates in `reference/` directory
+2. **Self-contained Context:** Each review request contains complete information for subagent execution
+3. **Evidence Inclusion:** Actual test outputs, commit hashes, verification results
+4. **Structured Reporting:** P1/P2/P3 issue classification with specific file:line references
+5. **Quality Gate Integration:** Explicit compliance checks with project quality gates
 
 **Status tracking:**
 - Update context after each agent completes work
 - Maintain iteration count and cycle limits
 - Document key decisions in decision log
 - Track progress through workflow phases
+
+### Subagent Execution Patterns
+
+**Effective subagent coordination:**
+1. **Complete Context:** Provide all needed information in review request files
+2. **Standardized Templates:** Use templates for predictable input/output structure
+3. **Clear Instructions:** Include exact commands for verification and reporting
+4. **Evidence Requirements:** Specify what evidence should be included in reports
+5. **Structured Output:** Require standardized report format for easy processing
+
+**Reviewer subagent success factors:**
+- **Comprehensive Context:** Review request includes specification, files, verification commands
+- **Template Usage:** Reviewer uses standardized report template with `-actual` suffix
+- **Evidence-Based:** Includes actual test outputs, build results, code references
+- **Structured Assessment:** Clear approval status with P1/P2/P3 issue classification
+- **Actionable Recommendations:** Specific fixes with file:line locations
+
+**Coordinator efficiency patterns:**
+- **Template-Driven:** Create all coordination files from standardized templates
+- **Sequential Numbering:** Maintain `###` sequence for related files
+- **Automated Handoffs:** Structured context enables clean subagent launches
+- **Progress Tracking:** Update task context after each workflow event
+- **Quality Assurance:** Verify all outputs against quality gate requirements
 
 ## Practical Example: Completed Iteration Cycle
 
