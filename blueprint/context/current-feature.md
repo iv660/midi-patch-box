@@ -1,8 +1,9 @@
 # Feature: Unify menu organization principles
 
 **From build-plan:** feature 2
-**Build attempt:** 1
+**Build attempt:** 2 (Revised for quality gate compliance)
 **Branch:** feature/unify-menu-organization-principles
+**Quality Gate Compliance:** v3.0 (Revised per critic feedback)
 
 ## Goal
 
@@ -19,8 +20,11 @@ No visual design changes needed. This is an architectural unification focusing o
 3. Create unified MenuControllerInterface that supports all menu use cases
 4. Ensure all navigation menu states follow consistent DI container usage
 5. Maintain all existing functionality and user interactions
-6. Update tests to reflect unified architecture
+6. Update tests to reflect unified architecture with TDD compliance
 7. Document the unified menu architecture pattern
+8. Add error handling strategy for adapter pattern
+9. Verify performance on embedded target
+10. Implement quality gate checklist verification
 
 ## Out of scope
 
@@ -33,54 +37,149 @@ No visual design changes needed. This is an architectural unification focusing o
 
 ## Build loop
 
-This feature will be built using TDD approach with step-by-step verification. Each step will leave the project in a working state with all tests passing.
+This feature will be built using strict TDD approach with explicit red/green/refactor cycles. Each step will start with failing tests (red phase), implement minimum code to pass tests (green phase), then refactor while maintaining passing tests. Each step will leave the project in a working state with all tests passing.
+
+## Quality Gate Compliance
+
+### Development Methodology:
+- [ ] **TDD Red Phase included for each step** - Each build step starts with failing tests
+- [ ] **Test commands specified**: `pio test -e native -f [test_name]`
+- [ ] **All existing tests pass after step** - Verified after each TDD cycle
+- [ ] **Build succeeds for native and pico targets** - Verified after implementation
+
+### Architectural Compliance:
+- [ ] **State pattern maintained** - Preserve State pattern design
+- [ ] **DI container used properly** - Follow interface-based dependency injection
+- [ ] **Interface contracts followed** - Adapter respects both interface contracts
+- [ ] **Backward compatibility considered** - Maintain existing ConfigMenuViewInterface
+
+### Project Standards:
+- [ ] **Hardware constraints respected** - Work within hardware limitations
+- [ ] **Memory usage considered** - Profile memory usage on pico target
+- [ ] **Real-time requirements met** - Verify no timing regressions
+- [ ] **Display limitations addressed** - Respect physical display constraints
 
 ## Build steps
 
 ### Step 1: Analyze current menu interfaces and create detailed mapping
+
+**Red Phase:**
+- [ ] Create interface analysis test verifying semantic differences between interfaces
+- [ ] Write failing test that demonstrates adapter requirements
+
+**Green Phase:**
 - [ ] Review MenuControllerInterface and MenuLayoutViewInterface methods
 - [ ] Review ConfigMenuViewInterface methods and identify semantic differences
 - [ ] Create detailed interface compatibility analysis table
+
+**Refactor Phase:**
 - [ ] Design ConfigMenuViewAdapter to bridge interface differences
-- **Done when:** Analysis document created with detailed interface mapping and adapter design
+- [ ] Document adapter strategy for each method translation
+- [ ] Update analysis document with architectural decision rationale
+
+**Verification:**
+- [ ] Run existing tests to ensure no regression
+- **Done when:** Analysis document created with detailed interface mapping, adapter design, and failing test written for adapter requirements
 
 **Interface Analysis Table:**
-| MenuLayoutViewInterface Method | ConfigMenuViewInterface Equivalent | Adapter Strategy |
-|-------------------------------|-----------------------------------|------------------|
-| `displayTitle(char* title)` | No equivalent | Store title internally for reference |
-| `displayItem(int index, char* caption, bool highlighted)` | `displayMenuItem(int index, const char* itemName)` + `setSelectedItem(int itemIndex)` | Call `displayMenuItem()`, then call `setSelectedItem()` if highlighted |
-| `clearItems()` | No equivalent | Reset internal state, call `showMenu()` to refresh |
-| `getMaxItems() const` | No equivalent | Return default value based on display constraints |
+| MenuLayoutViewInterface Method | ConfigMenuViewInterface Equivalent | Adapter Strategy | Error Handling |
+|-------------------------------|-----------------------------------|------------------|----------------|
+| `displayTitle(char* title)` | No equivalent | Store title internally for reference | Handle null pointer, validate title length |
+| `displayItem(int index, char* caption, bool highlighted)` | `displayMenuItem(int index, const char* itemName)` + `setSelectedItem(int itemIndex)` | Call `displayMenuItem()`, then call `setSelectedItem()` if highlighted | Validate index bounds, handle null caption, manage highlighting state |
+| `clearItems()` | No equivalent | Reset internal state, call `showMenu()` to refresh | Clear internal state safely |
+| `getMaxItems() const` | No equivalent | Return default value based on display constraints | Return safe default on error |
 
-### Step 2: Implement ConfigMenuViewAdapter
+### Step 2: Implement ConfigMenuViewAdapter using TDD
+
+**Red Phase:**
+- [ ] Write failing unit tests for ConfigMenuViewAdapter:
+  - Interface method translation tests
+  - Error condition tests (null pointer, invalid indices)
+  - Edge case tests (empty menu, maximum items)
+  - Memory safety tests
+
+**Green Phase:**
 - [ ] Create ConfigMenuViewAdapter class implementing MenuLayoutViewInterface
 - [ ] Implement adapter methods to wrap ConfigMenuViewInterface
 - [ ] Add internal state management for highlighted items and titles
-- [ ] Write unit tests for adapter functionality
-- [ ] Verify adapter correctly bridges interface differences
-- **Done when:** ConfigMenuViewAdapter implemented and tested, correctly translating between interfaces
+- [ ] Implement error handling for edge cases
 
-### Step 3: Refactor ConfigMenuState to use MenuController
+**Refactor Phase:**
+- [ ] Improve adapter implementation while maintaining passing tests
+- [ ] Optimize memory usage for embedded target
+- [ ] Add defensive programming checks
+
+**Verification:**
+- [ ] Run all existing tests to ensure no regression
+- [ ] Run adapter-specific tests: `pio test -e native -f test_config_menu_view_adapter`
+- **Done when:** ConfigMenuViewAdapter implemented with TDD, all tests pass, interface translation verified, error handling implemented
+
+### Step 3: Refactor ConfigMenuState to use MenuController with TDD
+
+**Red Phase:**
+- [ ] Write failing tests for ConfigMenuState using MenuController
+- [ ] Create tests demonstrating current ConfigMenuState behavior with direct interface
+- [ ] Write tests showing refactored behavior with MenuController
+
+**Green Phase:**
 - [ ] Update ConfigMenuState constructor to accept MenuControllerInterface
 - [ ] Modify ConfigMenuState to use MenuController for menu item management
 - [ ] Remove manual menu item tracking and view updates from ConfigMenuState
 - [ ] Ensure ConfigMenuState still provides same functionality via MenuController
+
+**Refactor Phase:**
 - [ ] Update ConfigMenuState tests to use MenuController pattern
+- [ ] Clean up deprecated code while maintaining backward compatibility
+- [ ] Optimize state transitions
+
+**Verification:**
+- [ ] Run ConfigMenuState tests: `pio test -e native -f test_config_menu_state`
+- [ ] Verify all existing functionality preserved
 - **Done when:** ConfigMenuState successfully uses MenuController and all tests pass
 
-### Step 4: Enhance MenuController to support ConfigMenuState requirements
-- [ ] Add support for menu titles in MenuController (optional enhancement)
+### Step 4: Enhance MenuController to support ConfigMenuState requirements using TDD
+
+**Red Phase:**
+- [ ] Write failing tests for enhanced MenuController functionality
+- [ ] Test menu title support (optional enhancement)
+- [ ] Test edge case handling (empty menus, single items)
+
+**Green Phase:**
+- [ ] Add support for menu titles in MenuController
 - [ ] Ensure MenuController handles edge cases (empty menus, single items)
 - [ ] Verify MenuController works with both SetlistMenuState and ConfigMenuState
+
+**Refactor Phase:**
 - [ ] Update MenuController tests for enhanced functionality
+- [ ] Optimize controller logic for embedded environment
+- [ ] Improve error recovery mechanisms
+
+**Verification:**
+- [ ] Run MenuController tests: `pio test -e native -f test_menu_controller`
+- [ ] Verify backward compatibility with SetlistMenuState
 - **Done when:** MenuController supports all ConfigMenuState requirements and all tests pass
 
-### Step 5: Update DI Container and StateFactory
+### Step 5: Update DI Container and StateFactory using TDD
+
+**Red Phase:**
+- [ ] Write failing tests for new DI container methods
+- [ ] Test StateFactory changes for MenuController instantiation
+- [ ] Test backward compatibility of existing methods
+
+**Green Phase:**
 - [ ] Add `getConfigMenuController()` method to DiContainerInterface
 - [ ] Update DiContainer implementation to provide ConfigMenuController instance
 - [ ] Modify StateFactory to create MenuController instances for ConfigMenuState
 - [ ] Ensure backward compatibility by keeping existing `getConfigMenuView()` method
+
+**Refactor Phase:**
 - [ ] Update StateFactory tests for new menu controller instantiation
+- [ ] Optimize dependency injection patterns
+- [ ] Clean up test code
+
+**Verification:**
+- [ ] Run StateFactory tests: `pio test -e native -f test_state_factory`
+- [ ] Verify DI container provides ConfigMenuController correctly
 - **Done when:** DI container provides ConfigMenuController, StateFactory creates it, and tests pass
 
 **DI Container Changes:**
@@ -99,11 +198,39 @@ DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
 }
 ```
 
-### Step 6: Decision on EditSetlistState - Document Exclusion Rationale
+### Step 6: Performance verification and embedded target testing
+
+**Performance Testing Phase:**
+- [ ] Build for pico target: `pio run -e pico`
+- [ ] Profile memory usage before and after changes
+- [ ] Verify real-time performance on hardware
+- [ ] Test with actual display constraints
+
+**Embedded Verification:**
+- [ ] Test adapter on embedded target with hardware display
+- [ ] Verify menu response times meet real-time requirements
+- [ ] Check memory allocation patterns
+
+**Quality Gate Verification:**
+- [ ] Complete quality gate compliance checklist
+- [ ] Verify all project standards met
+- [ ] Document performance results
+
+**Done when:** Performance verified on pico target, memory usage within constraints, real-time requirements met, quality gates satisfied
+
+### Step 7: Decision on EditSetlistState - Document Exclusion Rationale
+
+**Analysis Phase:**
 - [ ] Analyze EditSetlistState current implementation and requirements
 - [ ] Document decision to exclude from unification
 - [ ] Update scope definition to clarify exclusion
+
+**Documentation Phase:**
 - [ ] Add architectural decision record for future reference
+- [ ] Create comprehensive exclusion rationale
+
+**Verification:**
+- [ ] Confirm EditSetlistState functionality unchanged
 - **Done when:** EditSetlistState exclusion documented with clear rationale
 
 **EditSetlistState Exclusion Rationale:**
@@ -112,20 +239,41 @@ DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
 3. **Complex Interaction**: Requires text editing, program number selection, and save/cancel operations
 4. **Architectural Fit**: Better suited to specialized pattern rather than forced into menu navigation pattern
 
-### Step 7: Update documentation and architecture diagrams
+### Step 8: Update documentation and architecture diagrams
+
+**Documentation Phase:**
 - [ ] Update ARCHITECTURE.md with unified menu architecture
 - [ ] Document menu patterns in coding standards
 - [ ] Create menu subsystem documentation
 - [ ] Update any affected README sections
 - [ ] Add architectural decision record for adapter pattern choice
-- **Done when:** Documentation updated and reflects unified menu architecture
 
-### Step 8: Final verification and cleanup
-- [ ] Run all unit tests to ensure no regressions
+**Quality Documentation:**
+- [ ] Document error handling strategy
+- [ ] Record performance verification results
+- [ ] Update quality gate compliance status
+
+**Verification:**
+- [ ] Review documentation completeness
+- **Done when:** Documentation updated and reflects unified menu architecture with quality considerations
+
+### Step 9: Final verification, quality gate completion, and cleanup
+
+**Final Verification:**
+- [ ] Run all unit tests to ensure no regressions: `pio test -e native`
 - [ ] Verify build compiles successfully for both native and pico targets
 - [ ] Remove deprecated code and interfaces if any (with backward compatibility considerations)
-- [ ] Create summary of unification changes
-- **Done when:** All tests pass, builds succeed, and project uses unified menu patterns
+
+**Quality Gate Completion:**
+- [ ] Complete quality gate compliance checklist
+- [ ] Verify all gates satisfied
+- [ ] Document any remaining quality considerations
+
+**Rollback Verification:**
+- [ ] Verify rollback path exists if needed
+- [ ] Document any critical dependencies
+
+**Done when:** All tests pass, builds succeed, quality gates satisfied, project uses unified menu patterns
 
 ## Files / areas
 
@@ -172,6 +320,9 @@ DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
    - Wraps ConfigMenuViewInterface instance
    - Manages highlighting state internally
    - Translates method calls appropriately
+   - Includes error handling for edge cases
+   - Validates input parameters
+   - Provides safe defaults for missing methods
 
 3. **MenuControllerInterface** - Unified menu controller
    - `setTitle(char* title)` - Set menu title (optional)
@@ -186,36 +337,112 @@ DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
    - Use DI container for dependency injection
    - Maintain state pattern architecture
 
+### Error Handling Strategy:
+1. **Adapter Error Handling:**
+   - Null pointer validation for wrapped interface
+   - Index bounds checking for all display operations
+   - Memory allocation failure handling
+   - Graceful degradation on error
+   - Safe defaults for missing functionality
+
+2. **Controller Error Handling:**
+   - Empty menu handling
+   - Invalid selection recovery
+   - Action execution safety
+
+3. **Performance Considerations:**
+   - Memory usage profiling on pico target
+   - Real-time response verification
+   - Display constraint validation
+
 ### Architectural constraints:
 - Preserve State pattern architecture
 - Maintain DI container and interface design
 - Ensure testability through native target
-- Follow TDD development approach
+- Follow strict TDD development approach with red/green/refactor cycles
 - Unified menu interaction patterns across all interfaces
 - **Backward compatibility** for existing ConfigMenuViewInterface usage
+- **Error robustness** with comprehensive edge case handling
+- **Performance awareness** for embedded environment
 
 ## Testing
 
-### Unit testing strategy:
-1. **ConfigMenuViewAdapter tests** - Verify correct interface translation
-2. **MenuController tests** - Verify enhanced functionality
-3. **ConfigMenuState tests** - Verify refactored state uses MenuController
-4. **Integration tests** - Verify menu transitions and interactions
-5. **View implementation tests** - Verify display updates
+### TDD Testing Strategy:
+Each component follows explicit red/green/refactor TDD cycles:
+1. **Red Phase:** Write failing tests for specific functionality
+2. **Green Phase:** Implement minimum code to pass tests
+3. **Refactor Phase:** Improve implementation while maintaining passing tests
+4. **Verification:** Run all existing tests to ensure no regression
+
+### Specific Test Scenarios:
+
+**ConfigMenuViewAdapter Tests:**
+1. **Interface Translation Tests:**
+   - Test `displayItem()` correctly calls `displayMenuItem()` + `setSelectedItem()`
+   - Test `displayTitle()` stores title internally
+   - Test `clearItems()` resets internal state
+   - Test `getMaxItems()` returns appropriate default
+
+2. **Error Handling Tests:**
+   - Test with null ConfigMenuViewInterface pointer
+   - Test with invalid index values (negative, out of bounds)
+   - Test with null caption strings
+   - Test memory allocation edge cases
+   - Test error recovery mechanisms
+
+3. **Edge Case Tests:**
+   - Test empty menu handling
+   - Test maximum item limits
+   - Test highlighting state persistence
+   - Test title storage and retrieval
+
+4. **Integration Tests:**
+   - Test with actual DisplayConfigMenuView implementation
+   - Test end-to-end menu display flow
+   - Test performance under load
+
+**MenuController Enhancement Tests:**
+1. **Backward Compatibility Tests:**
+   - Verify SetlistMenuState continues to work
+   - Test existing controller functionality unchanged
+
+2. **Enhanced Functionality Tests:**
+   - Test menu title support
+   - Test edge case handling
+   - Test integration with ConfigMenuState
+
+**ConfigMenuState Refactoring Tests:**
+1. **Behavior Preservation Tests:**
+   - Test all existing ConfigMenuState functionality
+   - Verify menu navigation unchanged
+   - Test action execution
+
+2. **Integration Tests:**
+   - Test with MenuController
+   - Test with ConfigMenuViewAdapter
+   - Test state transitions
 
 ### Test commands:
 - Run all tests: `pio test -e native`
 - Run menu-specific tests: `pio test -e native -f test_menu_controller`
 - Run config menu tests: `pio test -e native -f test_config_menu_state`
 - Run adapter tests: `pio test -e native -f test_config_menu_view_adapter`
+- Run performance tests: `pio run -e pico` (build verification)
+- Run specific test suites: `pio test -e native -f [test_suite_name]`
+
+### Performance Test Commands:
+- Build for pico target: `pio run -e pico`
+- Memory usage check: `pio run -e pico --target size`
+- Runtime performance: Manual timing tests on hardware
 
 ### Test coverage requirements:
-- All menu navigation scenarios
-- Edge cases (empty menus, single items)
-- State transitions
-- Action execution
-- View updates through adapter
-- Backward compatibility verification
+- **100% Interface Coverage:** All adapter methods tested
+- **Edge Case Coverage:** All error conditions tested
+- **Integration Coverage:** End-to-end menu functionality tested
+- **Performance Coverage:** Memory and timing verified on embedded target
+- **Backward Compatibility:** All existing functionality preserved and tested
+- **Error Recovery:** All error handling scenarios tested
+- **Real-time Requirements:** Timing constraints verified on hardware
 
 ## Notes for the AI
 
@@ -225,35 +452,52 @@ DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
 3. **DI Container Updates**: Add getConfigMenuController() while maintaining backward compatibility
 4. **EditSetlistState Exclusion**: Keep specialized interface due to unique editing requirements
 5. **Backward Compatibility**: Maintain existing ConfigMenuViewInterface for gradual migration
+6. **TDD Compliance**: Strict red/green/refactor cycles for each component
+7. **Error Handling Strategy**: Comprehensive edge case handling in adapter
+8. **Performance Verification**: Embedded target testing and profiling
 
 ### Implementation guidance:
 - Start with adapter implementation (Step 2) to validate interface bridging
-- Use TDD: Write failing tests first, then implement
+- Use strict TDD: Write failing tests first, then implement (red phase)
 - Keep changes incremental and test at each step
 - Maintain backward compatibility where possible
 - Update documentation alongside code changes
+- Verify error handling for all edge cases
+- Profile performance on embedded target
+- Complete quality gate checklist after each major step
 
 ### Risk areas:
 - Adapter complexity in managing highlighting state
 - DI container changes affecting other states
 - MenuController enhancements must not break existing SetlistMenuState functionality
 - Backward compatibility testing for existing ConfigMenuViewInterface usage
+- Error handling completeness in adapter
+- Performance impact on embedded target
 
 ### Verification points:
 - All existing tests must pass after each step
 - Build must succeed for both native and pico targets
 - Menu functionality must remain identical from user perspective
 - Adapter correctly translates all interface methods
+- Error handling covers all edge cases
+- Performance meets embedded constraints
+- Quality gates satisfied at each milestone
 
 ## Open questions (Resolved)
 
-1. **EditSetlistState approach**: EditSetlistState will NOT use MenuController. It maintains its specialized EditSetlistViewInterface due to unique editing requirements (blinking cursor, text editing, edit mode). This is documented in Step 6.
+1. **EditSetlistState approach**: EditSetlistState will NOT use MenuController. It maintains its specialized EditSetlistViewInterface due to unique editing requirements (blinking cursor, text editing, edit mode). This is documented in Step 7.
 
 2. **Interface approach**: Use Adapter pattern instead of inheritance. ConfigMenuViewAdapter implements MenuLayoutViewInterface and wraps ConfigMenuViewInterface.
 
 3. **DI Container strategy**: Add getConfigMenuController() method. Maintain existing getConfigMenuView() for backward compatibility. Use separate MenuController instances per menu state.
 
 4. **Deprecated methods**: No immediate removal of deprecated methods. Maintain backward compatibility during transition period.
+
+5. **TDD approach**: Use strict red/green/refactor cycles with explicit verification points.
+
+6. **Error handling**: Add comprehensive error handling strategy for adapter edge cases.
+
+7. **Performance verification**: Include embedded target testing and profiling.
 
 ## Architectural Decision Records
 
@@ -271,3 +515,18 @@ DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
 **Context:** Need to provide MenuController instances to ConfigMenuState while maintaining existing interface.
 **Decision:** Add getConfigMenuController() method, keep existing getConfigMenuView() for compatibility.
 **Consequences:** Clear dependency injection, backward compatible, separate instances per state.
+
+### ADR-004: TDD Compliance Strategy
+**Context:** Quality gates require explicit TDD red phase for each implementation step.
+**Decision:** Implement strict red/green/refactor cycles with verification points at each phase.
+**Consequences:** Higher quality code, explicit test coverage, compliance with quality gates.
+
+### ADR-005: Error Handling Strategy
+**Context:** Adapter pattern requires robust error handling for edge cases and invalid inputs.
+**Decision:** Implement comprehensive error validation, safe defaults, and graceful degradation.
+**Consequences:** More robust adapter, better failure recovery, compliance with quality gates.
+
+### ADR-006: Performance Verification Approach
+**Context:** Embedded system requires verification of memory usage and real-time performance.
+**Decision:** Add performance testing step with pico target compilation and profiling.
+**Consequences:** Confidence in embedded performance, early detection of resource issues.
