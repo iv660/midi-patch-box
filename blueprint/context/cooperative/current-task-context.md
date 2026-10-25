@@ -5,7 +5,7 @@
 **Task ID:** CD-001  
 **Start Date:** 2026-10-24  
 **Coordinator:** Harvi Code  
-**Status:** Phase 1 - Architectural Specification (Quality Gate Compliance Achieved, Awaiting User Approval)
+**Status:** Phase 1 - Architectural Specification Complete (Awaiting User Approval for MVP Iterative Implementation)
 
 ## Task Description
 
@@ -52,29 +52,36 @@
 - [x] Quality Gate Compliance: ✅ FULLY COMPLIANT
 - [ ] User re-approval pending
 
-### Phase 2: Parallel Preparation
-- [ ] QA engineer creating acceptance tests
-- [ ] Developer implementing specification
+### Phase 2: Iterative Implementation
+- [ ] Step 1: Analyze current menu interfaces and create detailed mapping
+- [ ] Step 1 review by Reviewer
+- [ ] Step 2: Implement ConfigMenuViewAdapter
+- [ ] Step 2 review by Reviewer
+- [ ] Step 3: Refactor ConfigMenuState to use MenuController
+- [ ] Step 3 review by Reviewer
+- [ ] Step 4: Enhance MenuController to support ConfigMenuState requirements
+- [ ] Step 4 review by Reviewer
+- [ ] Step 5: Update DI Container and StateFactory
+- [ ] Step 5 review by Reviewer
+- [ ] Step 6: Document EditSetlistState Exclusion Rationale
+- [ ] Step 6 review by Reviewer
+- [ ] Step 7: Update documentation and architecture diagrams
+- [ ] Step 7 review by Reviewer
+- [ ] Step 8: Final verification and cleanup
+- [ ] Step 8 review by Reviewer
 
-### Phase 3: Implementation Loop
-- [ ] Step 1 implementation
-- [ ] Step 1 review
-- [ ] Step 2 implementation
-- [ ] Step 2 review
-- [ ] ... (additional steps)
-
-### Phase 4: Final Verification
-- [ ] Acceptance tests executed
+### Phase 3: Final Verification
+- [ ] All tests pass (pio test -e native)
+- [ ] Build succeeds for both native and pico targets
 - [ ] Blueprint check completed
 - [ ] User acceptance obtained
 
 ## Agent Assignments
 
-- **Architect:** ✅ Completed (Specification v2.0)
-- **Critic:** ✅ Completed (Approved specification)
-- **QA Engineer:** [Ready for assignment in Phase 2]
-- **Developer:** [Ready for assignment in Phase 2]
-- **Reviewer:** [Will be assigned in Phase 3]
+- **Architect:** ✅ Completed (Specification v3.0 with quality gate compliance)
+- **Critic:** ✅ Completed (Approved specification with quality gates)
+- **Developer:** [Ready for assignment in Phase 2 - Iterative Implementation]
+- **Reviewer:** [Ready for assignment in Phase 2 - Step-by-step review]
 
 ## Decision Log
 
@@ -119,7 +126,8 @@
 - Architectural decisions documented in `architect-decisions-002.md`
 - Quality gate compliance report: `quality-gate-compliance-report-002.md`
 - Specification v3.0 achieves full compliance with `quality-gates.md`
-- Task ready for user approval to proceed to Phase 2
+- **Workflow Simplified**: QA Engineer role removed for MVP
+- Task ready for user approval to proceed to Phase 2 (Iterative Implementation with Developer and Reviewer)
 
 ## Notes
 
