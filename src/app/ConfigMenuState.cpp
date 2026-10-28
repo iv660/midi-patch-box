@@ -41,10 +41,6 @@ void ConfigMenuState::exit() {
     // Cleanup if needed
 }
 
-bool ConfigMenuState::hasConfigMenuView() {
-    return getConfigMenuView() != nullptr;
-}
-
 bool ConfigMenuState::hasUserInput() {
     return getUserInput() != nullptr;
 }
@@ -83,24 +79,6 @@ bool ConfigMenuState::encoderButtonPressed() {
         return false;
     }
     return getUserInput()->encoderButtonPressed();
-}
-
-void ConfigMenuState::handleEncoderRotation() {
-    if (encoderRotatedClockwise()) {
-        selectNextMenuItem();
-        return;
-    }
-    
-    if (encoderRotatedCounterClockwise()) {
-        selectPreviousMenuItem();
-        return;
-    }
-}
-
-void ConfigMenuState::handleEncoderButtonPress() {
-    if (encoderButtonPressed()) {
-        performMenuItemAction();
-    }
 }
 
 void ConfigMenuState::selectNextMenuItem() {

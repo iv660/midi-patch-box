@@ -30,15 +30,12 @@ private:
         return diContainer ? diContainer->getSetlistMenuController() : nullptr;
     }
 
-    bool hasConfigMenuView();
     bool hasUserInput();
     void initializeView();
     void updateUserInput();
     bool encoderRotatedClockwise();
     bool encoderRotatedCounterClockwise();
     bool encoderButtonPressed();
-    void handleEncoderRotation();
-    void handleEncoderButtonPress();
     void selectNextMenuItem();
     void selectPreviousMenuItem();
     void changeToSetlistMenuState();
