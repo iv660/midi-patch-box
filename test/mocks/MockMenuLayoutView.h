@@ -54,6 +54,8 @@ public:
 
     // Test helper methods
     const char* getTitle() const { return title; }
+    bool hasTitle() const { return title[0] != '\0'; }
+    void clearTitle() { title[0] = '\0'; }
     const char* getItemCaption(int index) const {
         return (index >= 0 && index < itemCount) ? itemCaptions[index] : nullptr;
     }

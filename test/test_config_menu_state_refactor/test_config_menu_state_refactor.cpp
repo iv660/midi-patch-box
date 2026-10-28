@@ -250,6 +250,24 @@ void testConfigMenuStateHandlesNullMenuControllerGracefully() {
     TEST_ASSERT_TRUE(true);
 }
 
+void testConfigMenuStateSetsMenuTitleOnEnter() {
+    // Create MenuController and inject it via DI container
+    MenuController menuController(&mockDiContainer);
+    mockDiContainer.setMenuController(&menuController);
+    
+    ConfigMenuState configMenuState(&mockDiContainer);
+    
+    // Clear any previous title
+    mockMenuLayoutView.clearTitle();
+    
+    // Enter the state
+    configMenuState.enter();
+    
+    // ConfigMenuState должен установить заголовок "Configuration"
+    TEST_ASSERT_TRUE(mockMenuLayoutView.hasTitle());
+    TEST_ASSERT_EQUAL_STRING("Configuration", mockMenuLayoutView.getTitle());
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     
@@ -258,6 +276,7 @@ int main(int argc, char **argv) {
     RUN_TEST(testConfigMenuStateDelegatesCounterClockwiseToMenuController);
     RUN_TEST(testConfigMenuStateExecutesActionsViaMenuController);
     RUN_TEST(testConfigMenuStateHandlesNullMenuControllerGracefully);
+    RUN_TEST(testConfigMenuStateSetsMenuTitleOnEnter);
     
     return UNITY_END();
 }

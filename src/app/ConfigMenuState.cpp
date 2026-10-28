@@ -49,6 +49,7 @@ void ConfigMenuState::initializeView() {
     MenuControllerInterface* menuController = getMenuController();
     if (menuController) {
         menuController->resetMenuItems();
+        menuController->setTitle(const_cast<char*>("Configuration"));
         menuController->addMenuItem(const_cast<char*>("Edit Setlist"), [this]() { changeToSetlistMenuState(); });
         menuController->addMenuItem(const_cast<char*>("Back"), [this]() { changeToMainApplicationState(); });
     }
