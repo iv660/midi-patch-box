@@ -12,8 +12,11 @@ These gates are checked by:
 ## Development Methodology Gates
 
 ### TDD (Test-Driven Development)
-- [ ] **Red Phase Verification**: Each implementation step must start with failing tests that are verified to fail before implementation
-- [ ] **Test Failure Confirmation**: Red phase completion requires running tests and confirming they fail as expected
+- [ ] **Red Phase Verification**: Each implementation step must start with failing tests that use desired functionality as if it already existed
+  - **Proper test design**: Tests must fail because implementation is missing, NOT because of `TEST_FAIL_MESSAGE` or artificial failures
+  - **Follow TDD guide**: See `.harvi/guides/tdd.md` for correct red/green/refactor workflow
+  - **Real assertions**: Tests should contain real assertions that would pass if implementation existed
+- [ ] **Test Failure Confirmation**: Red phase completion requires running tests and confirming they fail as expected (compile or runtime failures due to missing implementation)
 - [ ] **Test Commands Defined**: PlatformIO test commands specified for each component
 - [ ] **Test Coverage**: Test scenarios cover all functionality and edge cases
 - [ ] **All Tests Pass**: All existing tests must pass after each implementation step

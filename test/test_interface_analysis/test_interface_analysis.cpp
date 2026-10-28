@@ -3,6 +3,8 @@
 #include "app/MenuLayoutViewInterface.h"
 #include "app/ConfigMenuViewInterface.h"
 #include "app/MenuControllerInterface.h"
+#include "app/ConfigMenuViewAdapter.h"
+#include "../../test/mocks/MockConfigMenuView.h"
 
 // Mock classes for testing interface differences
 class MockMenuLayoutView : public MenuLayoutViewInterface {
@@ -78,64 +80,7 @@ public:
     int getClearItemsCallCount() const { return clearItemsCallCount; }
 };
 
-class MockConfigMenuView : public ConfigMenuViewInterface {
-private:
-    bool showMenuCalled;
-    int setSelectedItemCalledCount;
-    int selectedItemIndex;
-    int displayMenuItemCallCount;
-    int displayedItemIndices[10];
-    const char* displayedItemNames[10];
 
-public:
-    MockConfigMenuView() : showMenuCalled(false), setSelectedItemCalledCount(0), 
-                          selectedItemIndex(-1), displayMenuItemCallCount(0) {
-        for (int i = 0; i < 10; i++) {
-            displayedItemIndices[i] = -1;
-            displayedItemNames[i] = nullptr;
-        }
-    }
-
-    ConfigMenuViewInterface* showMenu() override {
-        showMenuCalled = true;
-        return this;
-    }
-
-    ConfigMenuViewInterface* setSelectedItem(int itemIndex) override {
-        selectedItemIndex = itemIndex;
-        setSelectedItemCalledCount++;
-        return this;
-    }
-
-    ConfigMenuViewInterface* displayMenuItem(int itemIndex, const char* itemName) override {
-        if (displayMenuItemCallCount < 10) {
-            displayedItemIndices[displayMenuItemCallCount] = itemIndex;
-            displayedItemNames[displayMenuItemCallCount] = itemName;
-            displayMenuItemCallCount++;
-        }
-        return this;
-    }
-
-    // Test helper methods
-    bool showMenuWasCalled() const { return showMenuCalled; }
-    int getSetSelectedItemCallCount() const { return setSelectedItemCalledCount; }
-    int getSelectedItemIndex() const { return selectedItemIndex; }
-    int getDisplayMenuItemCallCount() const { return displayMenuItemCallCount; }
-    const char* getDisplayedItemName(int callIndex) const {
-        return (callIndex < displayMenuItemCallCount) ? displayedItemNames[callIndex] : nullptr;
-    }
-    int getDisplayedItemIndex(int callIndex) const {
-        return (callIndex < displayMenuItemCallCount) ? displayedItemIndices[callIndex] : -1;
-    }
-    bool itemWasDisplayed(const char* itemName) const {
-        for (int i = 0; i < displayMenuItemCallCount; i++) {
-            if (displayedItemNames[i] && strcmp(displayedItemNames[i], itemName) == 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-};
 
 // Test: Verify interface semantic differences
 void test_interface_semantic_differences() {
@@ -151,7 +96,7 @@ void test_interface_semantic_differences() {
     MockConfigMenuView configMenuView;
     configMenuView.showMenu();
     
-    TEST_ASSERT_TRUE(configMenuView.showMenuWasCalled());
+    TEST_ASSERT_TRUE(configMenuView.wasShowMenuCalled());
     
     // Test 3: MenuLayoutViewInterface combines display and highlighting
     char item1[] = "Item 1";
@@ -167,9 +112,9 @@ void test_interface_semantic_differences() {
     configMenuView.setSelectedItem(0);
     
     TEST_ASSERT_EQUAL(1, configMenuView.getDisplayMenuItemCallCount());
-    TEST_ASSERT_EQUAL(1, configMenuView.getSetSelectedItemCallCount());
-    TEST_ASSERT_EQUAL(0, configMenuView.getSelectedItemIndex());
-    TEST_ASSERT_EQUAL_STRING("Config Item 1", configMenuView.getDisplayedItemName(0));
+    TEST_ASSERT_TRUE(configMenuView.wasSetSelectedItemCalled());
+    TEST_ASSERT_EQUAL(0, configMenuView.getLastSelectedItem());
+    TEST_ASSERT_EQUAL_STRING("Config Item 1", configMenuView.getLastDisplayMenuItemName());
     
     // Test 5: MenuLayoutViewInterface has clearItems() method
     menuLayoutView.clearItems();
@@ -185,28 +130,54 @@ void test_interface_semantic_differences() {
 }
 
 // Test: Verify adapter requirements (This test should fail - RED PHASE)
-void test_adapter_requirements_failing() {
-    // This test demonstrates what an adapter needs to do
-    // It should fail because the adapter doesn't exist yet
+void test_adapter_implementation_verification() {
+    // This test verifies that the adapter correctly bridges the interface differences
     
-    // Create a ConfigMenuView
+    // Create a ConfigMenuView mock
     MockConfigMenuView configView;
     
-    // The adapter would need to:
-    // 1. Implement MenuLayoutViewInterface
-    // 2. Wrap a ConfigMenuViewInterface
-    // 3. Translate method calls
+    // Create the adapter
+    ConfigMenuViewAdapter adapter(&configView);
     
-    // Expected adapter behavior:
-    // - displayTitle() should store title internally (ConfigMenuView has no title support)
-    // - displayItem(index, caption, highlighted) should call:
-    //   - configView.displayMenuItem(index, caption)
-    //   - configView.setSelectedItem(index) if highlighted is true
-    // - clearItems() should reset internal state (ConfigMenuView has no clearItems)
-    // - getMaxItems() should return a reasonable default
+    // Test 1: Title storage (ConfigMenuView has no title support)
+    char title[] = "Test Menu";
+    adapter.displayTitle(title);
+    TEST_ASSERT_EQUAL_STRING("Test Menu", adapter.getStoredTitle());
+    TEST_ASSERT_FALSE(configView.wasDisplayMenuItemCalled()); // No view calls for title
     
-    // Since adapter doesn't exist, this test should fail
-    TEST_FAIL_MESSAGE("Adapter implementation required - ConfigMenuViewAdapter needed to bridge MenuLayoutViewInterface and ConfigMenuViewInterface");
+    // Test 2: Item display without highlighting
+    char item1[] = "Item 1";
+    adapter.displayItem(0, item1, false);
+    TEST_ASSERT_TRUE(configView.wasDisplayMenuItemCalled());
+    TEST_ASSERT_EQUAL(0, configView.getLastDisplayMenuItemIndex());
+    TEST_ASSERT_EQUAL_STRING("Item 1", configView.getLastDisplayMenuItemName());
+    TEST_ASSERT_FALSE(configView.wasSetSelectedItemCalled()); // Not highlighted
+    
+    configView.reset();
+    
+    // Test 3: Item display with highlighting
+    char item2[] = "Item 2";
+    adapter.displayItem(1, item2, true);
+    TEST_ASSERT_TRUE(configView.wasDisplayMenuItemCalled());
+    TEST_ASSERT_EQUAL(1, configView.getLastDisplayMenuItemIndex());
+    TEST_ASSERT_EQUAL_STRING("Item 2", configView.getLastDisplayMenuItemName());
+    TEST_ASSERT_TRUE(configView.wasSetSelectedItemCalled());
+    TEST_ASSERT_EQUAL(1, configView.getLastSelectedItem());
+    
+    configView.reset();
+    
+    // Test 4: Clear items (should reinitialize view)
+    adapter.clearItems();
+    TEST_ASSERT_TRUE(configView.wasShowMenuCalled());
+    TEST_ASSERT_EQUAL(-1, adapter.getHighlightedIndex()); // Reset highlighted index
+    
+    // Test 5: Maximum items
+    TEST_ASSERT_EQUAL(4, adapter.getMaxItems()); // Default from DisplayConfigMenuView
+    
+    // Test 6: Verify adapter implements correct interface
+    // (Compile-time check - if this compiles, adapter implements MenuLayoutViewInterface)
+    MenuLayoutViewInterface* interfacePtr = &adapter;
+    TEST_ASSERT_NOT_NULL(interfacePtr);
 }
 
 void setUp(void) {
@@ -221,7 +192,7 @@ int main(int argc, char **argv) {
     UNITY_BEGIN();
     
     RUN_TEST(test_interface_semantic_differences);
-    RUN_TEST(test_adapter_requirements_failing);
+    RUN_TEST(test_adapter_implementation_verification);
     
     return UNITY_END();
 }
