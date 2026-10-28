@@ -5,17 +5,13 @@
 #include "StateFactoryInterface.h"
 #include "StateMachineInterface.h"
 #include "DiContainerInterface.h"
+#include "MenuControllerInterface.h"
 
 class ConfigMenuState : public State {
 private:
     UserInputInterface* userInput = nullptr;
     ConfigMenuViewInterface* configMenuView = nullptr;
     StateFactoryInterface* stateFactory = nullptr;
-    int selectedMenuItem = 0;
-    
-    const int MENU_ITEM_EDIT_SETLIST = 0;
-    const int MENU_ITEM_BACK = 1;
-    const int TOTAL_MENU_ITEMS = 2;
 
     // Private getters
     UserInputInterface* getUserInput() const {
@@ -30,6 +26,9 @@ private:
     StateMachineInterface* getStateMachine() const {
         return stateMachine ? stateMachine : (diContainer ? diContainer->getStateMachine() : nullptr);
     }
+    MenuControllerInterface* getMenuController() const {
+        return diContainer ? diContainer->getSetlistMenuController() : nullptr;
+    }
 
     bool hasConfigMenuView();
     bool hasUserInput();
@@ -42,7 +41,6 @@ private:
     void handleEncoderButtonPress();
     void selectNextMenuItem();
     void selectPreviousMenuItem();
-    void updateMenuView();
     void changeToSetlistMenuState();
     void changeToMainApplicationState();
     void performMenuItemAction();

@@ -1,7 +1,7 @@
 #include "ConfigMenuState.h"
 
 void ConfigMenuState::enter() {
-    if (false == hasConfigMenuView()) {
+    if (getMenuController() == nullptr) {
         return;
     }
 
@@ -32,14 +32,8 @@ void ConfigMenuState::update() {
 }
 
 void ConfigMenuState::performMenuItemAction() {
-    if (selectedMenuItem == MENU_ITEM_EDIT_SETLIST) {
-        changeToSetlistMenuState();
-        return;
-    }
-
-    if (selectedMenuItem == MENU_ITEM_BACK) {
-        changeToMainApplicationState();
-        return;
+    if (getMenuController()) {
+        getMenuController()->executeSelectedAction();
     }
 }
 
@@ -56,11 +50,11 @@ bool ConfigMenuState::hasUserInput() {
 }
 
 void ConfigMenuState::initializeView() {
-    if (getConfigMenuView()) {
-        getConfigMenuView()->showMenu();
-        getConfigMenuView()->setSelectedItem(0);
-        getConfigMenuView()->displayMenuItem(0, "Edit Setlist");
-        getConfigMenuView()->displayMenuItem(1, "Back");
+    MenuControllerInterface* menuController = getMenuController();
+    if (menuController) {
+        menuController->resetMenuItems();
+        menuController->addMenuItem(const_cast<char*>("Edit Setlist"), [this]() { changeToSetlistMenuState(); });
+        menuController->addMenuItem(const_cast<char*>("Back"), [this]() { changeToMainApplicationState(); });
     }
 }
 
@@ -110,18 +104,14 @@ void ConfigMenuState::handleEncoderButtonPress() {
 }
 
 void ConfigMenuState::selectNextMenuItem() {
-    selectedMenuItem = (selectedMenuItem + 1) % TOTAL_MENU_ITEMS;
-    updateMenuView();
+    if (getMenuController()) {
+        getMenuController()->selectNext();
+    }
 }
 
 void ConfigMenuState::selectPreviousMenuItem() {
-    selectedMenuItem = (selectedMenuItem - 1 + TOTAL_MENU_ITEMS) % TOTAL_MENU_ITEMS;
-    updateMenuView();
-}
-
-void ConfigMenuState::updateMenuView() {
-    if (getConfigMenuView()) {
-        getConfigMenuView()->setSelectedItem(selectedMenuItem);
+    if (getMenuController()) {
+        getMenuController()->selectPrevious();
     }
 }
 

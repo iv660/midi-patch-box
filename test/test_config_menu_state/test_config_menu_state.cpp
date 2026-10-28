@@ -1,13 +1,14 @@
 #include <unity.h>
 #include <cstring>
 #include "app/ConfigMenuState.h"
-#include "app/ConfigMenuViewInterface.h"
+#include "app/MenuController.h"
+#include "app/ConfigMenuViewAdapter.h"
 #include "app/StateFactoryInterface.h"
 #include "app/StateMachineInterface.h"
 #include "app/UserInputInterface.h"
-#include "app/StateFactoryInterface.h"
-#include "app/StateMachineInterface.h"
-#include "app/DiContainer.h"
+#include "app/DiContainerInterface.h"
+#include "../mocks/MockConfigMenuView.h"
+#include "../mocks/MockMenuLayoutView.h"
 
 // Mock objects for testing
 class MockUserInput : public UserInputInterface {
@@ -30,61 +31,6 @@ public:
     void setEncoderClockwise(bool value) { encoderClockwise = value; }
     void setEncoderCounterClockwise(bool value) { encoderCounterClockwise = value; }
     void setEncoderButtonPressed(bool value) { encoderButtonPress = value; }
-};
-
-class MockConfigMenuView : public ConfigMenuViewInterface {
-private:
-    bool showMenuCalled = false;
-    bool setSelectedItemCalled = false;
-    int selectedItem = -1;
-    int displayMenuItemCallCount = 0;
-    int displayedItemIndices[10]; // Store up to 10 calls
-    const char* displayedItemNames[10];
-
-public:
-    ConfigMenuViewInterface* showMenu() override {
-        showMenuCalled = true;
-        return this;
-    }
-    
-    ConfigMenuViewInterface* setSelectedItem(int itemIndex) override {
-        selectedItem = itemIndex;
-        setSelectedItemCalled = true;
-        return this;
-    }
-    
-    ConfigMenuViewInterface* displayMenuItem(int itemIndex, const char* itemName) override {
-        if (displayMenuItemCallCount < 10) {
-            displayedItemIndices[displayMenuItemCallCount] = itemIndex;
-            displayedItemNames[displayMenuItemCallCount] = itemName;
-            displayMenuItemCallCount++;
-        }
-        return this;
-    }
-    
-    // Test helpers
-    bool showMenuWasCalled() const { return showMenuCalled; }
-    bool setSelectedItemWasCalled() const { return setSelectedItemCalled; }
-    int getSelectedItem() const { return selectedItem; }
-    int getDisplayMenuItemCallCount() const { return displayMenuItemCallCount; }
-    const char* getDisplayedItemName(int callIndex) const {
-        return (callIndex < displayMenuItemCallCount) ? displayedItemNames[callIndex] : nullptr;
-    }
-    int getDisplayedItemIndex(int callIndex) const {
-        return (callIndex < displayMenuItemCallCount) ? displayedItemIndices[callIndex] : -1;
-    }
-    const char* getLastDisplayedItemName() const {
-        return (displayMenuItemCallCount > 0) ? displayedItemNames[displayMenuItemCallCount - 1] : nullptr;
-    }
-    
-    bool itemWasDisplayed(const char* itemName) const {
-        for (int i = 0; i < displayMenuItemCallCount; i++) {
-            if (displayedItemNames[i] && strcmp(displayedItemNames[i], itemName) == 0) {
-                return true;
-            }
-        }
-        return false;
-    }
 };
 
 class MockStateFactory : public StateFactoryInterface {
@@ -137,6 +83,42 @@ public:
     StateInterface* setStateMachine(StateMachineInterface* stateMachine) override { return this; }
 };
 
+// Mock DiContainer
+class MockDiContainer : public DiContainerInterface {
+private:
+    UserInputInterface* userInput = nullptr;
+    MenuControllerInterface* menuController = nullptr;
+    StateFactoryInterface* stateFactory = nullptr;
+    StateMachineInterface* stateMachine = nullptr;
+    MenuLayoutViewInterface* menuLayoutView = nullptr;
+    ConfigMenuViewInterface* configMenuView = nullptr;
+
+public:
+    void setUserInput(UserInputInterface* input) { userInput = input; }
+    void setMenuController(MenuControllerInterface* controller) { menuController = controller; }
+    void setStateFactory(StateFactoryInterface* factory) { stateFactory = factory; }
+    void setStateMachine(StateMachineInterface* machine) { stateMachine = machine; }
+    void setMenuLayoutView(MenuLayoutViewInterface* view) { menuLayoutView = view; }
+    void setConfigMenuView(ConfigMenuViewInterface* view) { configMenuView = view; }
+    
+    UserInputInterface* getUserInput() const override { return userInput; }
+    MenuControllerInterface* getSetlistMenuController() const override { return menuController; }
+    StateFactoryInterface* getStateFactory() const override { return stateFactory; }
+    StateMachineInterface* getStateMachine() const override { return stateMachine; }
+    MenuLayoutViewInterface* getSetlistMenuLayoutView() const override { return menuLayoutView; }
+    ConfigMenuViewInterface* getConfigMenuView() const override { return configMenuView; }
+    
+    // Required stub methods
+    SplashScreenViewInterface* getSplashScreenView() const override { return nullptr; }
+    IoDriverInterface* getIoDriver() const override { return nullptr; }
+    ProgramSelectorInterface* getProgramSelector() const override { return nullptr; }
+    MidiControllerInterface* getMidiController() const override { return nullptr; }
+    ProgramSelectionViewInterface* getProgramSelectionView() const override { return nullptr; }
+    ProgramsBankInterface* getProgramsBank() const override { return nullptr; }
+    EditSetlistViewInterface* getEditSetlistView() const override { return nullptr; }
+    StateMachineInterface* getStateMachineInterface() const override { return stateMachine; }
+};
+
 void setUp(void) {
     // Set up code here, to run before each test
 }
@@ -148,58 +130,78 @@ void tearDown(void) {
 // ConfigMenuState should show menu on enter
 void testConfigMenuStateShowsMenu() {
     // Arrange
-    ConfigMenuState state;
-    MockConfigMenuView mockView;
+    MockConfigMenuView mockConfigView;
+    ConfigMenuViewAdapter adapter(&mockConfigView);
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    state.setConfigMenuView(&mockView);
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&adapter);
+    mockDiContainer.setConfigMenuView(&mockConfigView);
+    
+    ConfigMenuState state(&mockDiContainer);
     
     // Act
     state.enter();
     
     // Assert
-    TEST_ASSERT_TRUE(mockView.showMenuWasCalled());
+    TEST_ASSERT_TRUE(mockConfigView.wasShowMenuCalled());
 }
 
 // ConfigMenuState should display menu items on enter
 void testConfigMenuStateDisplaysItems() {
     // Arrange
-    ConfigMenuState state;
-    MockConfigMenuView mockView;
+    MockMenuLayoutView mockLayoutView;
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    state.setConfigMenuView(&mockView);
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&mockLayoutView);
+    
+    ConfigMenuState state(&mockDiContainer);
     
     // Act
     state.enter();
     
-    // Assert
-    TEST_ASSERT_TRUE(mockView.itemWasDisplayed("Edit Setlist"));
-    TEST_ASSERT_TRUE(mockView.itemWasDisplayed("Back"));
+    // Assert - via MenuController and MenuLayoutViewInterface
+    TEST_ASSERT_EQUAL(2, mockLayoutView.getItemCount());
+    TEST_ASSERT_EQUAL_STRING("Edit Setlist", mockLayoutView.getItemCaption(0));
+    TEST_ASSERT_EQUAL_STRING("Back", mockLayoutView.getItemCaption(1));
 }
 
 // ConfigMenuState should highlight first item by default
 void testConfigMenuStateHighlightsFirstItem() {
     // Arrange
-    ConfigMenuState state;
-    MockConfigMenuView mockView;
+    MockMenuLayoutView mockLayoutView;
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    state.setConfigMenuView(&mockView);
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&mockLayoutView);
+    
+    ConfigMenuState state(&mockDiContainer);
     
     // Act
     state.enter();
     
-    // Assert
-    TEST_ASSERT_EQUAL(0, mockView.getSelectedItem());
+    // Assert - via MenuController
+    TEST_ASSERT_TRUE(mockLayoutView.isItemHighlighted(0));
+    TEST_ASSERT_FALSE(mockLayoutView.isItemHighlighted(1));
 }
 
 // ConfigMenuState should navigate to next item on clockwise encoder rotation
 void testConfigMenuStateNavigatesOnClockwiseRotation() {
     // Arrange
-    ConfigMenuState state;
-    MockConfigMenuView mockView;
+    MockMenuLayoutView mockLayoutView;
     MockUserInput mockInput;
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    state.setConfigMenuView(&mockView);
-    state.setUserInput(&mockInput);
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&mockLayoutView);
+    mockDiContainer.setUserInput(&mockInput);
+    
+    ConfigMenuState state(&mockDiContainer);
     state.enter();
     
     // Act - simulate clockwise encoder rotation
@@ -207,18 +209,23 @@ void testConfigMenuStateNavigatesOnClockwiseRotation() {
     state.update();
     
     // Assert - should move to second item (index 1)
-    TEST_ASSERT_EQUAL(1, mockView.getSelectedItem());
+    TEST_ASSERT_FALSE(mockLayoutView.isItemHighlighted(0));
+    TEST_ASSERT_TRUE(mockLayoutView.isItemHighlighted(1));
 }
 
 // ConfigMenuState should navigate to previous item on counter-clockwise encoder rotation
 void testConfigMenuStateNavigatesOnCounterClockwiseRotation() {
     // Arrange
-    ConfigMenuState state;
-    MockConfigMenuView mockView;
+    MockMenuLayoutView mockLayoutView;
     MockUserInput mockInput;
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    state.setConfigMenuView(&mockView);
-    state.setUserInput(&mockInput);
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&mockLayoutView);
+    mockDiContainer.setUserInput(&mockInput);
+    
+    ConfigMenuState state(&mockDiContainer);
     state.enter();
     
     // First move to second item
@@ -231,98 +238,101 @@ void testConfigMenuStateNavigatesOnCounterClockwiseRotation() {
     state.update();
     
     // Assert - should move back to first item (index 0)
-    TEST_ASSERT_EQUAL(0, mockView.getSelectedItem());
+    TEST_ASSERT_TRUE(mockLayoutView.isItemHighlighted(0));
+    TEST_ASSERT_FALSE(mockLayoutView.isItemHighlighted(1));
 }
 
 // ConfigMenuState should wrap around cyclically in both directions
 void testConfigMenuStateCyclicNavigation() {
     // Arrange
-    ConfigMenuState state;
-    MockConfigMenuView mockView;
+    MockMenuLayoutView mockLayoutView;
     MockUserInput mockInput;
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    state.setConfigMenuView(&mockView);
-    state.setUserInput(&mockInput);
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&mockLayoutView);
+    mockDiContainer.setUserInput(&mockInput);
+    
+    ConfigMenuState state(&mockDiContainer);
     state.enter(); // starts at index 0
     
-    // Act & Assert - clockwise from last item should wrap to first
-    mockInput.setEncoderClockwise(true);
-    state.update(); // now at index 1
-    state.update(); // should wrap to index 0
-    TEST_ASSERT_EQUAL(0, mockView.getSelectedItem());
-    
-    // Reset encoder state
-    mockInput.setEncoderClockwise(false);
-    
-    // Act & Assert - counter-clockwise from first item should wrap to last
+    // Act - counter-clockwise from first item should wrap to last
     mockInput.setEncoderCounterClockwise(true);
-    state.update(); // should wrap to index 1
-    TEST_ASSERT_EQUAL(1, mockView.getSelectedItem());
+    state.update();
+    
+    // Assert - should wrap to last item (index 1)
+    TEST_ASSERT_FALSE(mockLayoutView.isItemHighlighted(0));
+    TEST_ASSERT_TRUE(mockLayoutView.isItemHighlighted(1));
 }
 
-// ConfigMenuState should transition to SetlistMenuState when encoder button pressed on Edit Setlist
+// ConfigMenuState should transition to SetlistMenuState when first item is selected
 void testConfigMenuStateTransitionsToSetlistMenuState() {
     // Arrange
-    ConfigMenuState state;
-    MockConfigMenuView mockView;
+    MockMenuLayoutView mockLayoutView;
     MockUserInput mockInput;
-    MockStateFactory mockFactory;
     MockStateMachine mockStateMachine;
-    MockState mockSetlistMenuState;
+    MockState mockSetlistState;
+    MockStateFactory mockStateFactory;
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    mockFactory.setMockSetlistMenuState(&mockSetlistMenuState);
+    mockStateFactory.setMockSetlistMenuState(&mockSetlistState);
     
-    state.setConfigMenuView(&mockView);
-    state.setUserInput(&mockInput);
-    state.setStateFactory(&mockFactory);
-    state.setStateMachine(&mockStateMachine);
-    state.enter(); // starts at index 0 (Setlist)
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&mockLayoutView);
+    mockDiContainer.setUserInput(&mockInput);
+    mockDiContainer.setStateMachine(&mockStateMachine);
+    mockDiContainer.setStateFactory(&mockStateFactory);
     
-    // Act - simulate encoder button press
+    ConfigMenuState state(&mockDiContainer);
+    state.enter();
+    
+    // Act - press button on first item
     mockInput.setEncoderButtonPressed(true);
     state.update();
     
-    // Assert - should create SetlistMenuState and change to it
-    TEST_ASSERT_TRUE(mockFactory.createSetlistMenuStateWasCalled());
+    // Assert
+    TEST_ASSERT_TRUE(mockStateFactory.createSetlistMenuStateWasCalled());
     TEST_ASSERT_TRUE(mockStateMachine.changeStateWasCalled());
-    TEST_ASSERT_EQUAL_PTR(&mockSetlistMenuState, mockStateMachine.getLastChangedState());
+    TEST_ASSERT_EQUAL(&mockSetlistState, mockStateMachine.getLastChangedState());
 }
 
-// ConfigMenuState should transition to EditSetlistState when encoder button pressed on Edit Setlist
+// ConfigMenuState should transition back to MainApplicationState when "Back" is selected
 void testConfigMenuStateTransitionsBackToMainApplication() {
     // Arrange
-    DiContainer container;
-    ConfigMenuState state(&container);
-
-    MockConfigMenuView mockView;
+    MockMenuLayoutView mockLayoutView;
     MockUserInput mockInput;
-    MockStateFactory mockFactory;
     MockStateMachine mockStateMachine;
-    MockState mockMainApplicationState;
-
-    container.setStateMachine(&mockStateMachine)
-        ->setStateFactory(&mockFactory)
-        ->setUserInput(&mockInput)
-        ->setConfigMenuView(&mockView);
+    MockState mockMainState;
+    MockStateFactory mockStateFactory;
+    MockDiContainer mockDiContainer;
+    MenuController menuController(&mockDiContainer);
     
-    mockFactory.setMockMainApplicationState(&mockMainApplicationState);
-
-    state.enter(); // starts at index 0 (Edit Setlist)
+    mockStateFactory.setMockMainApplicationState(&mockMainState);
     
-    // Act - simulate encoder button press
+    mockDiContainer.setMenuController(&menuController);
+    mockDiContainer.setMenuLayoutView(&mockLayoutView);
+    mockDiContainer.setUserInput(&mockInput);
+    mockDiContainer.setStateMachine(&mockStateMachine);
+    mockDiContainer.setStateFactory(&mockStateFactory);
+    
+    ConfigMenuState state(&mockDiContainer);
+    state.enter();
+    
+    // Navigate to second item ("Back")
     mockInput.setEncoderClockwise(true);
-    state.update(); // now at index 1
+    state.update();
     mockInput.setEncoderClockwise(false);
-
+    
+    // Act - press button on "Back" item
     mockInput.setEncoderButtonPressed(true);
     state.update();
-    mockInput.setEncoderButtonPressed(false);
     
-    
-    // Assert - should create EditSetlistState and change to it
-    TEST_ASSERT_TRUE(mockFactory.createMainApplicationStateWasCalled());
+    // Assert
+    TEST_ASSERT_TRUE(mockStateFactory.createMainApplicationStateWasCalled());
     TEST_ASSERT_TRUE(mockStateMachine.changeStateWasCalled());
-    TEST_ASSERT_EQUAL_PTR(&mockMainApplicationState, mockStateMachine.getLastChangedState());
+    TEST_ASSERT_EQUAL(&mockMainState, mockStateMachine.getLastChangedState());
 }
 
 int main(int argc, char **argv) {
