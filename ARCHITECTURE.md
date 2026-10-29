@@ -351,38 +351,59 @@ graph LR
 
 ### ConfigMenuState
 
-**Purpose**: Configuration menu state providing navigation between main application and setlist editing.
+**Purpose**: Configuration menu state providing navigation between main application and setlist editing using the unified MenuController pattern.
 
 **Interface**: Implements [`StateInterface`](src/app/StateInterface.h)
 
+**Architecture**: Uses **MenuController** mediator pattern for consistent menu behavior
+
 **Key Features**:
-- Menu navigation (Edit Setlist / Back options)
-- Encoder rotation for menu selection
-- Encoder button press to confirm selection
-- Transition to [`EditSetlistState`](src/app/EditSetlistState.h) or [`MainApplicationState`](src/app/MainApplicationState.h)
-- Display abstraction through [`ConfigMenuViewInterface`](src/app/ConfigMenuViewInterface.h)
+- Menu navigation through MenuController delegation
+- Encoder rotation handled by MenuController (selectNext/selectPrevious)
+- Encoder button press executes selected menu action
+- Transitions to [`EditSetlistState`](src/app/EditSetlistState.h) or [`MainApplicationState`](src/app/MainApplicationState.h)
+- Display abstraction through [`MenuLayoutViewInterface`](src/app/MenuLayoutViewInterface.h) (via MenuController)
+- Menu items configured with lambda actions
 
-**Dependencies**: [`ConfigMenuViewInterface`](src/app/ConfigMenuViewInterface.h), [`StateFactoryInterface`](src/app/StateFactoryInterface.h), [`StateMachineInterface`](src/app/StateMachineInterface.h)
+**Dependencies**: 
+- [`MenuControllerInterface`](src/app/MenuControllerInterface.h) - Menu management and navigation
+- [`StateFactoryInterface`](src/app/StateFactoryInterface.h) - State creation for transitions
+- [`StateMachineInterface`](src/app/StateMachineInterface.h) - State transitions
+- [`UserInputInterface`](src/app/UserInputInterface.h) - Encoder and button input
+- [`DiContainerInterface`](src/app/DiContainerInterface.h) - Dependency access
 
-**Testing**: Unit tested with mock dependencies
+**Pattern**: Navigation menu using MenuController (see [Menu Architecture](#menu-architecture-unified-pattern))
+
+**Testing**: Unit tested with mock MenuController and dependencies
 
 ### EditSetlistState
 
-**Purpose**: Setlist editing state allowing users to modify the program list with encoder-based navigation and editing.
+**Purpose**: Setlist editing state allowing users to modify program assignments with dual-mode (navigation + editing) interaction.
 
 **Interface**: Implements [`StateInterface`](src/app/StateInterface.h)
 
+**Architecture**: Uses **specialized editing pattern** with direct state management (does not use MenuController)
+
 **Key Features**:
-- Two operation modes: Navigation and Edit
-- Navigation mode: Select programs in setlist with encoder rotation
-- Edit mode: Change program number for selected slot
-- Real-time display of program names from ProgramsBank
-- Automatic update of ProgramSelector when programs change
-- Clean separation of input handling and business logic
+- **Dual operation modes**: Navigation mode and Edit mode
+- **Navigation mode**: Select programs in setlist with encoder rotation
+- **Edit mode**: Modify program number (0-127 with wraparound) for selected slot
+- **Visual feedback**: Blinking cursor during edit mode
+- **Real-time display**: Program names from ProgramsBank update immediately
+- **Automatic update**: ProgramSelector receives changes when programs are modified
+- **Clean separation**: Input handling and business logic clearly separated
 
-**Dependencies**: [`EditSetlistViewInterface`](src/app/EditSetlistViewInterface.h), [`DiContainerInterface`](src/app/DiContainerInterface.h), [`StateMachineInterface`](src/app/StateMachineInterface.h)
+**Dependencies**: 
+- [`EditSetlistViewInterface`](src/app/EditSetlistViewInterface.h) - Specialized editing view with blinking cursor support
+- [`DiContainerInterface`](src/app/DiContainerInterface.h) - Access to ProgramsBank and other services
+- [`StateMachineInterface`](src/app/StateMachineInterface.h) - State transitions
+- [`UserInputInterface`](src/app/UserInputInterface.h) - Encoder and button input
 
-**Testing**: Unit tested with mock dependencies
+**Pattern**: Specialized editing state (see [Menu Architecture - Editing States](#2-editing-states-specialized-implementation))
+
+**Exclusion from MenuController**: EditSetlistState implements a complex editing workflow fundamentally different from navigation menus. See [ADR-002](blueprint/context/cooperative/step7_editsetlist_exclusion_rationale.md) for detailed rationale.
+
+**Testing**: Unit tested with mock dependencies and dual-mode behavior verification
 
 ### DiContainer
 
@@ -531,6 +552,225 @@ public:
 - Memory safety with RAII principles
 - Testable state transitions
 - Clean code principles (early returns, isolated conditions)
+
+### Menu Architecture (Unified Pattern)
+
+The application uses a **unified MenuController pattern** for all navigation menus, providing consistent behavior and maintainability. This architecture separates menu states into two categories:
+
+#### 1. Navigation Menus (Use MenuController)
+
+**Pattern**: States delegate menu management to **MenuController** mediator
+
+**States Using This Pattern**:
+- [`ConfigMenuState`](src/app/ConfigMenuState.h) - Configuration menu navigation
+- [`SetlistMenuState`](src/app/SetlistMenuState.h) - Setlist selection menu
+
+**Architecture**:
+
+```mermaid
+graph TD
+    CMS[ConfigMenuState] --> MC[MenuController]
+    SMS[SetlistMenuState] --> MC
+    MC --> MLVI[MenuLayoutViewInterface]
+    MLVI --> DVMLV[DisplayVerticalMenuLayoutView]
+    MLVI --> CMVA[ConfigMenuViewAdapter]
+    CMVA --> CMI[ConfigMenuViewInterface]
+    CMI --> DCMV[DisplayConfigMenuView]
+```
+
+**MenuController Responsibilities**:
+- Manage menu items and navigation state
+- Handle encoder rotation (up/down navigation)
+- Track highlighted item with viewport scrolling
+- Delegate rendering to MenuLayoutViewInterface
+- Execute actions on menu item selection
+- Support wrap-around navigation
+- Handle menu title display
+
+**State Responsibilities**:
+- Define menu items and their actions
+- Respond to encoder button press (execute selected action)
+- Transition to other states based on actions
+- Provide business logic for menu operations
+
+**Key Interfaces**:
+
+```cpp
+// MenuController uses this interface for rendering
+class MenuLayoutViewInterface {
+public:
+    virtual void displayTitle(char* title) = 0;
+    virtual void displayItem(int index, char* caption, bool highlighted) = 0;
+    virtual void clearItems() = 0;
+    virtual unsigned int getMaxItems() const = 0;
+};
+
+// MenuController interface for states
+class MenuControllerInterface {
+public:
+    virtual void addItem(const char* caption, std::function<void()> action) = 0;
+    virtual void selectNext() = 0;
+    virtual void selectPrevious() = 0;
+    virtual void executeSelectedAction() = 0;
+    virtual void resetMenuItems() = 0;
+    virtual void setMenuTitle(const char* title) = 0;
+};
+```
+
+**Benefits of MenuController Pattern**:
+- ✅ Consistent navigation behavior across all menus
+- ✅ Simplified state implementation (states focus on business logic)
+- ✅ Centralized navigation logic (easier to maintain and test)
+- ✅ Reusable menu infrastructure
+- ✅ Viewport scrolling handled automatically
+- ✅ Wrap-around navigation included
+
+**Example: ConfigMenuState**:
+
+```cpp
+void ConfigMenuState::enter() {
+    auto menuController = diContainer->getConfigMenuController();
+    menuController->resetMenuItems();
+    menuController->setMenuTitle("Configuration");
+    
+    menuController->addItem("Edit Setlist", [this]() {
+        // Transition to EditSetlistState
+        StateInterface* newState = stateFactory->createEditSetlistState();
+        stateMachine->changeState(newState);
+    });
+    
+    menuController->addItem("Back", [this]() {
+        // Return to MainApplicationState
+        StateInterface* newState = stateFactory->createMainApplicationState();
+        stateMachine->changeState(newState);
+    });
+}
+
+void ConfigMenuState::update() {
+    userInput->update();
+    
+    if (userInput->encoderRotatedClockwise()) {
+        menuController->selectNext();
+    } else if (userInput->encoderRotatedCounterClockwise()) {
+        menuController->selectPrevious();
+    } else if (userInput->encoderButtonPressed()) {
+        menuController->executeSelectedAction();
+    }
+}
+```
+
+**Adapter Pattern for Interface Compatibility**:
+
+Some views implement **ConfigMenuViewInterface** (legacy interface) rather than **MenuLayoutViewInterface**. The **ConfigMenuViewAdapter** bridges this gap:
+
+```cpp
+class ConfigMenuViewAdapter : public MenuLayoutViewInterface {
+private:
+    ConfigMenuViewInterface* wrappedView;
+    int lastHighlightedIndex = -1;
+    
+public:
+    void displayItem(int index, char* caption, bool highlighted) override {
+        wrappedView->displayMenuItem(index, caption);
+        if (highlighted) {
+            wrappedView->setSelectedItem(index);
+            lastHighlightedIndex = index;
+        }
+    }
+    // ... other method translations
+};
+```
+
+**Dependency Injection**:
+
+Each navigation menu state receives its own **MenuController** instance through the DI container:
+
+```cpp
+class DiContainer : public DiContainerInterface {
+private:
+    MenuControllerInterface* configMenuController = nullptr;
+    MenuControllerInterface* setlistMenuController = nullptr;
+
+public:
+    MenuControllerInterface* getConfigMenuController() const override {
+        return configMenuController;
+    }
+    
+    MenuControllerInterface* getSetlistMenuController() const override {
+        return setlistMenuController;
+    }
+};
+```
+
+**Separation Rationale**: Separate instances prevent state pollution and allow independent configuration.
+
+#### 2. Editing States (Specialized Implementation)
+
+**Pattern**: States manage complex dual-mode interactions directly
+
+**States Using This Pattern**:
+- [`EditSetlistState`](src/app/EditSetlistState.h) - Setlist program editing
+
+**Why Not MenuController?**
+
+EditSetlistState implements a **fundamentally different interaction pattern**:
+
+| Navigation Menus | EditSetlistState |
+|-----------------|------------------|
+| Single mode (navigation) | Dual mode (navigation + editing) |
+| Browse and select | Browse, enter edit, modify value, save |
+| Simple highlighting | Blinking cursor for edit mode |
+| Read-only display | Mutable data (program numbers 0-127) |
+| Action execution on selection | Real-time value editing |
+
+**EditSetlistState Architecture**:
+
+```cpp
+class EditSetlistState : public StateInterface {
+private:
+    bool isEditMode;  // Dual-mode tracking
+    int selectedIndex;  // Navigation mode
+    int editedProgramNumber;  // Edit mode
+    Program currentSetlist[16];  // Mutable data
+    
+    void handleNavigationModeInput();  // Browse setlist
+    void handleEditModeInput();  // Edit program number
+    void enterEditMode();  // Toggle blinking cursor
+    void saveEditedProgram();  // Persist changes
+};
+```
+
+**EditSetlistViewInterface** (Specialized):
+
+```cpp
+class EditSetlistViewInterface {
+public:
+    virtual void showSetlist(Program* setlist) = 0;
+    virtual void setSelectedItemIndex(int index) = 0;
+    virtual void setEditMode(bool enabled) = 0;  // Blinking cursor
+    virtual void setEditedProgramIndex(int index) = 0;
+    virtual void setEditedProgramNumber(int programNumber) = 0;  // Real-time update
+    virtual void setEditedProgramName(const char* name) = 0;
+};
+```
+
+**Key Distinction**: EditSetlistState requires **editing workflow** support that MenuController doesn't provide. Forcing it into MenuController would compromise both abstractions.
+
+**Architectural Decision Record (ADR-002)**: See [`step7_editsetlist_exclusion_rationale.md`](blueprint/context/cooperative/step7_editsetlist_exclusion_rationale.md) for detailed analysis.
+
+#### When to Use Which Pattern
+
+**Use MenuController when**:
+- ✅ Single-mode navigation (browse and select)
+- ✅ Executing actions on selection
+- ✅ Simple menu structure with static or dynamic items
+- ✅ Consistent navigation behavior desired
+
+**Use Specialized State when**:
+- ✅ Dual-mode or multi-mode interaction required
+- ✅ Real-time data editing with immediate feedback
+- ✅ Complex visual feedback (blinking, custom rendering)
+- ✅ Stateful editing workflow (edit → modify → save/cancel)
 
 ### Factory Pattern
 

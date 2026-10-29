@@ -29,6 +29,7 @@ private:
     EditSetlistViewInterface* editSetlistView = nullptr;
     MenuControllerInterface* setlistMenuController = nullptr;
     MenuLayoutViewInterface* setlistMenuLayoutView = nullptr;
+    MenuControllerInterface* configMenuController = nullptr;
 
 public:
     DiContainer() = default;
@@ -102,6 +103,11 @@ public:
         return this;
     }
     
+    DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
+        this->configMenuController = controller;
+        return this;
+    }
+    
     // Getters for SplashScreenState dependencies
     SplashScreenViewInterface* getSplashScreenView() const override {
         return splashScreenView;
@@ -155,6 +161,10 @@ public:
     
     MenuLayoutViewInterface* getSetlistMenuLayoutView() const override {
         return setlistMenuLayoutView;
+    }
+    
+    MenuControllerInterface* getConfigMenuController() const override {
+        return configMenuController;
     }
     
     StateMachineInterface* getStateMachineInterface() const override {

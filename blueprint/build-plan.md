@@ -6,7 +6,7 @@ Keep each item to one line; the details come later in `/feature`.
 ## MVP for real-world use
 
 - [x] 1. **Update project documentation** - Update README and ARCHITECTURE documentation to reflect current project state and architecture
-- [ ] 2. **Unify menu organization principles** - Standardize menu architecture to use consistent patterns across all menus (currently two different approaches in use)
+- [x] 2. **Unify menu organization principles** - Standardize menu architecture to use consistent patterns across all menus (currently two different approaches in use)
 - [ ] 3. **Analyze current data storage architecture** - Review existing ProgramsBank and SetlistMenuState structures, identify integration points for non-volatile storage
 - [ ] 4. **Non-volatile storage interface** - Abstract interface for reading/writing banks and setlists to flash memory with mock implementation for tests
 - [ ] 5. **Flash storage implementation for RP2040** - Concrete interface implementation for Pico's built-in flash memory with wear leveling consideration

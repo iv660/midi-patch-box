@@ -1,9 +1,5 @@
-# Current Feature
+# current-feature.md
 
-> **Generated file.** Holds the one feature, fix, or rollback being built in this checkout. Run
-> `/feature <number-or-name>` to spec a build-plan feature, or `/fix "<bug>"` for
-> an ad-hoc fix. Use `/rollback <completed-feature>` to plan a safe reversal.
-> Build one thing at a time in this checkout; `/complete` archives it under
-> `blueprint/history/` and resets this file.
+Reserved for the feature, fix, or rollback currently being built.
 
-_Nothing in progress. Run `/feature`, `/fix`, or `/rollback` to start._
+Run `/feature` to start a build-plan item or `/fix` to document an ad-hoc change.

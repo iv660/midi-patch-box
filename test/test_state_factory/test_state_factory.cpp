@@ -160,6 +160,9 @@ public:
     MenuLayoutViewInterface* getSetlistMenuLayoutView() const override {
         return nullptr;
     }
+    MenuControllerInterface* getConfigMenuController() const override {
+        return &mockMenuController;
+    }
     StateMachineInterface* getStateMachineInterface() const override {
         getStateMachineInterfaceCallCount++;
         return &mockStateMachine;

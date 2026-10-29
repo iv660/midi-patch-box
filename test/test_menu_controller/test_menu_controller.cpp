@@ -30,6 +30,7 @@ public:
     ConfigMenuViewInterface* getConfigMenuView() const override { return nullptr; }
     EditSetlistViewInterface* getEditSetlistView() const override { return nullptr; }
     MenuControllerInterface* getSetlistMenuController() const override { return nullptr; }
+    MenuControllerInterface* getConfigMenuController() const override { return nullptr; }
     StateMachineInterface* getStateMachineInterface() const override { return nullptr; }
 };
 

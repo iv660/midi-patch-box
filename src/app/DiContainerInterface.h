@@ -41,6 +41,9 @@ public:
     virtual MenuControllerInterface* getSetlistMenuController() const = 0;
     virtual MenuLayoutViewInterface* getSetlistMenuLayoutView() const = 0;
     
+    // Dependencies for ConfigMenuState
+    virtual MenuControllerInterface* getConfigMenuController() const = 0;
+    
     /**
      * @deprecated Use getStateMachine()
      */
