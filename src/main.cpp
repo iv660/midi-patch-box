@@ -47,6 +47,7 @@ DisplayEditSetlistView editSetlistView;
 DisplayVerticalMenuLayoutView setlistMenuView;
 SetlistMenuViewDecorator setlistMenuViewDecorator;
 MenuController setlistMenuController;
+MenuController configMenuController;
 ProgramsBank programsBank;
 
 StateFactory stateFactory;
@@ -69,6 +70,7 @@ void setup()
     
     // Initialize MenuController with DI container
     setlistMenuController = MenuController(&diContainer);
+    configMenuController = MenuController(&diContainer);
     
     // Initialize programs bank with program names
     programsBank.addProgram(0, "Clean")
@@ -106,6 +108,7 @@ void setup()
         ->setConfigMenuView(&configMenuView)
         ->setEditSetlistView(&editSetlistView)
         ->setSetlistMenuController(&setlistMenuController)
+        ->setConfigMenuController(&configMenuController)
         ->setSetlistMenuLayoutView(&setlistMenuViewDecorator)
         ->setStateMachine(&stateMachine);
 

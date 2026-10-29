@@ -116,6 +116,7 @@ public:
     ProgramSelectionViewInterface* getProgramSelectionView() const override { return nullptr; }
     ProgramsBankInterface* getProgramsBank() const override { return nullptr; }
     EditSetlistViewInterface* getEditSetlistView() const override { return nullptr; }
+    MenuControllerInterface* getConfigMenuController() const override { return menuController; }
     StateMachineInterface* getStateMachineInterface() const override { return stateMachine; }
 };
 

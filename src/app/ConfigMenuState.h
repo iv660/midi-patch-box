@@ -27,7 +27,7 @@ private:
         return stateMachine ? stateMachine : (diContainer ? diContainer->getStateMachine() : nullptr);
     }
     MenuControllerInterface* getMenuController() const {
-        return diContainer ? diContainer->getSetlistMenuController() : nullptr;
+        return diContainer ? diContainer->getConfigMenuController() : nullptr;
     }
 
     bool hasUserInput();
