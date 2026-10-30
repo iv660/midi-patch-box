@@ -1,0 +1,204 @@
+<merge_resolver_tool_usage>
+  <tool_priorities>
+    <priority level="1">
+      <tool>run_command</tool>
+      <when>For all git and gh CLI operations</when>
+      <why>Git commands provide the historical context needed for intelligent resolution</why>
+    </priority>
+    
+    <priority level="2">
+      <tool>read_file</tool>
+      <when>To examine conflicted files and understand the conflict structure</when>
+      <why>Need to see the actual conflict markers and code</why>
+    </priority>
+    
+    <priority level="3">
+      <tool>apply_patch</tool>
+      <when>To resolve conflicts by applying a focused patch</when>
+      <why>Preserves exact context while replacing conflicted sections</why>
+    </priority>
+  </tool_priorities>
+
+  <tool_specific_guidance>
+    <tool name="run_command">
+      <best_practices>
+        <practice>Always use gh CLI for GitHub operations instead of MCP tools</practice>
+        <practice>Chain git commands with && for efficiency</practice>
+        <practice>Use --format options for structured output</practice>
+        <practice>Capture command output for parsing</practice>
+      </best_practices>
+      
+      <common_commands>
+        <command>
+          <purpose>Get PR information</purpose>
+          <syntax>gh pr view [PR_NUMBER] --json title,body,headRefName,baseRefName</syntax>
+        </command>
+        
+        <command>
+          <purpose>Checkout PR branch</purpose>
+          <syntax>gh pr checkout [PR_NUMBER] --force</syntax>
+        </command>
+        
+        <command>
+          <purpose>Fetch latest main branch</purpose>
+          <syntax>git fetch origin main</syntax>
+        </command>
+        
+        <command>
+          <purpose>Rebase onto main to reveal conflicts</purpose>
+          <syntax>git rebase origin/main</syntax>
+        </command>
+        
+        <command>
+          <purpose>Check conflict status</purpose>
+          <syntax>git status --porcelain | grep "^UU"</syntax>
+        </command>
+        
+        <command>
+          <purpose>Get blame for specific lines</purpose>
+          <syntax>git blame -L [start],[end] HEAD -- [file] | cut -d' ' -f1</syntax>
+        </command>
+        
+        <command>
+          <purpose>Get commit message</purpose>
+          <syntax>git log -1 --format="%s%n%n%b" [commit_sha]</syntax>
+        </command>
+        
+        <command>
+          <purpose>Stage resolved file</purpose>
+          <syntax>git add [file_path]</syntax>
+        </command>
+        
+        <command>
+          <purpose>Continue rebase after resolution</purpose>
+          <syntax>git rebase --continue</syntax>
+        </command>
+      </common_commands>
+    </tool>
+
+    <tool name="read_file">
+      <best_practices>
+        <practice>Read the entire conflicted file first to understand structure</practice>
+        <practice>Note line numbers of conflict markers for precise editing</practice>
+        <practice>Identify the pattern of conflicts (multiple vs single)</practice>
+      </best_practices>
+      
+      <conflict_parsing>
+        <marker><<<<<<< HEAD - Start of current branch changes</marker>
+        <marker>======= - Separator between versions</marker>
+        <marker>>>>>>>> [branch] - End of incoming changes</marker>
+      </conflict_parsing>
+    </tool>
+
+    <tool name="apply_patch">
+      <best_practices>
+        <practice>Read the file immediately before editing</practice>
+        <practice>Replace the complete conflict block, including marker lines</practice>
+        <practice>Include enough unchanged context in update hunks</practice>
+        <practice>Resolve one conflict block per patch when necessary</practice>
+      </best_practices>
+      
+      <example><![CDATA[
+apply_patch arguments:
+{
+  "patch": "*** Begin Patch\n*** Update File: src/feature.ts\n@@\n-<<<<<<< HEAD\n-function oldImplementation() {\n-  return \"old\";\n-}\n-=======\n-function newImplementation() {\n-  return \"new\";\n-}\n->>>>>>> feature-branch\n+function mergedImplementation() {\n+  return \"merged\";\n+}\n*** End Patch"
+}
+      ]]></example>
+    </tool>
+
+    <tool name="apply_patch">
+      <best_practices>
+        <practice>Use when an exact conflict block has been read</practice>
+        <practice>Include all conflict marker lines in the patch hunk</practice>
+        <practice>Verify the result with read_file</practice>
+      </best_practices>
+      
+      <example><![CDATA[
+apply_patch arguments:
+{
+  "patch": "*** Begin Patch\n*** Update File: src/config.ts\n@@\n-<<<<<<< HEAD\n-old configuration\n-=======\n-new configuration\n->>>>>>> branch\n+const config = {\n+  // Merged settings from both branches\n+}\n*** End Patch"
+}
+      ]]></example>
+    </tool>
+  </tool_specific_guidance>
+
+  <tool_combination_patterns>
+    <pattern name="initialize_pr_resolution">
+      <sequence>
+        <step>run_command - Get PR info with gh CLI</step>
+        <step>run_command - Checkout PR with gh pr checkout --force</step>
+        <step>run_command - Fetch origin main</step>
+        <step>run_command - Rebase onto origin/main</step>
+        <step>run_command - Check for conflicts with git status</step>
+      </sequence>
+    </pattern>
+    
+    <pattern name="analyze_conflict">
+      <sequence>
+        <step>run_command - List conflicted files</step>
+        <step>read_file - Examine conflict structure</step>
+        <step>run_command - Git blame on conflict regions</step>
+        <step>run_command - Fetch commit messages</step>
+      </sequence>
+    </pattern>
+    
+    <pattern name="resolve_conflict">
+      <sequence>
+        <step>read_file - Get exact conflict content</step>
+        <step>apply_patch - Replace conflict with resolution</step>
+        <step>run_command - Stage resolved file</step>
+        <step>run_command - Verify resolution status</step>
+      </sequence>
+    </pattern>
+    
+    <pattern name="complete_rebase">
+      <sequence>
+        <step>run_command - Check all conflicts resolved</step>
+        <step>run_command - Continue rebase with git rebase --continue</step>
+        <step>run_command - Verify clean status</step>
+      </sequence>
+    </pattern>
+  </tool_combination_patterns>
+
+  <error_handling>
+    <scenario name="no_conflicts_after_rebase">
+      <description>Rebase completes without conflicts</description>
+      <approach>
+        Inform user that PR can be merged without conflicts
+        No resolution needed
+      </approach>
+    </scenario>
+    
+    <scenario name="rebase_in_progress">
+      <description>A rebase is already in progress</description>
+      <approach>
+        Check status with git status
+        Either continue existing rebase or abort with git rebase --abort
+      </approach>
+    </scenario>
+    
+    <scenario name="malformed_conflicts">
+      <description>Conflict markers are incomplete or nested</description>
+      <approach>
+        Inspect the complete block manually, then use apply_patch with
+        exact content from the latest read_file result.
+      </approach>
+    </scenario>
+    
+    <scenario name="binary_conflicts">
+      <description>Binary files cannot be merged automatically</description>
+      <approach>
+        Identify which version to keep based on PR intent
+        Use git checkout --theirs or --ours
+      </approach>
+    </scenario>
+    
+    <scenario name="escaped_markers">
+      <description>Code contains literal conflict marker strings</description>
+      <approach>
+        Include literal marker strings in the patch hunk and verify the
+        result with read_file afterwards.
+      </approach>
+    </scenario>
+  </error_handling>
+</merge_resolver_tool_usage>
