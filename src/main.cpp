@@ -21,6 +21,7 @@
 #include "app/MenuController.h"
 #include "app/Context.h"
 #include "app/SetlistMenuViewDecorator.h"
+#include "app/SetlistManager.h"
 
 
 const uint8_t MIDI_CHANNEL = 0;
@@ -53,7 +54,7 @@ ProgramsBank programsBank;
 StateFactory stateFactory;
 DiContainer diContainer;
 Context context;
-int programs[] = {0, 41, 112};
+SetlistManager setlistManager;  // Static storage, initialized with [0, 41, 112]
 
 void setup()
 {
@@ -62,8 +63,10 @@ void setup()
     USBDevice.setProductDescriptor("MIDI Patch Box");
     USBDevice.setSerialDescriptor("0001"); // any serial number
 
-    context.programs = programs;
-    context.programsCount = 3;
+    // Wire SetlistManager into Context
+    context.setSetlistManager(&setlistManager);
+    context.programs = setlistManager.getPrograms();
+    context.programsCount = setlistManager.getProgramCount();
 
     // Initialize StateFactory with DiContainer and Context
     stateFactory = StateFactory(&diContainer, &context);
@@ -77,7 +80,7 @@ void setup()
         ->addProgram(41, "Viola")
         ->addProgram(112, "Reverse");
     
-    programSelector.setPrograms(programs, 3);
+    programSelector.setPrograms(setlistManager.getPrograms(), setlistManager.getProgramCount());
     
     // Configure hardware components
     userButton.setIoDriver(&ioDriver);
