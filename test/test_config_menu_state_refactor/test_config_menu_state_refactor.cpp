@@ -114,6 +114,7 @@ public:
     EditSetlistViewInterface* getEditSetlistView() const override { return nullptr; }
     MenuControllerInterface* getConfigMenuController() const override { return menuController; }
     StateMachineInterface* getStateMachineInterface() const override { return stateMachine; }
+    SetlistManager* getSetlistManager() const override { return nullptr; }
 };
 
 // Global test fixtures
