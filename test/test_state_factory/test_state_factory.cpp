@@ -167,6 +167,9 @@ public:
         getStateMachineInterfaceCallCount++;
         return &mockStateMachine;
     }
+    SetlistManager* getSetlistManager() const override {
+        return nullptr;
+    }
 };
 
 void setUp(void) {

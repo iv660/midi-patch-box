@@ -13,6 +13,7 @@
 #include "MenuControllerInterface.h"
 #include "MenuLayoutViewInterface.h"
 #include "StateMachineInterface.h"
+#include "SetlistManager.h"
 
 class DiContainer : public DiContainerInterface {
 private:
@@ -30,10 +31,12 @@ private:
     MenuControllerInterface* setlistMenuController = nullptr;
     MenuLayoutViewInterface* setlistMenuLayoutView = nullptr;
     MenuControllerInterface* configMenuController = nullptr;
+    SetlistManager* setlistManager = nullptr;
+    bool ownsSetlistManager = false;
 
 public:
-    DiContainer() = default;
-    virtual ~DiContainer() = default;
+    DiContainer();
+    virtual ~DiContainer();
     
     // Setters for SplashScreenState dependencies
     DiContainer* setSplashScreenView(SplashScreenViewInterface* view) {
@@ -108,6 +111,11 @@ public:
         return this;
     }
     
+    DiContainer* setSetlistManager(SetlistManager* manager) {
+        this->setlistManager = manager;
+        return this;
+    }
+    
     // Getters for SplashScreenState dependencies
     SplashScreenViewInterface* getSplashScreenView() const override {
         return splashScreenView;
@@ -166,6 +174,8 @@ public:
     MenuControllerInterface* getConfigMenuController() const override {
         return configMenuController;
     }
+    
+    SetlistManager* getSetlistManager() const override;
     
     StateMachineInterface* getStateMachineInterface() const override {
         return stateMachine; // StateMachine implements StateMachineInterface

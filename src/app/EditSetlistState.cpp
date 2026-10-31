@@ -5,6 +5,7 @@
 #include "ProgramsBankInterface.h"
 #include "StateMachineInterface.h"
 #include "StateFactoryInterface.h"
+#include "SetlistManager.h"
 #include "Program.h"
 #include <cstring>
 #include <cstdio>
@@ -157,6 +158,13 @@ void EditSetlistState::updateEditedProgramDisplay() {
 void EditSetlistState::saveEditedProgram() {
     updateProgramInSetlist(selectedIndex, editedProgramNumber);
     
+    // Update SetlistManager (bug fix - persist edits in the setlist)
+    auto setlistManager = diContainer->getSetlistManager();
+    if (setlistManager) {
+        setlistManager->updateProgram(selectedIndex, editedProgramNumber);
+    }
+    
+    // Update ProgramSelector (existing behavior)
     auto programSelector = diContainer->getProgramSelector();
     programSelector->updateProgram(selectedIndex, editedProgramNumber);
 }

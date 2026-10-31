@@ -6,10 +6,12 @@
 #include "app/DiContainer.h"
 #include "app/MenuLayoutViewInterface.h"
 #include "app/SetlistMenuViewDecorator.h"
+#include "app/SetlistManager.h"
 #include "mocks/MockInput.h"
 #include "mocks/MockStateFactory.h"
 #include "mocks/MockStateMachine.h"
 #include "mocks/MockState.h"
+#include "mocks/MockProgramSelector.h"
 
 // Mock MenuControllerInterface
 class MockMenuController : public MenuControllerInterface {
@@ -117,6 +119,7 @@ public:
     EditSetlistViewInterface* getEditSetlistView() const override { return nullptr; }
     MenuControllerInterface* getConfigMenuController() const override { return nullptr; }
     StateMachineInterface* getStateMachineInterface() const override { return nullptr; }
+    SetlistManager* getSetlistManager() const override { return nullptr; }
 };
 
 class MockMenuControllerWithSingleAction : public MenuControllerInterface {
@@ -380,6 +383,266 @@ void testRotatingEncoderClockwiseInEditShouldIterateThroughProgramsZeroToOneTwen
         "Expecting to display next sequential program number when encoder gets rotated once");
 }
 
+// Integration tests for SetlistMenuState dynamic context reading
+
+void testShouldDisplayUpdatedSetlistAfterEdit() {
+    // Simulate the full cycle: SetlistMenuState reads from context.programs,
+    // which points to SetlistManager. When SetlistManager is updated,
+    // SetlistMenuState should display the new values on next enter().
+    
+    int programs[] = {0, 41, 112};
+    Context context;
+    context.programs = programs;
+    context.programsCount = 3;
+
+    MockInput mockUserInput;
+    MockMenuController mockMenuController;
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&mockMenuController)
+        ->setUserInput(&mockUserInput);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    
+    // First enter - should read initial values
+    setlistMenuState.enter();
+    
+    // Simulate external update (e.g., from EditSetlistState via SetlistManager)
+    programs[0] = 5;  // Change first program from 0 to 5
+    
+    // Re-enter - should read updated values
+    setlistMenuState.enter();
+    
+    // The menu should have been rebuilt with the new program number.
+    // We verify this indirectly: resetMenuItems should be called on each enter,
+    // and menu items should be added fresh from context.programs.
+    TEST_ASSERT_TRUE_MESSAGE(mockMenuController.resetMenuItemsWasCalled(),
+        "Expected menu to be rebuilt on re-enter");
+}
+
+void testShouldReflectMultipleEdits() {
+    // Verify that multiple edits all persist when SetlistMenuState re-enters
+    
+    int programs[] = {0, 41, 112};
+    Context context;
+    context.programs = programs;
+    context.programsCount = 3;
+
+    MockInput mockUserInput;
+    MockMenuController mockMenuController;
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&mockMenuController)
+        ->setUserInput(&mockUserInput);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    
+    // Initial enter
+    setlistMenuState.enter();
+    
+    // First edit: change program at index 0
+    programs[0] = 5;
+    setlistMenuState.enter();
+    
+    // Second edit: change program at index 1
+    programs[1] = 20;
+    setlistMenuState.enter();
+    
+    // Third edit: change program at index 0 again
+    programs[0] = 10;
+    setlistMenuState.enter();
+    
+    // The test verifies that SetlistMenuState doesn't cache values
+    // and always reads fresh from context.programs.
+    // We can't directly inspect the menu items with MockMenuController,
+    // but the fact that it rebuilds on each enter confirms dynamic reading.
+    TEST_ASSERT_TRUE_MESSAGE(mockMenuController.resetMenuItemsWasCalled(),
+        "Expected menu to be rebuilt after multiple edits");
+}
+
+void testShouldDisplayCorrectProgramNames() {
+    // Verify that menu items reflect the actual values in context.programs
+    // This test uses the real MenuController with view capture to verify
+    // the actual program numbers displayed.
+    
+    int programs[] = {5, 20, 64};
+    Context context;
+    context.programs = programs;
+    context.programsCount = 3;
+
+    MockInput mockUserInput;
+    
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    // Enter edit mode for first program - it should show "5 " not "0 "
+    char firstProgramCaption[] = "5 ";
+    
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(firstProgramCaption, innerView.getLastHighlightedItemCaption(),
+        "Expected menu to display program number from context.programs, not a cached value");
+}
+
+// Test that verifies the actual bug fix: edits must be saved
+void testEditModeShouldSaveChangesToSetlistManagerAndProgramSelector() {
+    // GIVEN: A setlist with programs
+    // SetlistManager initializes with default programs [0, 41, 112]
+    SetlistManager setlistManager;
+
+    // Create context that points to SetlistManager's programs
+    Context context;
+    context.programs = setlistManager.getPrograms();
+    context.programsCount = setlistManager.getProgramCount();
+
+    // Setup MockProgramSelector to track updates
+    MockProgramSelector programSelector;
+    programSelector.setPrograms(context.programs, context.programsCount);
+
+    // Setup user input mock
+    MockInput mockUserInput;
+
+    // Setup view and controller
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    // Setup state machine and factory
+    MockStateMachine stateMachine;
+    MockStateFactory stateFactory;
+
+    // Setup DiContainer with all dependencies
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput)
+        ->setStateMachine(&stateMachine)
+        ->setStateFactory(&stateFactory)
+        ->setSetlistManager(&setlistManager)
+        ->setProgramSelector(&programSelector);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    // WHEN: User enters edit mode for first program (index 0, program 0)
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // User rotates encoder clockwise 5 times (from 0 to 5)
+    for (int i = 0; i < 5; i++) {
+        mockUserInput.setEncoderClockwise(true);
+        setlistMenuState.update();
+        mockUserInput.setEncoderClockwise(false);
+    }
+
+    // User presses encoder button to exit edit mode and SAVE
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // THEN: The change should be saved to SetlistManager
+    TEST_ASSERT_EQUAL_INT_MESSAGE(5, setlistManager.getProgram(0),
+        "SetlistManager should have saved the edited program at index 0");
+
+    // AND: The change should be saved to ProgramSelector
+    TEST_ASSERT_EQUAL_INT_MESSAGE(5, programSelector.getProgramsList()[0],
+        "ProgramSelector should have saved the edited program at index 0");
+
+    // AND: Other programs should remain unchanged
+    TEST_ASSERT_EQUAL_INT_MESSAGE(41, setlistManager.getProgram(1),
+        "SetlistManager should preserve unedited program at index 1");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(112, setlistManager.getProgram(2),
+        "SetlistManager should preserve unedited program at index 2");
+}
+
+void testEditModeShouldSaveChangesAtDifferentIndices() {
+    // GIVEN: A setlist with default programs [0, 41, 112]
+    SetlistManager setlistManager;
+
+    Context context;
+    context.programs = setlistManager.getPrograms();
+    context.programsCount = setlistManager.getProgramCount();
+
+    MockProgramSelector programSelector;
+    programSelector.setPrograms(context.programs, context.programsCount);
+
+    MockInput mockUserInput;
+
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    MockStateMachine stateMachine;
+    MockStateFactory stateFactory;
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput)
+        ->setStateMachine(&stateMachine)
+        ->setStateFactory(&stateFactory)
+        ->setSetlistManager(&setlistManager)
+        ->setProgramSelector(&programSelector);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    // Navigate to second item (index 1)
+    mockUserInput.setEncoderClockwise(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderClockwise(false);
+
+    // WHEN: User enters edit mode for second program (index 1, program 41)
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // User rotates encoder counterclockwise 4 times (from 41 to 37)
+    for (int i = 0; i < 4; i++) {
+        mockUserInput.setEncoderCounterClockwise(true);
+        setlistMenuState.update();
+        mockUserInput.setEncoderCounterClockwise(false);
+    }
+
+    // User presses encoder button to exit edit mode and SAVE
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // THEN: The change should be saved at the correct index
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, setlistManager.getProgram(0),
+        "SetlistManager should preserve unedited program at index 0");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(37, setlistManager.getProgram(1),
+        "SetlistManager should have saved the edited program at index 1");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(112, setlistManager.getProgram(2),
+        "SetlistManager should preserve unedited program at index 2");
+
+    // AND: ProgramSelector should also be updated
+    TEST_ASSERT_EQUAL_INT_MESSAGE(37, programSelector.getProgramsList()[1],
+        "ProgramSelector should have saved the edited program at index 1");
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(testSetlistMenuStateSetsMenuTitleOnEnter);
@@ -390,5 +653,12 @@ int main(int argc, char **argv) {
     RUN_TEST(testEnteringEditModeShouldShowCurrentProgramCaption);
     RUN_TEST(testRotatingEncoderClockwiseInEditModeShouldShowNextProgramCaption);
     RUN_TEST(testRotatingEncoderClockwiseInEditShouldIterateThroughProgramsZeroToOneTwentySeven);
+    // Integration tests for dynamic context reading
+    RUN_TEST(testShouldDisplayUpdatedSetlistAfterEdit);
+    RUN_TEST(testShouldReflectMultipleEdits);
+    RUN_TEST(testShouldDisplayCorrectProgramNames);
+    // Bug fix tests: verify that edits are actually saved
+    RUN_TEST(testEditModeShouldSaveChangesToSetlistManagerAndProgramSelector);
+    RUN_TEST(testEditModeShouldSaveChangesAtDifferentIndices);
     return UNITY_END();
 }

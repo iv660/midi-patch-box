@@ -14,6 +14,7 @@ private:
     const Context* context = nullptr;
 
     int currentEditProgramNumber = 0;
+    int currentEditProgramIndex = -1;
     bool editModeEnabled = false;
 
     MenuLayoutViewInterface* getMenuView() const {

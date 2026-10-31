@@ -15,6 +15,7 @@ class MenuControllerInterface;
 class MenuLayoutViewInterface;
 class StateMachine;
 class StateMachineInterface;
+class SetlistManager;
 
 class DiContainerInterface {
 public:
@@ -43,6 +44,9 @@ public:
     
     // Dependencies for ConfigMenuState
     virtual MenuControllerInterface* getConfigMenuController() const = 0;
+    
+    // Dependencies for SetlistManager
+    virtual SetlistManager* getSetlistManager() const = 0;
     
     /**
      * @deprecated Use getStateMachine()

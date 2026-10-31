@@ -1,3 +1,25 @@
+## PROJECT RULE: Do NOT place application domain headers here!
+
+**This directory is ONLY for low-level system/library configuration files.**
+
+Examples of files that belong here:
+- `custom_tusb_config.h` - TinyUSB configuration
+- Hardware-specific configuration headers
+- Third-party library configuration files
+
+**Application domain headers (.h files for classes, interfaces, business logic) 
+MUST be placed in `src/app/` alongside their implementation files.**
+
+Example:
+- ✅ Correct: `src/app/SetlistManager.h` and `src/app/SetlistManager.cpp`
+- ❌ Wrong: `include/app/SetlistManager.h`
+
+This keeps related code together and follows the project's established convention
+as seen in existing classes like ProgramsBank, MenuController, etc.
+
+---
+
+## Original PlatformIO README content:
 
 This directory is intended for project header files.
 

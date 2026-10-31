@@ -5,6 +5,8 @@
 #include "../../src/app/DiContainerInterface.h"
 #include "../../src/app/ProgramsBankInterface.h"
 #include "../../src/app/Program.h"
+#include "../../src/app/SetlistManager.h"
+#include "../../src/app/Context.h"
 #include "../mocks/MockEditSetlistView.h"
 #include "../mocks/MockInput.h"
 #include "../mocks/MockProgramSelector.h"
@@ -332,6 +334,250 @@ void testShouldCallUserInputUpdateAndNotEnterEditModeWhenButtonReset(void) {
                               "Edit mode should be off when button is not pressed");
 }
 
+// ========================================
+// Step 4: EditSetlistState Integration Tests with SetlistManager
+// These tests verify the core bug fix - edits must persist in the setlist
+// ========================================
+
+void testShouldUpdateSetlistManagerWhenSavingEdit(void) {
+    // Arrange
+    DiContainer diContainer;
+    MockEditSetlistView mockView;
+    MockInput mockInput;
+    MockProgramsBank programsBank;
+    MockProgramSelector mockProgramSelector;
+    
+    // Initialize SetlistManager - it uses default programs (0, 41, 112)
+    SetlistManager setlistManager;
+    
+    // Initialize Context with SetlistManager
+    Context context;
+    context.setSetlistManager(&setlistManager);
+    
+    // Setup programs bank
+    programsBank.addProgram(0, "Clean");
+    programsBank.addProgram(41, "Viola");
+    programsBank.addProgram(112, "Reverse");
+    programsBank.addProgram(5, "Crunch");  // New program to edit to
+    
+    // Setup DI container
+    diContainer.setEditSetlistView(&mockView);
+    diContainer.setUserInput(&mockInput);
+    diContainer.setProgramsBank(&programsBank);
+    diContainer.setProgramSelector(&mockProgramSelector);
+    diContainer.setSetlistManager(&setlistManager);
+    
+    EditSetlistState state(&diContainer);
+    
+    // Act - Edit first program from 0 to 5
+    state.enter();
+    mockInput.setEncoderButtonPressed(true);
+    state.update();  // Enter edit mode
+    mockInput.setEncoderButtonPressed(false);
+    
+    // Rotate encoder to change program from 0 to 5
+    for (int i = 0; i < 5; i++) {
+        mockInput.setEncoderClockwise(true);
+        state.update();
+        mockInput.setEncoderClockwise(false);
+    }
+    
+    mockInput.setEncoderButtonPressed(true);
+    state.update();  // Save changes
+    
+    // Assert - SetlistManager should be updated
+    // This is THE KEY TEST - verifying the bug fix
+    TEST_ASSERT_EQUAL_INT(5, setlistManager.getProgram(0));
+}
+
+void testShouldPersistEditedProgramInSetlist(void) {
+    // This test verifies THE BUG FIX - edits must persist in the setlist
+    // Previously, edits would update ProgramSelector but not the Context/setlist
+    
+    // Arrange
+    DiContainer diContainer;
+    MockEditSetlistView mockView;
+    MockInput mockInput;
+    MockProgramsBank programsBank;
+    MockProgramSelector mockProgramSelector;
+    
+    // Initialize SetlistManager - it uses default programs (0, 41, 112)
+    SetlistManager setlistManager;
+    
+    // Initialize Context with SetlistManager
+    Context context;
+    context.setSetlistManager(&setlistManager);
+    
+    // Setup programs bank
+    programsBank.addProgram(0, "Clean");
+    programsBank.addProgram(41, "Viola");
+    programsBank.addProgram(112, "Reverse");
+    programsBank.addProgram(45, "Cello");
+    
+    // Setup DI container
+    diContainer.setEditSetlistView(&mockView);
+    diContainer.setUserInput(&mockInput);
+    diContainer.setProgramsBank(&programsBank);
+    diContainer.setProgramSelector(&mockProgramSelector);
+    diContainer.setSetlistManager(&setlistManager);
+    
+    EditSetlistState state(&diContainer);
+    
+    // Act - Edit second program (index 1) from 41 to 45
+    state.enter();
+    
+    // Navigate to second item
+    mockInput.setEncoderClockwise(true);
+    state.update();
+    mockInput.setEncoderClockwise(false);
+    
+    // Enter edit mode
+    mockInput.setEncoderButtonPressed(true);
+    state.update();
+    mockInput.setEncoderButtonPressed(false);
+    
+    // Change program from 41 to 45 (increment by 4)
+    for (int i = 0; i < 4; i++) {
+        mockInput.setEncoderClockwise(true);
+        state.update();
+        mockInput.setEncoderClockwise(false);
+    }
+    
+    // Save changes
+    mockInput.setEncoderButtonPressed(true);
+    state.update();
+    
+    // Assert - The edited program MUST persist in the Context
+    // This is what was broken - context.programs[1] would still show 41 instead of 45
+    TEST_ASSERT_EQUAL_INT(45, context.programs[1]);
+    
+    // Also verify it's in SetlistManager (redundant but explicit)
+    TEST_ASSERT_EQUAL_INT(45, setlistManager.getProgram(1));
+}
+
+void testShouldUpdateCorrectSetlistIndex(void) {
+    // Verify that EditSetlistState updates the correct index in SetlistManager
+    
+    // Arrange
+    DiContainer diContainer;
+    MockEditSetlistView mockView;
+    MockInput mockInput;
+    MockProgramsBank programsBank;
+    MockProgramSelector mockProgramSelector;
+    
+    // Initialize SetlistManager - it uses default programs (0, 41, 112)
+    SetlistManager setlistManager;
+    
+    // Initialize Context with SetlistManager
+    Context context;
+    context.setSetlistManager(&setlistManager);
+    
+    // Setup programs bank
+    programsBank.addProgram(0, "Clean");
+    programsBank.addProgram(41, "Viola");
+    programsBank.addProgram(112, "Reverse");
+    programsBank.addProgram(100, "NewProgram");
+    
+    // Setup DI container
+    diContainer.setEditSetlistView(&mockView);
+    diContainer.setUserInput(&mockInput);
+    diContainer.setProgramsBank(&programsBank);
+    diContainer.setProgramSelector(&mockProgramSelector);
+    diContainer.setSetlistManager(&setlistManager);
+    
+    EditSetlistState state(&diContainer);
+    
+    // Act - Edit THIRD program (index 2) from 112 to 100
+    state.enter();
+    
+    // Navigate to third item
+    mockInput.setEncoderClockwise(true);
+    state.update();
+    mockInput.setEncoderClockwise(false);
+    mockInput.setEncoderClockwise(true);
+    state.update();
+    mockInput.setEncoderClockwise(false);
+    
+    // Enter edit mode
+    mockInput.setEncoderButtonPressed(true);
+    state.update();
+    mockInput.setEncoderButtonPressed(false);
+    
+    // Decrement program from 112 to 100 (decrement by 12)
+    for (int i = 0; i < 12; i++) {
+        mockInput.setEncoderCounterClockwise(true);
+        state.update();
+        mockInput.setEncoderCounterClockwise(false);
+    }
+    
+    // Save changes
+    mockInput.setEncoderButtonPressed(true);
+    state.update();
+    
+    // Assert - Only index 2 should be updated
+    TEST_ASSERT_EQUAL_INT(0, setlistManager.getProgram(0));    // Unchanged
+    TEST_ASSERT_EQUAL_INT(41, setlistManager.getProgram(1));   // Unchanged
+    TEST_ASSERT_EQUAL_INT(100, setlistManager.getProgram(2));  // Changed
+}
+
+void testShouldPreserveProgramSelectorUpdate(void) {
+    // Verify that EditSetlistState still updates ProgramSelector (existing behavior)
+    // This ensures we didn't break the existing functionality while adding SetlistManager
+    
+    // Arrange
+    DiContainer diContainer;
+    MockEditSetlistView mockView;
+    MockInput mockInput;
+    MockProgramsBank programsBank;
+    MockProgramSelector mockProgramSelector;
+    
+    // Initialize SetlistManager - it uses default programs (0, 41, 112)
+    SetlistManager setlistManager;
+    
+    // Initialize Context with SetlistManager
+    Context context;
+    context.setSetlistManager(&setlistManager);
+    
+    // Setup programs bank with a wider range
+    programsBank.addProgram(0, "Clean");
+    programsBank.addProgram(41, "Viola");
+    programsBank.addProgram(112, "Reverse");
+    programsBank.addProgram(43, "NewSound");
+    
+    // Initialize ProgramSelector with matching initial programs
+    mockProgramSelector.setPrograms({0, 41, 112});
+    
+    // Setup DI container
+    diContainer.setEditSetlistView(&mockView);
+    diContainer.setUserInput(&mockInput);
+    diContainer.setProgramsBank(&programsBank);
+    diContainer.setProgramSelector(&mockProgramSelector);
+    diContainer.setSetlistManager(&setlistManager);
+    
+    EditSetlistState state(&diContainer);
+    
+    // Act - Edit first program from 0 to 43
+    state.enter();
+    mockInput.setEncoderButtonPressed(true);
+    state.update();  // Enter edit mode
+    mockInput.setEncoderButtonPressed(false);
+    
+    // Increment program from 0 to 43
+    for (int i = 0; i < 43; i++) {
+        mockInput.setEncoderClockwise(true);
+        state.update();
+        mockInput.setEncoderClockwise(false);
+    }
+    
+    // Save changes
+    mockInput.setEncoderButtonPressed(true);
+    state.update();
+    
+    // Assert - BOTH ProgramSelector AND SetlistManager should be updated
+    TEST_ASSERT_EQUAL_INT(43, mockProgramSelector.getProgramsList()[0]);  // Existing behavior
+    TEST_ASSERT_EQUAL_INT(43, setlistManager.getProgram(0));              // New behavior
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     
@@ -345,6 +591,12 @@ int main(int argc, char **argv) {
     RUN_TEST(testShouldUpdateEditedProgramInProgramSelector);
     RUN_TEST(testEditModeShouldNotToggleOnSubsequentUpdate);
     RUN_TEST(testShouldCallUserInputUpdateAndNotEnterEditModeWhenButtonReset);
+    
+    // Step 4: EditSetlistState Integration Tests
+    RUN_TEST(testShouldUpdateSetlistManagerWhenSavingEdit);
+    RUN_TEST(testShouldPersistEditedProgramInSetlist);
+    RUN_TEST(testShouldUpdateCorrectSetlistIndex);
+    RUN_TEST(testShouldPreserveProgramSelectorUpdate);
 
     return UNITY_END();
 }
