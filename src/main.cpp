@@ -113,6 +113,7 @@ void setup()
         ->setSetlistMenuController(&setlistMenuController)
         ->setConfigMenuController(&configMenuController)
         ->setSetlistMenuLayoutView(&setlistMenuViewDecorator)
+        ->setSetlistManager(&setlistManager)
         ->setStateMachine(&stateMachine);
 
     // Initialize MidiPatchBoxApplication using DiContainer
