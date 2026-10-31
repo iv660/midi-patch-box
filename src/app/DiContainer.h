@@ -32,6 +32,7 @@ private:
     MenuLayoutViewInterface* setlistMenuLayoutView = nullptr;
     MenuControllerInterface* configMenuController = nullptr;
     SetlistManager* setlistManager = nullptr;
+    bool ownsSetlistManager = false;
 
 public:
     DiContainer();
@@ -107,6 +108,11 @@ public:
     
     DiContainer* setConfigMenuController(MenuControllerInterface* controller) {
         this->configMenuController = controller;
+        return this;
+    }
+    
+    DiContainer* setSetlistManager(SetlistManager* manager) {
+        this->setlistManager = manager;
         return this;
     }
     
