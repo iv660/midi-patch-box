@@ -6,10 +6,12 @@
 #include "app/DiContainer.h"
 #include "app/MenuLayoutViewInterface.h"
 #include "app/SetlistMenuViewDecorator.h"
+#include "app/SetlistManager.h"
 #include "mocks/MockInput.h"
 #include "mocks/MockStateFactory.h"
 #include "mocks/MockStateMachine.h"
 #include "mocks/MockState.h"
+#include "mocks/MockProgramSelector.h"
 
 // Mock MenuControllerInterface
 class MockMenuController : public MenuControllerInterface {
@@ -496,6 +498,151 @@ void testShouldDisplayCorrectProgramNames() {
         "Expected menu to display program number from context.programs, not a cached value");
 }
 
+// Test that verifies the actual bug fix: edits must be saved
+void testEditModeShouldSaveChangesToSetlistManagerAndProgramSelector() {
+    // GIVEN: A setlist with programs
+    // SetlistManager initializes with default programs [0, 41, 112]
+    SetlistManager setlistManager;
+
+    // Create context that points to SetlistManager's programs
+    Context context;
+    context.programs = setlistManager.getPrograms();
+    context.programsCount = setlistManager.getProgramCount();
+
+    // Setup MockProgramSelector to track updates
+    MockProgramSelector programSelector;
+    programSelector.setPrograms(context.programs, context.programsCount);
+
+    // Setup user input mock
+    MockInput mockUserInput;
+
+    // Setup view and controller
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    // Setup state machine and factory
+    MockStateMachine stateMachine;
+    MockStateFactory stateFactory;
+
+    // Setup DiContainer with all dependencies
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput)
+        ->setStateMachine(&stateMachine)
+        ->setStateFactory(&stateFactory)
+        ->setSetlistManager(&setlistManager)
+        ->setProgramSelector(&programSelector);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    // WHEN: User enters edit mode for first program (index 0, program 0)
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // User rotates encoder clockwise 5 times (from 0 to 5)
+    for (int i = 0; i < 5; i++) {
+        mockUserInput.setEncoderClockwise(true);
+        setlistMenuState.update();
+        mockUserInput.setEncoderClockwise(false);
+    }
+
+    // User presses encoder button to exit edit mode and SAVE
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // THEN: The change should be saved to SetlistManager
+    TEST_ASSERT_EQUAL_INT_MESSAGE(5, setlistManager.getProgram(0),
+        "SetlistManager should have saved the edited program at index 0");
+
+    // AND: The change should be saved to ProgramSelector
+    TEST_ASSERT_EQUAL_INT_MESSAGE(5, programSelector.getProgramsList()[0],
+        "ProgramSelector should have saved the edited program at index 0");
+
+    // AND: Other programs should remain unchanged
+    TEST_ASSERT_EQUAL_INT_MESSAGE(41, setlistManager.getProgram(1),
+        "SetlistManager should preserve unedited program at index 1");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(112, setlistManager.getProgram(2),
+        "SetlistManager should preserve unedited program at index 2");
+}
+
+void testEditModeShouldSaveChangesAtDifferentIndices() {
+    // GIVEN: A setlist with default programs [0, 41, 112]
+    SetlistManager setlistManager;
+
+    Context context;
+    context.programs = setlistManager.getPrograms();
+    context.programsCount = setlistManager.getProgramCount();
+
+    MockProgramSelector programSelector;
+    programSelector.setPrograms(context.programs, context.programsCount);
+
+    MockInput mockUserInput;
+
+    MockMenuLayoutViewWithLastHighlightedItem innerView;
+    SetlistMenuViewDecorator viewDecorator(&innerView);
+
+    MockDiContainerForEditModeScenario controllerContainer;
+    controllerContainer.setSetlistMenuLayoutView(&viewDecorator);
+    MenuController realMenuController(&controllerContainer);
+
+    MockStateMachine stateMachine;
+    MockStateFactory stateFactory;
+
+    DiContainer stateContainer;
+    stateContainer.setSetlistMenuController(&realMenuController)
+        ->setSetlistMenuLayoutView(&viewDecorator)
+        ->setUserInput(&mockUserInput)
+        ->setStateMachine(&stateMachine)
+        ->setStateFactory(&stateFactory)
+        ->setSetlistManager(&setlistManager)
+        ->setProgramSelector(&programSelector);
+
+    SetlistMenuState setlistMenuState(&stateContainer, &context);
+    setlistMenuState.enter();
+
+    // Navigate to second item (index 1)
+    mockUserInput.setEncoderClockwise(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderClockwise(false);
+
+    // WHEN: User enters edit mode for second program (index 1, program 41)
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // User rotates encoder counterclockwise 4 times (from 41 to 37)
+    for (int i = 0; i < 4; i++) {
+        mockUserInput.setEncoderCounterClockwise(true);
+        setlistMenuState.update();
+        mockUserInput.setEncoderCounterClockwise(false);
+    }
+
+    // User presses encoder button to exit edit mode and SAVE
+    mockUserInput.setEncoderButtonPressed(true);
+    setlistMenuState.update();
+    mockUserInput.setEncoderButtonPressed(false);
+
+    // THEN: The change should be saved at the correct index
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, setlistManager.getProgram(0),
+        "SetlistManager should preserve unedited program at index 0");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(37, setlistManager.getProgram(1),
+        "SetlistManager should have saved the edited program at index 1");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(112, setlistManager.getProgram(2),
+        "SetlistManager should preserve unedited program at index 2");
+
+    // AND: ProgramSelector should also be updated
+    TEST_ASSERT_EQUAL_INT_MESSAGE(37, programSelector.getProgramsList()[1],
+        "ProgramSelector should have saved the edited program at index 1");
+}
+
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(testSetlistMenuStateSetsMenuTitleOnEnter);
@@ -510,5 +657,8 @@ int main(int argc, char **argv) {
     RUN_TEST(testShouldDisplayUpdatedSetlistAfterEdit);
     RUN_TEST(testShouldReflectMultipleEdits);
     RUN_TEST(testShouldDisplayCorrectProgramNames);
+    // Bug fix tests: verify that edits are actually saved
+    RUN_TEST(testEditModeShouldSaveChangesToSetlistManagerAndProgramSelector);
+    RUN_TEST(testEditModeShouldSaveChangesAtDifferentIndices);
     return UNITY_END();
 }

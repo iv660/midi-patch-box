@@ -1,5 +1,7 @@
 #include "SetlistMenuState.h"
 #include "SetlistMenuViewDecorator.h"
+#include "SetlistManager.h"
+#include "ProgramSelectorInterface.h"
 #include <cstdio>
 
 void SetlistMenuState::enter() {
@@ -44,6 +46,18 @@ void SetlistMenuState::handleEditModeActions() {
 
     if (encoderButtonPressed()) {
         editModeEnabled = false;
+
+        // Save the edited program
+        auto setlistManager = diContainer->getSetlistManager();
+        if (setlistManager) {
+            setlistManager->updateProgram(currentEditProgramIndex, currentEditProgramNumber);
+        }
+
+        auto programSelector = diContainer->getProgramSelector();
+        if (programSelector) {
+            programSelector->updateProgram(currentEditProgramIndex, currentEditProgramNumber);
+        }
+
         changeToMainApplicationState();
         return;
     }
@@ -190,6 +204,7 @@ void SetlistMenuState::switchToEditMode(int programIndex) {
     }
 
     editModeEnabled = true;
+    currentEditProgramIndex = programIndex;
     currentEditProgramNumber = context->programs[programIndex];
     redrawCurrentProgramOption();
 }
