@@ -5,7 +5,7 @@
 **Task Type:** Fix  
 **Item Reference:** Ad-hoc  
 **Priority:** P1  
-**Status:** Specification Ready - All P1 Issues Resolved
+**Status:** Implementation Complete - Bug Fixed
 
 ## P1 Issues Resolution Summary
 
@@ -19,16 +19,90 @@ This specification has been updated to resolve all blocking issues identified in
 
 4. **Bounds checking (RESOLVED):** Step 1 elevates bounds checking from future consideration to immediate requirement. `SetlistManager::updateProgram()` must validate `index < 0 || index >= count` to prevent buffer overruns. Includes test case `testShouldIgnoreOutOfBoundsUpdate()`.
 
+## Actual Root Cause Found
+
+**Initial Investigation Was Incorrect:** The specification incorrectly assumed the bug was in `EditSetlistState` and required adding a `SetlistManager` component. 
+
+**Actual Root Cause:** The bug was in `SetlistMenuState::handleEditModeActions()`. When exiting edit mode after selecting a new program, the method set `editModeEnabled = false` but **never saved the edited program** before returning to the main application state.
+
+**Key Finding:** `EditSetlistState` was never actually used in the current implementation. The inline editing happens directly in `SetlistMenuState` through its `handleEditModeActions()` method.
+
 ## Problem Description
 
-After editing a setlist item in `EditSetlistState` (selecting a new program with encoder and pressing the button to save), the setlist view does not reflect the change when returning to `SetlistMenuState`. The edited program appears to revert to its previous value even though `ProgramSelector` was correctly updated.
+After editing a setlist item in `SetlistMenuState` (selecting a new program with encoder and pressing the button to save), the setlist view does not reflect the change when returning to `SetlistMenuState`. The edited program appears to revert to its previous value even though the user saw the correct program number during editing.
 
 ### User-Facing Symptom
-1. User enters `EditSetlistState`
-2. User selects a program slot and changes it (e.g., from program 0 to program 5)
-3. User presses button to save
-4. View briefly shows the updated program
-5. When returning to `SetlistMenuState` or re-entering edit mode, the old program (0) is shown instead of the new one (5)
+1. User navigates to setlist menu in `SetlistMenuState`
+2. User selects a program slot and enters edit mode (inline editing)
+3. User changes the program with encoder (e.g., from program 0 to program 5)
+4. User presses encoder button to save
+5. `SetlistMenuState` exits edit mode and returns to main state
+6. **Bug:** The edited program was never saved to `SetlistManager` or `ProgramSelector`
+7. When returning to `SetlistMenuState`, the old program (0) is shown instead of the new one (5)
+
+### Actual Root Cause
+**File:** `src/app/SetlistMenuState.cpp`, method `handleEditModeActions()`
+
+**The Bug (lines 47-63, before fix):**
+```cpp
+if (encoderButtonPressed()) {
+    editModeEnabled = false;  // ❌ Exits edit mode...
+    changeToMainApplicationState();  // ❌ ...but never saves!
+    return;
+}
+```
+
+**The Fix (lines 47-63, after fix):**
+```cpp
+if (encoderButtonPressed()) {
+    editModeEnabled = false;
+    
+    // ✅ Save the edited program
+    auto setlistManager = diContainer->getSetlistManager();
+    if (setlistManager) {
+        setlistManager->updateProgram(currentEditProgramIndex, currentEditProgramNumber);
+    }
+    
+    auto programSelector = diContainer->getProgramSelector();
+    if (programSelector) {
+        programSelector->updateProgram(currentEditProgramIndex, currentEditProgramNumber);
+    }
+    
+    changeToMainApplicationState();
+    return;
+}
+```
+
+**Why This Fixes It:**
+- `currentEditProgramIndex` is set when entering edit mode (line 207: `currentEditProgramIndex = programIndex`)
+- `currentEditProgramNumber` is updated by encoder rotation (lines 67-82: `selectNextProgramOption()` / `selectPreviousProgramOption()`)
+- Before the fix, these values were lost when exiting edit mode
+- After the fix, both `SetlistManager` and `ProgramSelector` are updated with the new program number
+- `context.programs` points to `SetlistManager`'s internal array, so the next `enter()` displays the updated value
+
+## Implementation Summary
+
+**Files Modified:**
+- `src/app/SetlistMenuState.cpp` - Added save logic in `handleEditModeActions()` (lines 50-59)
+- `src/app/SetlistMenuState.h` - Added `currentEditProgramIndex` field (line 17)
+- `test/test_setlist_menu_state/test_setlist_menu_state.cpp` - Added tests verifying save behavior
+
+**Key Changes:**
+1. Store `currentEditProgramIndex` when entering edit mode (`switchToEditMode()`)
+2. Before exiting edit mode, save to both `SetlistManager` and `ProgramSelector`
+3. Added 4 new tests verifying the save behavior
+
+**Test Results:**
+- All 154/154 tests passing
+- Hardware verification pending
+
+**Note on Specification:** The original specification incorrectly identified `EditSetlistState` as the bug location and proposed adding a `SetlistManager` component with extensive DI changes. The actual bug was simpler - `SetlistMenuState` just needed to save before exiting edit mode. `EditSetlistState` is not currently used in the application.
+
+## Original Specification (For Reference)
+
+The sections below document the originally planned implementation based on incorrect root cause analysis. They are preserved for historical context but were not actually implemented.
+
+### Original Misdiagnosis (5)
 
 ### Root Cause Analysis
 
@@ -42,7 +116,9 @@ After editing a setlist item in `EditSetlistState` (selecting a new program with
 The global `Context` object in `main.cpp` holds the canonical setlist in `context.programs` (a `const int*` pointing to the static `programs[]` array). This `Context` is passed to `SetlistMenuState` but is never updated when edits occur in `EditSetlistState`. When `SetlistMenuState` re-enters, it reconstructs the menu from the stale `context.programs` data.
 
 **Architecture issue:**
-There are two sources of truth for the setlist:
+### Original Misdiagnosis
+
+The original investigation incorrectly assumed:
 1. `Context::programs` - used by `SetlistMenuState` to display the menu
 2. `ProgramSelector::programsList` - used by `MainApplicationState` for program selection
 
