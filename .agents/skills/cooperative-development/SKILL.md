@@ -57,10 +57,16 @@ This skill acts as a **lightweight coordinator** that delegates work to Blueprin
 
 ### Steps
 1. **Context:** Coordinator creates `blueprint/context/cooperative/current-task-context.md`
-2. **Specification:** Launch `/feature` or `/fix` subagent in **architect** mode to create `current-feature.md` with acceptance checklist
-3. **Validation:** Coordinator verifies quality gates are integrated, no blocking ambiguities
+2. **Branch Creation:** Ensure feature/fix branch is created with correct Blueprint prefix and format:
+   - Feature: `feature/<lowercase-kebab-case-title>`
+   - Fix: `fix/<lowercase-kebab-case-title>`
+   - Rollback: `rollback/<lowercase-kebab-case-title>`
+   - Prefix from `blueprint/config.json` `git.branchPrefix` (default: feature/, fix/, rollback/)
+3. **Specification:** Launch `/feature` or `/fix` subagent in **architect** mode to create `current-feature.md` with acceptance checklist
+4. **Validation:** Coordinator verifies quality gates are integrated, no blocking ambiguities
 
 ### Requirements
+- Feature/fix branch created with correct prefix and kebab-case format per Blueprint conventions
 - Complete, actionable specification
 - Acceptance checklist for human gates
 - Quality gates integrated into specification
@@ -82,12 +88,17 @@ This skill acts as a **lightweight coordinator** that delegates work to Blueprin
 **Deliverable:** Revised `current-feature.md`
 
 ### Steps
-1. **Critic Review:** Launch Critic subagent in **architect** mode to review specification via `critic-role.md`
-2. **Feedback:** Critic creates `critic-feedback.md` with P1/P2/P3 findings
-3. **Blockers:** If P1 issues exist, launch architect subagent in **architect** mode to resolve them
-4. **Human Gate 1:** Present specification to user, request approval after all P1 issues resolved
+1. **Branch Verification:** Verify feature/fix branch exists with correct Blueprint prefix and format
+   - Expected branch names match specification title in kebab-case
+   - Prefix matches `blueprint/config.json` settings
+   - Report branch status in coordinator context
+2. **Critic Review:** Launch Critic subagent in **architect** mode to review specification via `critic-role.md`
+3. **Feedback:** Critic creates `critic-feedback.md` with P1/P2/P3 findings
+4. **Blockers:** If P1 issues exist, launch architect subagent in **architect** mode to resolve them
+5. **Human Gate 1:** Present specification to user, request approval after all P1 issues resolved
 
 ### Requirements
+- Feature/fix branch created with correct prefix and kebab-case format per Blueprint conventions
 - Critic separate from specification author (isolated subagent)
 - All P1 issues resolved before approval
 - Explicit user approval recorded in task context
