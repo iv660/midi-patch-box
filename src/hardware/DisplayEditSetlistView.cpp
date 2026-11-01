@@ -194,7 +194,7 @@ void DisplayEditSetlistView::drawEditMode()
         display.print("(none)");
     }
     
-    // Draw blinking cursor or edit indicator
+    // Draw edit mode indicator
     display.setCursor(0, 44);
     display.print("Press to save");
 }

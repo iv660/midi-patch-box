@@ -34,7 +34,7 @@ No visual design changes needed. This is an architectural unification focusing o
 3. Modifying non-menu related states or components
 4. Changes to hardware abstraction layer
 5. Performance optimizations beyond architectural unification
-6. **EditSetlistState unification** - Maintains specialized EditSetlistViewInterface due to unique editing requirements (blinking cursor, text editing, edit mode)
+6. **EditSetlistState unification** - Maintains specialized EditSetlistViewInterface due to unique editing requirements (text editing, edit mode)
 
 ## Build loop
 
@@ -481,7 +481,7 @@ Each component follows explicit red/green/refactor TDD cycles:
 
 ## Open questions (Resolved)
 
-1. **EditSetlistState approach**: EditSetlistState will NOT use MenuController. It maintains its specialized EditSetlistViewInterface due to unique editing requirements (blinking cursor, text editing, edit mode). This is documented in Step 7.
+1. **EditSetlistState approach**: EditSetlistState will NOT use MenuController. It maintains its specialized EditSetlistViewInterface due to unique editing requirements (text editing, edit mode). This is documented in Step 7.
 
 2. **Interface approach**: Use Adapter pattern instead of inheritance. ConfigMenuViewAdapter implements MenuLayoutViewInterface and wraps ConfigMenuViewInterface.
 

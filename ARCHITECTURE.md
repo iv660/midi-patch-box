@@ -24,30 +24,57 @@ The architecture follows modern C++ design principles with interface-based abstr
 4. **Mock-Based Testing**: Hardware dependencies are mocked for isolated unit testing
 5. **State Machine Pattern**: Application flow managed through discrete states with clear transitions
 6. **Factory Pattern**: State creation abstracted through factory interfaces for flexible instantiation
+7. **Unified Menu Controller**: Navigation menus use consistent MenuController pattern
 
 ## Data Model
 
 The MIDI Patch Box manages several core data structures for program and setlist management:
 
+### Program
+
+```cpp
+struct Program {
+    int number;      // MIDI program number (0-127)
+    char name[16];   // Program name (up to 15 characters + null terminator)
+};
+```
+
+### SetlistManager
+
+- **Role**: Centralized manager for program lists
+- **Responsibility**: Maintains the current program set (default: [0, 41, 112])
+- **Capacity**: Up to 16 programs per setlist
+- **Purpose**: Provides programs to ProgramSelector and enables future setlist switching
+
 ### ProgramBank
+
 - **`programNumber`**: Integer (0-127) - MIDI program number
 - **`programName`**: String[16] - UTF-8 program name (up to 15 characters + null terminator)
 - **`bankIndex`**: Integer - Sequential position in bank for display ordering
 - **Capacity**: Up to 128 programs per bank
 
 ### Setlist
+
 - **`setlistName`**: String[16] - Name of setlist for display
-- **`programReferences`**: ProgramBank[] - Ordered list of program references from bank
+- **`programReferences`**: Program[] - Ordered list of program references from bank
 - **`programOrder`**: Integer[] - Display and navigation order in setlist
 - **Purpose**: Performance sets for live shows with curated program selection
 
+### Context
+
+- **Role**: Shared data structure connecting SetlistManager with application states
+- **Contents**: Current program list and count from SetlistManager
+- **Purpose**: Provides centralized access to program data across state transitions
+
 ### SystemState
+
 - **`activeBank`**: ProgramBank - Currently selected bank
 - **`activeSetlist`**: Setlist - Currently selected setlist (or null if in bank mode)
-- **`selectedProgram`**: ProgramBank - Currently selected program for MIDI output
+- **`selectedProgram`**: Program - Currently selected program for MIDI output
 - **`operatingMode`**: Enum{Performance, Configuration} - Current user interface mode
 
 ### Storage Architecture
+
 - **Target**: Built-in RP2040 flash memory (2MB)
 - **Strategy**: Wear-leveling consideration for frequent writes
 - **Scope**: Banks, setlists, and application state persistence
@@ -63,6 +90,7 @@ graph TD
         SPS[SplashScreenState]
         MAS[MainApplicationState]
         CMS[ConfigMenuState]
+        SMS[SetlistMenuState]
         ESS[EditSetlistState]
         PS[ProgramSelector]
         PB[ProgramsBank]
@@ -71,6 +99,9 @@ graph TD
         UI[UserInput]
         SF[StateFactory]
         DC[DiContainer]
+        MC[MenuController]
+        SM_MGR[SetlistManager]
+        CTX[Context]
         
         subgraph "Interfaces"
             UII[UserInputInterface]
@@ -88,17 +119,20 @@ graph TD
             CMI[ConfigMenuViewInterface]
             ESVI[EditSetlistViewInterface]
             DCI[DiContainerInterface]
+            MCI_I[MenuControllerInterface]
+            MLVI[MenuLayoutViewInterface]
         end
     end
     
     subgraph "Hardware Layer (src/hardware/)"
-        MC[MidiController]
+        MC_H[MidiController]
         AIO[ArduinoIoDriver]
         DPSV[DisplayProgramSelectionView]
         DSSV[DisplaySplashScreenView]
         DBSSV[DisplayBitmapSplashScreenView]
         DCMDV[DisplayConfigMenuView]
         DESV[DisplayEditSetlistView]
+        DVMLV[DisplayVerticalMenuLayoutView]
     end
     
     subgraph "Test Layer (test/)"
@@ -118,11 +152,17 @@ graph TD
     SPS --> IOI
     SPS --> SFI
     CMS --> SI
-    CMS --> CMI
+    CMS --> MCI_I
     CMS --> SFI
+    CMS --> SMI
+    SMS --> SI
+    SMS --> MCI_I
+    SMS --> SFI
+    SMS --> SMI
     ESS --> SI
     ESS --> ESVI
     ESS --> DCI
+    ESS --> SMI
     MAS --> SI
     MAS --> UII
     MAS --> PSI
@@ -140,6 +180,8 @@ graph TD
     PB --> PBI
     SF --> SFI
     DC --> DCI
+    MC --> MCI_I
+    MC --> MLVI
 ```
 
 ## Layers
@@ -159,19 +201,21 @@ The application layer contains the core business logic and is designed to be pla
 - [`StateMachine`](src/app/StateMachine.h) - State management and transitions
 - [`SplashScreenState`](src/app/SplashScreenState.h) - Initial application state with splash screen
 - [`MainApplicationState`](src/app/MainApplicationState.h) - Main operational state handling user input
-- [`ConfigMenuState`](src/app/ConfigMenuState.h) - Configuration menu state for navigation
-- [`SetlistMenuState`](src/app/SetlistMenuState.h) - Setlist management and navigation state
-- [`EditSetlistState`](src/app/EditSetlistState.h) - Setlist editing state with program selection
+- [`ConfigMenuState`](src/app/ConfigMenuState.h) - Configuration menu state using MenuController
+- [`SetlistMenuState`](src/app/SetlistMenuState.h) - Setlist management using MenuController
+- [`EditSetlistState`](src/app/EditSetlistState.h) - Setlist editing state with specialized interface
 - [`ProgramSelector`](src/app/ProgramSelector.h) - Program list management and selection logic
 - [`ProgramsBank`](src/app/ProgramsBank.h) - Program name storage and management
+- [`SetlistManager`](src/app/SetlistManager.h) - Manages program lists for setlists
+- [`Context`](src/app/Context.h) - Shared data structure for application context
 - [`UserInput`](src/app/UserInput.h) - User input coordination and button management
 - [`Button`](src/app/Button.h) - Button state management with debouncing and long press detection
 - [`Encoder`](src/app/Encoder.h) - Rotary encoder input handling
-- [`MenuController`](src/app/MenuController.h) - Menu navigation and item management
+- [`MenuController`](src/app/MenuController.h) - Unified menu navigation for ConfigMenuState and SetlistMenuState
 - [`StateFactory`](src/app/StateFactory.h) - Unified factory for all state creation
 - [`DiContainer`](src/app/DiContainer.h) - Dependency injection container
-- [`Context`](src/app/Context.h) - Shared data structure for application context
-- [`SetlistMenuViewDecorator`](src/app/SetlistMenuViewDecorator.h) - View decorator for setlist menu display
+- [`SetlistMenuViewDecorator`](src/app/SetlistMenuViewDecorator.h) - Decorator for setlist menu display
+- [`ConfigMenuViewAdapter`](src/app/ConfigMenuViewAdapter.h) - Adapter for legacy ConfigMenuViewInterface
 - Abstract interfaces for hardware abstraction and component communication
 
 ### Hardware Layer (`src/hardware/`)
@@ -205,8 +249,8 @@ The test layer provides comprehensive unit testing infrastructure with mock obje
 - TDD workflow support
 
 **Structure:**
-- `test/mocks/` - Centralized mock object definitions ([`MockIoDriver`](test/mocks/MockIoDriver.h), [`MockButton`](test/mocks/MockButton.h), [`MockEncoder`](test/mocks/MockEncoder.h))
-- `test/test_*/` - Component-specific test suites (application, state_machine, splash_screen_state, main_application_state, program_selector, programs_bank, button, encoder, user_input)
+- `test/mocks/` - Centralized mock object definitions
+- `test/test_*/` - Component-specific test suites
 - Native platform execution for fast feedback
 
 ## Core Components
@@ -230,22 +274,6 @@ The test layer provides comprehensive unit testing infrastructure with mock obje
 **Dependencies**: Receives all dependencies through fluent setter methods
 
 **Testing**: Comprehensive unit tests with mocked dependencies
-
-```mermaid
-graph LR
-    APP[MidiPatchBoxApplication] --> SM[StateMachine]
-    APP --> UII[UserInputInterface]
-    APP --> PSI[ProgramSelectorInterface]
-    APP --> MCI[MidiControllerInterface]
-    APP --> PSVI[ProgramSelectionViewInterface]
-    
-    SM -.-> SPS[SplashScreenState]
-    SM -.-> MAS[MainApplicationState]
-    UII -.-> UI[UserInput]
-    PSI -.-> PS[ProgramSelector]
-    MCI -.-> MC[MidiController]
-    PSVI -.-> DPSV[DisplayProgramSelectionView]
-```
 
 ### ProgramSelector
 
@@ -361,7 +389,7 @@ graph LR
 - Menu navigation through MenuController delegation
 - Encoder rotation handled by MenuController (selectNext/selectPrevious)
 - Encoder button press executes selected menu action
-- Transitions to [`EditSetlistState`](src/app/EditSetlistState.h) or [`MainApplicationState`](src/app/MainApplicationState.h)
+- Transitions to [`SetlistMenuState`](src/app/SetlistMenuState.h), [`EditSetlistState`](src/app/EditSetlistState.h), or [`MainApplicationState`](src/app/MainApplicationState.h)
 - Display abstraction through [`MenuLayoutViewInterface`](src/app/MenuLayoutViewInterface.h) (via MenuController)
 - Menu items configured with lambda actions
 
@@ -373,6 +401,33 @@ graph LR
 - [`DiContainerInterface`](src/app/DiContainerInterface.h) - Dependency access
 
 **Pattern**: Navigation menu using MenuController (see [Menu Architecture](#menu-architecture-unified-pattern))
+
+**Testing**: Unit tested with mock MenuController and dependencies
+
+### SetlistMenuState
+
+**Purpose**: Setlist management state providing navigation and editing of program lists using MenuController.
+
+**Interface**: Implements [`StateInterface`](src/app/StateInterface.h)
+
+**Architecture**: Uses **MenuController** pattern with dual-mode support for editing
+
+**Key Features**:
+- Menu navigation through MenuController
+- Program list editing with dual-mode interface (navigation/edit)
+- Automatic ProgramSelector updates
+- Real-time name lookup from ProgramsBank
+- Edit mode indication during program editing
+- SetlistMenuViewDecorator for optimized redrawing
+
+**Dependencies**: 
+- [`MenuControllerInterface`](src/app/MenuControllerInterface.h) - Menu management
+- [`MenuLayoutViewInterface`](src/app/MenuLayoutViewInterface.h) - Display rendering
+- [`DiContainerInterface`](src/app/DiContainerInterface.h) - Dependency access
+- [`ProgramsBankInterface`](src/app/ProgramsBankInterface.h) - Program name lookup
+- [`UserInputInterface`](src/app/UserInputInterface.h) - Input handling
+
+**Pattern**: Navigation menu with editing using MenuController
 
 **Testing**: Unit tested with mock MenuController and dependencies
 
@@ -388,20 +443,18 @@ graph LR
 - **Dual operation modes**: Navigation mode and Edit mode
 - **Navigation mode**: Select programs in setlist with encoder rotation
 - **Edit mode**: Modify program number (0-127 with wraparound) for selected slot
-- **Visual feedback**: Blinking cursor during edit mode
+- **Visual feedback**: Edit mode indication during program editing
 - **Real-time display**: Program names from ProgramsBank update immediately
 - **Automatic update**: ProgramSelector receives changes when programs are modified
 - **Clean separation**: Input handling and business logic clearly separated
 
 **Dependencies**: 
-- [`EditSetlistViewInterface`](src/app/EditSetlistViewInterface.h) - Specialized editing view with blinking cursor support
+- [`EditSetlistViewInterface`](src/app/EditSetlistViewInterface.h) - Specialized editing view for setlist item modification
 - [`DiContainerInterface`](src/app/DiContainerInterface.h) - Access to ProgramsBank and other services
 - [`StateMachineInterface`](src/app/StateMachineInterface.h) - State transitions
 - [`UserInputInterface`](src/app/UserInputInterface.h) - Encoder and button input
 
 **Pattern**: Specialized editing state (see [Menu Architecture - Editing States](#2-editing-states-specialized-implementation))
-
-**Exclusion from MenuController**: EditSetlistState implements a complex editing workflow fundamentally different from navigation menus. See [ADR-002](blueprint/context/cooperative/step7_editsetlist_exclusion_rationale.md) for detailed rationale.
 
 **Testing**: Unit tested with mock dependencies and dual-mode behavior verification
 
@@ -437,6 +490,37 @@ graph LR
 **Dependencies**: None (self-contained data structure)
 
 **Testing**: Unit tested for storage and retrieval operations
+
+### SetlistManager
+
+**Purpose**: Manages the current program list for the application.
+
+**Responsibility**: Provides read/write access to program numbers in the current setlist
+
+**Key Features**:
+- Static storage of 16 programs (default: [0, 41, 112])
+- Update individual programs at index
+- Query programs by index or get full array
+- Simple interface for program management
+
+**Dependencies**: None (self-contained data structure)
+
+**Testing**: Unit tested for storage and update operations
+
+### Context
+
+**Purpose**: Shared data structure connecting SetlistManager with application states.
+
+**Responsibility**: Provides centralized access to current program list
+
+**Key Features**:
+- Reference to SetlistManager
+- Current program array and count
+- Simple initialization from SetlistManager
+
+**Dependencies**: [`SetlistManager`](src/app/SetlistManager.h)
+
+**Testing**: Unit tested for initialization and data access
 
 ### Encoder
 
@@ -502,16 +586,66 @@ graph LR
 
 **Testing**: Unit tested through [`MockProgramSelectionView`](test/mocks/MockProgramSelectionView.h)
 
+### MenuController
+
+**Purpose**: Unified controller for menu navigation, providing consistent behavior across ConfigMenuState and SetlistMenuState.
+
+**Interface**: Implements [`MenuControllerInterface`](src/app/MenuControllerInterface.h)
+
+**Key Features**:
+- Menu item management with up to 10 items
+- Encoder-based navigation (up/down)
+- Viewport scrolling with configurable size
+- Wrap-around navigation
+- Fluent interface for configuration
+- Delegation to MenuLayoutViewInterface for rendering
+
+**Dependencies**: [`MenuLayoutViewInterface`](src/app/MenuLayoutViewInterface.h), [`DiContainerInterface`](src/app/DiContainerInterface.h)
+
+**Testing**: Comprehensive unit tests covering navigation and item management
+
+### SetlistMenuViewDecorator
+
+**Purpose**: Decorator for MenuLayoutViewInterface that optimizes redrawing for setlist menu display.
+
+**Interface**: Implements [`MenuLayoutViewInterface`](src/app/MenuLayoutViewInterface.h)
+
+**Key Features**:
+- Wraps inner MenuLayoutViewInterface
+- Tracks last highlighted item
+- Provides method to replace only the last highlighted item (optimization)
+- Maintains clean separation between view and state
+
+**Dependencies**: [`MenuLayoutViewInterface`](src/app/MenuLayoutViewInterface.h)
+
+**Testing**: Unit tested for proper delegation and decorator behavior
+
+### ConfigMenuViewAdapter
+
+**Purpose**: Adapter that bridges legacy ConfigMenuViewInterface with MenuLayoutViewInterface.
+
+**Interface**: Implements [`MenuLayoutViewInterface`](src/app/MenuLayoutViewInterface.h)
+
+**Key Features**:
+- Translates MenuLayoutViewInterface calls to ConfigMenuViewInterface
+- Maintains compatibility with legacy display views
+- Tracks highlighted item state
+
+**Dependencies**: [`ConfigMenuViewInterface`](src/app/ConfigMenuViewInterface.h)
+
+**Testing**: Unit tested for proper interface translation
+
 ## Design Patterns
 
 ### State Machine Pattern
 
-The application uses a finite state machine to manage different operational modes with clear state transitions and lifecycle management. The application includes four main states:
+The application uses a finite state machine to manage different operational modes with clear state transitions and lifecycle management. The application includes five main states:
 
 1. **SplashScreenState** - Initial splash screen display
 2. **MainApplicationState** - Main operational state for program selection
 3. **ConfigMenuState** - Configuration menu for navigation
-4. **EditSetlistState** - Setlist editing interface
+4. **SetlistMenuState** - Setlist management interface
+5. **EditSetlistState** - Setlist item editing
 
 ```cpp
 class StateMachine : public StateMachineInterface {
@@ -542,8 +676,10 @@ public:
 **State Transitions:**
 - SplashScreenState → MainApplicationState (after timeout)
 - MainApplicationState → ConfigMenuState (on long press)
+- ConfigMenuState → SetlistMenuState (on "Setlist" selection)
 - ConfigMenuState → EditSetlistState (on "Edit Setlist" selection)
 - ConfigMenuState → MainApplicationState (on "Back" selection)
+- SetlistMenuState → ConfigMenuState (on "Back" selection)
 - EditSetlistState → ConfigMenuState (implicit)
 
 **Key Benefits**:
@@ -563,7 +699,7 @@ The application uses a **unified MenuController pattern** for all navigation men
 
 **States Using This Pattern**:
 - [`ConfigMenuState`](src/app/ConfigMenuState.h) - Configuration menu navigation
-- [`SetlistMenuState`](src/app/SetlistMenuState.h) - Setlist selection menu
+- [`SetlistMenuState`](src/app/SetlistMenuState.h) - Setlist selection and editing menu
 
 **Architecture**:
 
@@ -573,6 +709,8 @@ graph TD
     SMS[SetlistMenuState] --> MC
     MC --> MLVI[MenuLayoutViewInterface]
     MLVI --> DVMLV[DisplayVerticalMenuLayoutView]
+    MLVI --> SMDEC[SetlistMenuViewDecorator]
+    SMDEC --> DVMLV
     MLVI --> CMVA[ConfigMenuViewAdapter]
     CMVA --> CMI[ConfigMenuViewInterface]
     CMI --> DCMV[DisplayConfigMenuView]
@@ -599,21 +737,21 @@ graph TD
 // MenuController uses this interface for rendering
 class MenuLayoutViewInterface {
 public:
-    virtual void displayTitle(char* title) = 0;
-    virtual void displayItem(int index, char* caption, bool highlighted) = 0;
-    virtual void clearItems() = 0;
+    virtual MenuLayoutViewInterface* displayTitle(char* title) = 0;
+    virtual MenuLayoutViewInterface* displayItem(int index, char* caption, bool highlighted) = 0;
+    virtual MenuLayoutViewInterface* clearItems() = 0;
     virtual unsigned int getMaxItems() const = 0;
 };
 
 // MenuController interface for states
 class MenuControllerInterface {
 public:
-    virtual void addItem(const char* caption, std::function<void()> action) = 0;
-    virtual void selectNext() = 0;
-    virtual void selectPrevious() = 0;
+    virtual MenuControllerInterface* setTitle(char* title) = 0;
+    virtual MenuControllerInterface* addMenuItem(char* caption, std::function<void()> action) = 0;
+    virtual MenuControllerInterface* selectNext() = 0;
+    virtual MenuControllerInterface* selectPrevious() = 0;
+    virtual MenuControllerInterface* resetMenuItems() = 0;
     virtual void executeSelectedAction() = 0;
-    virtual void resetMenuItems() = 0;
-    virtual void setMenuTitle(const char* title) = 0;
 };
 ```
 
@@ -631,15 +769,15 @@ public:
 void ConfigMenuState::enter() {
     auto menuController = diContainer->getConfigMenuController();
     menuController->resetMenuItems();
-    menuController->setMenuTitle("Configuration");
+    menuController->setTitle("Configuration");
     
-    menuController->addItem("Edit Setlist", [this]() {
-        // Transition to EditSetlistState
-        StateInterface* newState = stateFactory->createEditSetlistState();
+    menuController->addMenuItem("Setlist", [this]() {
+        // Transition to SetlistMenuState
+        StateInterface* newState = stateFactory->createSetlistMenuState();
         stateMachine->changeState(newState);
     });
     
-    menuController->addItem("Back", [this]() {
+    menuController->addMenuItem("Back", [this]() {
         // Return to MainApplicationState
         StateInterface* newState = stateFactory->createMainApplicationState();
         stateMachine->changeState(newState);
@@ -670,12 +808,13 @@ private:
     int lastHighlightedIndex = -1;
     
 public:
-    void displayItem(int index, char* caption, bool highlighted) override {
+    MenuLayoutViewInterface* displayItem(int index, char* caption, bool highlighted) override {
         wrappedView->displayMenuItem(index, caption);
         if (highlighted) {
             wrappedView->setSelectedItem(index);
             lastHighlightedIndex = index;
         }
+        return this;
     }
     // ... other method translations
 };
@@ -719,7 +858,7 @@ EditSetlistState implements a **fundamentally different interaction pattern**:
 |-----------------|------------------|
 | Single mode (navigation) | Dual mode (navigation + editing) |
 | Browse and select | Browse, enter edit, modify value, save |
-| Simple highlighting | Blinking cursor for edit mode |
+| Simple highlighting | Edit mode indication |
 | Read-only display | Mutable data (program numbers 0-127) |
 | Action execution on selection | Real-time value editing |
 
@@ -735,7 +874,7 @@ private:
     
     void handleNavigationModeInput();  // Browse setlist
     void handleEditModeInput();  // Edit program number
-    void enterEditMode();  // Toggle blinking cursor
+    void enterEditMode();  // Toggle edit mode
     void saveEditedProgram();  // Persist changes
 };
 ```
@@ -747,7 +886,7 @@ class EditSetlistViewInterface {
 public:
     virtual void showSetlist(Program* setlist) = 0;
     virtual void setSelectedItemIndex(int index) = 0;
-    virtual void setEditMode(bool enabled) = 0;  // Blinking cursor
+    virtual void setEditMode(bool enabled) = 0;  // Toggle edit mode
     virtual void setEditedProgramIndex(int index) = 0;
     virtual void setEditedProgramNumber(int programNumber) = 0;  // Real-time update
     virtual void setEditedProgramName(const char* name) = 0;
@@ -755,8 +894,6 @@ public:
 ```
 
 **Key Distinction**: EditSetlistState requires **editing workflow** support that MenuController doesn't provide. Forcing it into MenuController would compromise both abstractions.
-
-**Architectural Decision Record (ADR-002)**: See [`step7_editsetlist_exclusion_rationale.md`](blueprint/context/cooperative/step7_editsetlist_exclusion_rationale.md) for detailed analysis.
 
 #### When to Use Which Pattern
 
@@ -769,7 +906,7 @@ public:
 **Use Specialized State when**:
 - ✅ Dual-mode or multi-mode interaction required
 - ✅ Real-time data editing with immediate feedback
-- ✅ Complex visual feedback (blinking, custom rendering)
+- ✅ Custom visual feedback and rendering
 - ✅ Stateful editing workflow (edit → modify → save/cancel)
 
 ### Factory Pattern
@@ -780,6 +917,7 @@ State creation is abstracted through a unified factory interface, enabling flexi
 class StateFactory : public StateFactoryInterface {
 private:
     DiContainerInterface* diContainer;
+    Context* context;
 
 public:
     StateInterface* createSplashScreenState() override {
@@ -794,6 +932,10 @@ public:
         return new ConfigMenuState(diContainer);
     }
 
+    StateInterface* createSetlistMenuState() override {
+        return new SetlistMenuState(diContainer, context);
+    }
+
     StateInterface* createEditSetlistState() override {
         return new EditSetlistState(diContainer);
     }
@@ -805,6 +947,7 @@ public:
 - Dependency injection at creation time
 - Easy testing with mock factories
 - Flexible state configuration
+- Context injection for data sharing
 
 ### Dependency Injection
 
@@ -855,6 +998,31 @@ public:
     virtual void setEditedProgramNumber(int programNumber) = 0;
     virtual void setEditedProgramName(const char* name) = 0;
     virtual ~EditSetlistViewInterface() = default;
+};
+```
+
+### Decorator Pattern
+
+The **SetlistMenuViewDecorator** implements the Decorator pattern to provide optimized rendering:
+
+```cpp
+class SetlistMenuViewDecorator : public MenuLayoutViewInterface {
+private:
+    MenuLayoutViewInterface* innerView;
+    int lastHighlightedIndex = -1;
+    
+public:
+    MenuLayoutViewInterface* displayItem(int index, char* caption, bool highlighted) override {
+        innerView->displayItem(index, caption, highlighted);
+        return this;
+    }
+    
+    SetlistMenuViewDecorator* replaceLastHighlightedItem(char* caption) {
+        if (lastHighlightedIndex >= 0) {
+            innerView->displayItem(lastHighlightedIndex, caption, false);
+        }
+        return this;
+    }
 };
 ```
 
@@ -914,13 +1082,22 @@ graph LR
         MAS --> SMI
         
         CMS[ConfigMenuState] --> SI
-        CMS --> CMI[ConfigMenuViewInterface]
+        CMS --> MCI_I[MenuControllerInterface]
         CMS --> SFI
         CMS --> SMI
+        CMS --> DCI[DiContainerInterface]
+        
+        SMS[SetlistMenuState] --> SI
+        SMS --> MCI_I
+        SMS --> SFI
+        SMS --> SMI
+        SMS --> DCI
+        SMS --> PBI
+        SMS --> MLVI[MenuLayoutViewInterface]
         
         ESS[EditSetlistState] --> SI
         ESS --> ESVI[EditSetlistViewInterface]
-        ESS --> DCI[DiContainerInterface]
+        ESS --> DCI
         ESS --> SMI
         
         DC[DiContainer] --> DCI
@@ -930,9 +1107,11 @@ graph LR
         DC --> MCI
         DC --> PSVI
         DC --> PBI
-        DC --> CMI
+        DC --> CMI[ConfigMenuViewInterface]
         DC --> ESVI
         DC --> IOI
+        DC --> MCI_I
+        DC --> MLVI
         
         UI[UserInput] --> UII
         UI --> IOI
@@ -943,14 +1122,15 @@ graph LR
         PS[ProgramSelector] --> PSI
         PB[ProgramsBank] --> PBI
         SF[StateFactory] --> SFI
+        MC[MenuController] --> MCI_I
     end
     
     subgraph "Hardware Dependencies"
         AIO[ArduinoIoDriver] --> IOI
         AIO --> ARDUINO[Arduino Framework]
         
-        MC[MidiController] --> MCI
-        MC --> TINYUSB[Adafruit TinyUSB Library]
+        MC_H[MidiController] --> MCI
+        MC_H --> TINYUSB[Adafruit TinyUSB Library]
         
         DPSV[DisplayProgramSelectionView] --> PSVI
         DPSV --> ADAFRUIT[Adafruit GFX/SSD1306]
@@ -958,10 +1138,12 @@ graph LR
         DSSV --> ADAFRUIT
         DBSSV[DisplayBitmapSplashScreenView] --> SSVI
         DBSSV --> ADAFRUIT
-        DCMDV[DisplayConfigMenuView] --> CMI[ConfigMenuViewInterface]
+        DCMDV[DisplayConfigMenuView] --> CMI
         DCMDV --> ADAFRUIT
-        DESV[DisplayEditSetlistView] --> ESVI[EditSetlistViewInterface]
+        DESV[DisplayEditSetlistView] --> ESVI
         DESV --> ADAFRUIT
+        DVMLV[DisplayVerticalMenuLayoutView] --> MLVI
+        DVMLV --> ADAFRUIT
     end
     
     subgraph "Test Dependencies"
@@ -977,14 +1159,16 @@ graph LR
         MOCKS --> SI
         MOCKS --> SMI
         MOCKS --> SFI
+        MOCKS --> MCI_I
+        MOCKS --> MLVI
     end
     
     classDef interface fill:#fff2cc
     classDef concrete fill:#d5e8d4
     classDef external fill:#f8cecc
     
-    class UII,PSI,MCI,IOI,PSVI,SSVI,PBI,SI,SMI,SFI interface
-    class APP,SM,SPS,MAS,BTN,ENC,PS,PB,UI,AIO,MC,DPSV,DSSV,DBSSV,SF,MASF,TESTS,MOCKS concrete
+    class UII,PSI,MCI,IOI,PSVI,SSVI,PBI,SI,SMI,SFI,MCI_I,MLVI interface
+    class APP,SM,SPS,MAS,CMS,SMS,ESS,BTN,ENC,PS,PB,UI,AIO,MC_H,DPSV,DSSV,DBSSV,SF,MC,TESTS,MOCKS concrete
     class ARDUINO,TINYUSB,UNITY,ADAFRUIT external
 ```
 
@@ -1051,45 +1235,44 @@ graph TB
 
 ```
 test/
-├── mocks/
+├── mocks/                           # Centralized mock objects
 │   ├── MockIoDriver.h              # GPIO operations mock
 │   ├── MockButton.h                # Button interface mock
 │   ├── MockEncoder.h               # Encoder interface mock
 │   ├── MockProgramsBank.h          # ProgramsBank interface mock
 │   ├── MockProgramSelector.h       # ProgramSelector interface mock
 │   ├── MockEditSetlistView.h       # EditSetlistView interface mock
+│   ├── MockConfigMenuView.h        # ConfigMenuView interface mock
+│   ├── MockMenuLayoutView.h        # MenuLayoutView interface mock
+│   ├── MockState.h                 # State interface mock
+│   ├── MockStateFactory.h          # StateFactory interface mock
+│   ├── MockStateMachine.h          # StateMachine interface mock
 │   └── MockInput.h                 # UserInput interface mock
-├── test_button/
-│   └── test_button.cpp             # Button logic tests
-├── test_encoder/
-│   └── test_encoder.cpp            # Encoder logic tests
-├── test_program_selector/
-│   └── test_program_selector.cpp   # Program selection tests
-├── test_programs_bank/
-│   └── test_programs_bank.cpp      # Program name storage tests
-├── test_user_input/
-│   └── test_user_input.cpp         # User input coordination tests
-├── test_state_machine/
-│   └── test_state_machine.cpp      # State machine tests
-├── test_splash_screen_state/
-│   └── test_splash_screen_state.cpp # Splash screen state tests
-├── test_main_application_state/
-│   └── test_main_application_state.cpp # Main application state tests
-├── test_splash_screen_view/
-│   └── test_splash_screen_view.cpp  # Splash screen view tests
-├── test_config_menu_state/
-│   └── test_config_menu_state.cpp   # Config menu state tests
-├── test_edit_setlist_state/
-│   └── test_edit_setlist_state.cpp  # Edit setlist state tests
-├── test_state_factory/
-│   └── test_state_factory.cpp       # State factory tests
-└── test_midi_patch_box_application/
-    └── test_midi_patch_box_application.cpp  # Main app tests
+├── test_button/                     # Button logic tests
+├── test_encoder/                    # Encoder logic tests
+├── test_program_selector/           # Program selection tests
+├── test_programs_bank/              # Program name storage tests
+├── test_user_input/                 # User input coordination tests
+├── test_state_machine/              # State machine tests
+├── test_splash_screen_state/        # Splash screen state tests
+├── test_main_application_state/     # Main application state tests
+├── test_config_menu_state/          # Config menu state tests
+├── test_setlist_menu_state/         # Setlist menu state tests
+├── test_edit_setlist_state/         # Edit setlist state tests
+├── test_menu_controller/            # MenuController pattern tests
+├── test_setlist_manager/            # SetlistManager tests
+├── test_di_container/               # Dependency injection tests
+├── test_context/                    # Context structure tests
+├── test_setlist_menu_view_decorator/# View decorator tests
+├── test_config_menu_view_adapter/   # Interface adapter tests
+├── test_state_factory/              # State factory tests
+├── test_main_integration/           # Integration tests
+└── test_interface_analysis/         # Interface design analysis
 ```
 
 ### Testing Scope
 
-- **Unit Tests**: Application layer components (100% coverage goal)
+- **Unit Tests**: Application layer components (comprehensive coverage)
 - **Manual Tests**: Hardware layer functionality and system integration
 
 **Note**: System and integration testing is performed manually due to hardware dependencies and real-time MIDI communication requirements.

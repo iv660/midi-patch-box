@@ -43,7 +43,7 @@ Critic review identified critical issues requiring specification revision before
 #### P3: EditSetlistState Ambiguity
 **Problem:** Specification leaves EditSetlistState approach as "if applicable" without clear criteria.
 
-**Critic Concern:** EditSetlistState has unique editing requirements (blinking cursor, text editing) that may not fit standard menu pattern.
+**Critic Concern:** EditSetlistState has unique editing requirements (text editing) that may not fit standard menu pattern.
 
 **Required Changes:**
 1. Make explicit decision about EditSetlistState inclusion/exclusion

@@ -20,7 +20,7 @@
 **Primary Purpose:**
 - Edit individual setlist program assignments
 - Support dual-mode operation (navigation + editing)
-- Manage blinking cursor for edit mode feedback
+- Provide edit mode feedback
 - Handle program number editing with wraparound (0-127)
 - Save/cancel edit operations
 
@@ -32,7 +32,7 @@
    - Edit mode: Modify the program number for selected slot
 
 2. **Edit Mode Features**
-   - Blinking cursor visual feedback
+   - Edit mode visual feedback
    - Real-time program number editing
    - Immediate display updates during editing
    - Save on encoder press
@@ -91,7 +91,7 @@ virtual unsigned int getMaxItems() const = 0;
 | **Primary Function** | Select from options | Edit data values |
 | **Modes** | Single (navigation) | Dual (navigation + editing) |
 | **Interaction Pattern** | Browse → Select → Execute | Browse → Enter Edit → Modify → Save/Cancel |
-| **Visual Feedback** | Highlighting | Highlighting + Blinking Cursor |
+| **Visual Feedback** | Highlighting | Highlighting + Edit mode indication |
 | **Data Model** | Read-only display | Mutable setlist array |
 | **View Interface** | Simple (4 methods) | Complex (6 methods) |
 | **State Complexity** | Low | High (mode tracking, edit buffer) |
@@ -112,7 +112,7 @@ Forcing EditSetlistState into MenuController would require:
 ### 2. Unique Interface Requirements
 
 **EditSetlistViewInterface provides:**
-- `setEditMode(bool enabled)` - Toggle blinking cursor
+- `setEditMode(bool enabled)` - Toggle edit mode
 - `setEditedProgramNumber(int)` - Real-time edit updates
 - `setEditedProgramName(const char*)` - Display editing value
 - `showSetlist(Program*)` - Full array display
@@ -219,7 +219,7 @@ All EditSetlistState tests pass (confirmed in full test suite: 129/129 tests).
 
 **Functionality Preserved:**
 - Dual-mode operation (navigation + editing)
-- Blinking cursor in edit mode
+- Edit mode indication during program editing
 - Program number editing (0-127 wraparound)
 - Save/cancel operations
 - Setlist array management

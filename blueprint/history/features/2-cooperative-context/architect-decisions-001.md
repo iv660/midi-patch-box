@@ -72,7 +72,7 @@ ConfigMenuViewInterface* configMenuView = nullptr;        // Existing (kept)
 **Rationale:**
 1. **Different Purpose**: EditSetlistState is for editing setlist contents, not navigation
 2. **Unique Interface Requirements**:
-   - Blinking cursor for edit mode
+   - Edit mode indication
    - Text editing capabilities
    - Program number selection
    - Save/cancel operations

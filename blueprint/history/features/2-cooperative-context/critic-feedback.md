@@ -91,7 +91,7 @@ The revised specification demonstrates:
 2. **Technical Soundness:**
    **Exclusion Rationale:**
    1. **Different Purpose**: EditSetlistState is for editing setlist contents, not navigation
-   2. **Unique Interface**: Uses specialized methods for blinking cursor, edit mode, program editing
+   2. **Unique Interface**: Uses specialized methods for edit mode, program editing
    3. **Complex Interaction**: Text editing, program selection, save/cancel operations
    4. **Architectural Fit**: Better suited to specialized pattern than forced into navigation pattern
 
