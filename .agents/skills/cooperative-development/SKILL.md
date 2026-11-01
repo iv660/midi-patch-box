@@ -11,6 +11,18 @@ description: Linear automated development workflow with two human gates for spec
 
 **Human Gates:** (1) Specification approval, (2) Final acceptance
 
+## Overview
+
+**Cooperative Development** is a workflow wrapper around **Blueprint skills** that adds explicit human approval gates and custom review roles to the standard Blueprint feature development process. It orchestrates and enhances Blueprint's `/feature`, `/fix`, `/implement`, `/check`, and `/complete` skills with:
+
+- **Two mandatory human gates** for specification approval and final acceptance
+- **Isolated Critic role** for independent specification review
+- **Custom reviewer roles** for TDD red-phase and code review validation
+- **Artifact preservation** for full audit trail of development decisions
+- **Linear execution** through isolated subagents to minimize token usage
+
+This skill does not replace Blueprint; it coordinates Blueprint skills and supplements them with additional review and approval checkpoints.
+
 ## Architecture
 
 This skill acts as a **lightweight coordinator** that delegates work to Blueprint skills and custom roles via subagents. Each phase uses isolated context to minimize token usage while maintaining quality through specialized execution.
