@@ -7,7 +7,7 @@ description: Linear automated development workflow with two human gates for spec
 
 **Purpose:** Linear sequence of validated steps with two human gates: specification approval and final acceptance.
 
-**Process:** Specification → Critic Review → Human Gate 1 → Implementation → Quality Gates → Human Gate 2 → Completion
+**Process:** Specification → Critic Review → Human Gate 1 → Implementation → Quality Gates → Documentation Update → Completion
 
 **Human Gates:** (1) Specification approval, (2) Final acceptance
 
@@ -54,7 +54,11 @@ This skill acts as a **lightweight coordinator** that delegates work to Blueprin
 - Full test suite execution before final acceptance
 - **HUMAN GATE:** User completes final acceptance checklist
 
-### 5. Completion
+### 5. Documentation Update
+- Review and update project documentation per `updatable-docs.md`
+- Ensure all documentation reflects implementation changes
+
+### 6. Completion
 - `/complete` after acceptance
 - Archive context and artifacts
 
@@ -188,7 +192,28 @@ This skill acts as a **lightweight coordinator** that delegates work to Blueprin
 - No blocking issues in implementation
 - Explicit user acceptance recorded in coordinator context
 
-## Phase 5: Completion & Cleanup
+## Phase 5: Documentation Update
+
+### Steps
+1. **Documentation Review:** Review changes from `current-feature.md` implementation against `blueprint/context/updatable-docs.md` checklist
+2. **Identify Updates:** Determine which documentation files require updates based on:
+   - Architecture changes
+   - New or modified public interfaces
+   - Changed behavior or capabilities
+   - Updated coding patterns or standards
+3. **Update Documentation:** Launch architect subagent in **architect** mode to update identified documentation files
+4. **Validation:** Verify all updated documentation is:
+   - Accurate and reflects current implementation
+   - Consistent across related documents
+   - Indexed and linked in project overview
+5. **Record:** Coordinator documents which files were updated in coordinator context
+
+### Requirements
+- All relevant documentation updated per `updatable-docs.md` checklist
+- Documentation changes committed with feature implementation
+- No orphaned or out-of-sync documentation references
+
+## Phase 6: Completion & Cleanup
 
 ### Delegation
 **Blueprint Skill:** `/complete`  
